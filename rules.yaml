@@ -1,0 +1,80 @@
+metadata:
+  policy_name: unified_agent_security_policy
+  version: 2.0.0
+  description: Enterprise Agent WAF & Action Guardrail Policy
+
+shadow_mode: false
+
+rules:
+  # Rate Limit Rules
+  rate_limits:
+    - tool: send_email
+      max_calls_per_minute: 3
+      action: block
+      shadow_mode: false
+    - tool: process_refund
+      max_calls_per_minute: 3
+      action: block
+      shadow_mode: false
+
+  # Sequence Enforcement Rules
+  sequences:
+    - tool: send_email
+      required_predecessor: verify_recipient
+      action: block
+      shadow_mode: false
+    - tool: process_refund
+      required_predecessor: lookup_customer
+      action: block
+      shadow_mode: false
+
+  # Bulk Operations Threshold Rules
+  bulk_thresholds:
+    - tool: delete_records
+      param_name: record_count
+      max_value: 100
+      action: block
+      shadow_mode: false
+    - tool: process_refund
+      param_name: amount
+      max_value: 1000
+      action: block
+      shadow_mode: false
+
+  # Data Scope Rules
+  data_scope:
+    - tool: delete_records
+      param_name: customer_id
+      check_session_customer_id: true
+      action: block
+      shadow_mode: false
+    - tool: process_refund
+      param_name: customer_id
+      check_session_customer_id: true
+      action: block
+      shadow_mode: false
+    - tool: send_email
+      param_name: recipient
+      pattern: "^[a-zA-Z0-9._%+-]+@(?!aivar\\.com)[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+      action: require_hitl
+      shadow_mode: false
+
+  # Parameter Blocklist Rules
+  parameter_blocklist:
+    - tool: execute_query
+      param_name: query
+      blocklist:
+        - "drop table"
+        - "truncate"
+        - "shutdown"
+        - "grant all"
+      action: block
+      shadow_mode: false
+
+  # HITL Rules
+  hitl_rules:
+    - tool: process_refund
+      condition_param: amount
+      greater_than: 100
+      action: require_hitl
+      shadow_mode: false

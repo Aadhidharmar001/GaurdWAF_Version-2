@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GuardWAF — Production Enterprise AI Guardrail & Governance Gateway</title>
+
+  <!-- Typography & Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-logo-icon">G</div>
+      <div class="brand-titles">
+        <h1>GuardWAF <span class="brand-badge">v2.0 Enterprise</span></h1>
+        <p>Autonomous AI Agent WAF & Action Guardrail Gateway</p>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <div class="status-indicator">
+        <div class="status-dot-live"></div>
+        <span id="live-status-text">SYSTEM ONLINE</span>
+      </div>
+      <div class="status-indicator">
+        <span>⚡ Latency: <strong>1.2ms</strong></span>
+      </div>
+      <button class="btn-utility" id="audio-toggle-btn" onclick="window.GuardWAF.toggleAudio()">🔊 Sound: ON</button>
+      <button class="btn-utility" id="theme-toggle-btn" onclick="window.GuardWAF.toggleTheme()">🌙 Dark Mode</button>
+      <button class="btn-utility btn-cmd-palette" onclick="window.GuardWAF.openCmdPalette()">⌘K Actions</button>
+    </div>
+  </header>
+
+  <!-- Workspace Navigation Bar -->
+  <nav class="workspace-nav">
+    <button class="nav-tab-btn active" data-tab="workspace-overview">🛡️ Overview & Posture</button>
+    <button class="nav-tab-btn" data-tab="workspace-live">⚡ Live Interceptor</button>
+    <button class="nav-tab-btn" data-tab="workspace-hitl">⚖️ HITL Workspace <span id="hitl-badge-count" class="nav-badge-count" style="display:none;">0</span></button>
+    <button class="nav-tab-btn" data-tab="workspace-rulebuilder">🛠️ Visual Rule Builder</button>
+    <button class="nav-tab-btn" data-tab="workspace-agent">🕵️ Agent Inspector</button>
+    <button class="nav-tab-btn" data-tab="workspace-redteam">🚀 Red-Teaming & SOC 2</button>
+  </nav>
+
+  <!-- Main Viewport Layout -->
+  <main class="app-viewport">
+
+    <!-- WORKSPACE 1: Overview & Command Center -->
+    <section id="workspace-overview" class="workspace-panel active">
+      <!-- Operational Posture Banner -->
+      <div class="panel-card" style="background: linear-gradient(135deg, var(--bg-surface-elevated), var(--bg-card)); border-color: var(--border-accent);">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <span style="font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; color:var(--brand-light);">OPERATIONAL SECURITY POSTURE</span>
+            <h2 style="font-size:1.35rem; font-weight:800; margin-top:0.2rem; color:var(--text-primary);">Agents Protected & Enforced</h2>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.25rem;">Active Policy: <strong style="color:var(--text-primary);">Enterprise_Standard_Policy v2.0.0</strong> | Real-Time Microsecond Packet Inspection</p>
+          </div>
+          <div style="text-align:right;">
+            <span class="badge-status badge-allowed" style="font-size:0.8rem; padding:0.4rem 0.8rem;">● Live Protection Active</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI Metrics Grid -->
+      <div class="kpi-metrics-grid">
+        <div class="kpi-stat-card">
+          <div class="kpi-label">Total Tool Calls</div>
+          <div class="kpi-number" id="kpi-total-val">0</div>
+          <div class="kpi-meta">Real-time microsecond evaluation</div>
+        </div>
+        <div class="kpi-stat-card">
+          <div class="kpi-label">Allowed Actions</div>
+          <div class="kpi-number" style="color:var(--color-allow);" id="kpi-allowed-val">0</div>
+          <div class="kpi-meta">Verified policy compliance</div>
+        </div>
+        <div class="kpi-stat-card">
+          <div class="kpi-label">Threats Intercepted</div>
+          <div class="kpi-number" style="color:var(--color-block);" id="kpi-blocked-val">0</div>
+          <div class="kpi-meta">Blocked before execution</div>
+        </div>
+        <div class="kpi-stat-card">
+          <div class="kpi-label">HITL Queue Pending</div>
+          <div class="kpi-number" style="color:var(--color-hitl);" id="kpi-hitl-val">0</div>
+          <div class="kpi-meta">Awaiting admin review</div>
+        </div>
+        <div class="kpi-stat-card">
+          <div class="kpi-label">Threat Interception Rate</div>
+          <div class="kpi-number" style="color:var(--brand-light);" id="kpi-rate-val">0.0%</div>
+          <div class="kpi-meta">Autonomous DevSecOps engine</div>
+        </div>
+      </div>
+
+      <!-- Signature Element: The Guardrail Flow Matrix -->
+      <div class="guardrail-flow-card">
+        <div class="panel-header-bar" style="margin-bottom:0.5rem; border-bottom:none;">
+          <div class="panel-title">🔄 The Guardrail Flow Matrix <span class="panel-subtitle">— Interactive AI Security Pipeline</span></div>
+          <span style="font-size:0.75rem; color:var(--text-muted);">Click any node to inspect validator rules</span>
+        </div>
+        <div class="flow-matrix-container">
+          <div class="flow-node active-pass" id="node-1">
+            <div class="node-step-num">Step 1</div>
+            <div class="node-title">Client Agent</div>
+            <div class="node-desc">Tool Request Payload</div>
+          </div>
+          <div class="flow-connector"></div>
+          <div class="flow-node active-pass" id="node-2">
+            <div class="node-step-num">Step 2</div>
+            <div class="node-title">Rate Limiter</div>
+            <div class="node-desc">Sliding Window Check</div>
+          </div>
+          <div class="flow-connector"></div>
+          <div class="flow-node active-pass" id="node-3">
+            <div class="node-step-num">Step 3</div>
+            <div class="node-title">Sequence Guard</div>
+            <div class="node-desc">Predecessor Check</div>
+          </div>
+          <div class="flow-connector"></div>
+          <div class="flow-node active-pass" id="node-4">
+            <div class="node-step-num">Step 4</div>
+            <div class="node-title">Data Scope</div>
+            <div class="node-desc">Tenant Isolation</div>
+          </div>
+          <div class="flow-connector"></div>
+          <div class="flow-node active-pass" id="node-5">
+            <div class="node-step-num">Step 5</div>
+            <div class="node-title">Param Validator</div>
+            <div class="node-desc">Blocklist & Bulk Check</div>
+          </div>
+          <div class="flow-connector"></div>
+          <div class="flow-node active-pass" id="node-6">
+            <div class="node-step-num">Step 6</div>
+            <div class="node-title">ML Threat Radar</div>
+            <div class="node-desc">OWASP & Entropy Scan</div>
+          </div>
+          <div class="flow-connector"></div>
+          <div class="flow-node active-pass" id="node-7">
+            <div class="node-step-num">Step 7</div>
+            <div class="node-title">Gateway Decision</div>
+            <div class="node-desc">ALLOW / BLOCK / HITL</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Security Events Table -->
+      <div class="panel-card">
+        <div class="panel-header-bar">
+          <div class="panel-title">📡 Recent Intercepted Security Activity</div>
+          <button class="btn-secondary" onclick="window.GuardWAF.fetchAuditLogs()">🔄 Refresh Feed</button>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Time</th>
+                <th>Agent ID</th>
+                <th>Tool</th>
+                <th>Payload Parameters</th>
+                <th>Status</th>
+                <th>Latency</th>
+              </tr>
+            </thead>
+            <tbody id="overview-logs-tbody">
+              <tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">Loading security telemetry...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORKSPACE 2: Live Interceptor Stream -->
+    <section id="workspace-live" class="workspace-panel">
+      <div class="panel-card">
+        <div class="panel-header-bar">
+          <div>
+            <div class="panel-title">⚡ Live Microsecond Interceptor Telemetry Stream</div>
+            <p class="panel-subtitle">Click any row to open the complete Decision Explainer & trace panel.</p>
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <input type="text" id="audit-search-input" class="input-text" placeholder="Filter by Agent or Tool..." style="width:220px;" oninput="window.GuardWAF.fetchAuditLogs()">
+            <button class="btn-secondary" onclick="window.GuardWAF.fetchAuditLogs()">🔄 Refresh Feed</button>
+            <button class="btn-danger" onclick="window.GuardWAF.clearLogs()">🗑️ Clear Audit DB</button>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Time</th>
+                <th>Agent ID</th>
+                <th>Tool Action</th>
+                <th>Parameters Payload</th>
+                <th>Evaluation Status</th>
+                <th>Latency</th>
+              </tr>
+            </thead>
+            <tbody id="live-logs-tbody">
+              <tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">Loading event stream...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORKSPACE 3: HITL Authorization Workspace -->
+    <section id="workspace-hitl" class="workspace-panel">
+      <div class="panel-card">
+        <div class="panel-header-bar">
+          <div>
+            <div class="panel-title">⚖️ Human-in-the-Loop (HITL) Authorization Command Center</div>
+            <p class="panel-subtitle">Review high-risk agent operations requiring manual human approval.</p>
+          </div>
+          <button class="btn-secondary" onclick="window.GuardWAF.fetchHitlQueue()">🔄 Refresh Queue</button>
+        </div>
+        <div id="hitl-queue-list" class="hitl-queue-grid">
+          <p style="color:var(--text-muted); text-align:center; padding: 2rem;">No pending HITL authorization requests in queue.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORKSPACE 4: Visual Rule Builder & Policy Canvas -->
+    <section id="workspace-rulebuilder" class="workspace-panel">
+      <div class="rule-builder-grid">
+        <div class="panel-card">
+          <div class="panel-header-bar">
+            <div class="panel-title">🛠️ Firewall-Style Visual Rule Logic Builder</div>
+            <button class="btn-primary" onclick="window.GuardWAF.dryRunValidatePolicy()">Dry-Run Policy</button>
+          </div>
+
+          <div class="rule-logic-builder">
+            <div class="logic-block">
+              <div class="logic-block-title">1. WHEN (Target Selection)</div>
+              <div class="form-group-row">
+                <div class="form-field">
+                  <label>Target Tool</label>
+                  <select id="rule-target-tool" class="input-select">
+                    <option value="send_email">send_email</option>
+                    <option value="execute_query">execute_query</option>
+                    <option value="delete_records">delete_records</option>
+                    <option value="*">All Tools (*)</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label>Agent Scope</label>
+                  <input type="text" class="input-text" value="*" placeholder="e.g. sales-agent-01">
+                </div>
+                <div class="form-field">
+                  <label>Session Scope</label>
+                  <input type="text" class="input-text" value="*" placeholder="Session ID match">
+                </div>
+              </div>
+            </div>
+
+            <div class="logic-block">
+              <div class="logic-block-title">2. IF (Condition Trigger)</div>
+              <div class="form-group-row">
+                <div class="form-field">
+                  <label>Condition Type</label>
+                  <select id="rule-condition-type" class="input-select">
+                    <option value="rate_limit">Rate Limit Exceeded</option>
+                    <option value="sequence">Required Predecessor Missing</option>
+                    <option value="data_scope">Session Customer Mismatch</option>
+                    <option value="blocklist">Parameter Blocklist Match</option>
+                    <option value="bulk_threshold">Bulk Record Limit</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label>Parameter Name</label>
+                  <input type="text" class="input-text" value="query" placeholder="e.g. query, recipient">
+                </div>
+                <div class="form-field">
+                  <label>Threshold / Pattern</label>
+                  <input type="text" class="input-text" value="drop table, truncate" placeholder="Value limit or pattern">
+                </div>
+              </div>
+            </div>
+
+            <div class="logic-block">
+              <div class="logic-block-title">3. THEN (Enforcement Action)</div>
+              <div class="form-group-row">
+                <div class="form-field">
+                  <label>Security Action</label>
+                  <select id="rule-enforcement-action" class="input-select">
+                    <option value="block">BLOCK (Deny Action)</option>
+                    <option value="require_hitl">REQUIRE HITL (Human Approval)</option>
+                    <option value="allow">ALLOW (Permit Execution)</option>
+                    <option value="shadow_block">SHADOW BLOCK (Log Only)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.4rem;">Declarative Policy YAML Canvas</label>
+              <textarea id="policy-yaml-editor" class="input-code">metadata:
+  policy_name: Enterprise_Standard_Policy
+  version: 2.0.0
+  description: FAANG-Grade WAF & Action Guardrail Policy
+
+shadow_mode: false
+
+rules:
+  rate_limits:
+    - tool: send_email
+      max_calls_per_minute: 3
+      action: block
+
+  sequences:
+    - tool: send_email
+      required_predecessor: verify_recipient
+      action: block
+
+  bulk_thresholds:
+    - tool: delete_records
+      param_name: record_count
+      max_value: 100
+      action: block
+
+  data_scope:
+    - tool: delete_records
+      param_name: customer_id
+      check_session_customer_id: true
+      action: require_hitl
+
+  parameter_blocklist:
+    - tool: execute_query
+      param_name: query
+      blocklist:
+        - "drop table"
+        - "truncate"
+        - "delete from users"
+      action: block</textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header-bar">
+            <div class="panel-title">📐 Dynamic Policy Flow Preview & Validation Output</div>
+          </div>
+
+          <div class="policy-preview-card">
+            <span style="font-size:0.725rem; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Visual Logic Preview</span>
+            <div class="policy-flow-diagram">
+              <div class="diagram-node" id="diag-tool-val">Tool: send_email</div>
+              <div class="diagram-arrow">↓</div>
+              <div class="diagram-node" id="diag-cond-val">Condition: RATE LIMIT</div>
+              <div class="diagram-arrow">↓</div>
+              <div class="diagram-node" id="diag-action-val" style="border-color:var(--color-block);">Enforce: BLOCK</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 1rem;">
+            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.4rem;">Dry-Run Simulation Output</span>
+            <pre class="code-block" id="policy-dryrun-output">Click "Dry-Run Policy" to evaluate YAML syntax against GuardWAF policy validator.</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORKSPACE 5: Agent & Session Inspector -->
+    <section id="workspace-agent" class="workspace-panel">
+      <div class="panel-card">
+        <div class="panel-header-bar">
+          <div>
+            <div class="panel-title">🕵️ Autonomous Agent Session & Sequence Inspector</div>
+            <p class="panel-subtitle">Track agent activity sequences and state transitions in microsecond order.</p>
+          </div>
+          <button class="btn-secondary" onclick="window.GuardWAF.fetchAuditLogs()">🔄 Refresh Session Data</button>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Agent ID</th>
+                <th>Status</th>
+                <th>Total Tool Calls</th>
+                <th>Observed Sequence Flow</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="agent-timeline-tbody">
+              <tr><td colspan="5" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">Loading agent activity data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORKSPACE 6: Red-Teaming & Compliance -->
+    <section id="workspace-redteam" class="workspace-panel">
+      <div class="rule-builder-grid">
+        <div class="panel-card">
+          <div class="panel-header-bar">
+            <div class="panel-title">🚀 AI Red-Teaming Attack Simulator</div>
+          </div>
+          <p style="font-size:0.775rem; color:var(--text-muted); margin-bottom:1rem;">Select a pre-configured attack vector to test GuardWAF interception:</p>
+          <div id="redteam-scenarios-grid" style="display:grid; grid-template-columns:1fr; gap:0.75rem;">
+            <p style="color:var(--text-muted);">Loading scenarios...</p>
+          </div>
+
+          <div style="margin-top: 1.5rem;">
+            <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:0.4rem;">Custom Tool Call JSON Payload Editor</label>
+            <textarea id="custom-payload-textarea" class="input-code" style="min-height:160px;">{
+  "agent_id": "redteam-bot",
+  "session_id": "session-attack-01",
+  "tool": "execute_query",
+  "parameters": {
+    "query": "DROP TABLE users;--"
+  }
+}</textarea>
+            <button class="btn-primary" onclick="window.GuardWAF.executeCustomPayload()" style="width:100%; justify-content:center; margin-top:0.75rem;">⚡ Fire Red-Team Attack Request</button>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header-bar">
+            <div class="panel-title">🏆 SOC 2 & OWASP LLM Compliance Matrix</div>
+            <button class="btn-secondary" onclick="window.GuardWAF.downloadComplianceReport()">📥 Export Audit Certificate (MD)</button>
+          </div>
+          <pre id="compliance-report-box" class="code-block" style="white-space:pre-wrap; min-height:480px;">Loading compliance report...</pre>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-header-bar">
+          <div class="panel-title">🧪 Attack Interception Console Output</div>
+        </div>
+        <pre id="redteam-output-box" class="code-block">Ready for attack simulation.</pre>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Side Drawer Overlay (Decision Explainer) -->
+  <div id="decision-drawer-overlay" class="side-drawer-overlay" onclick="if(event.target===this) window.GuardWAF.closeDecisionExplainer()">
+    <div class="side-drawer-content">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-subtle); padding-bottom:0.75rem;">
+        <h3 style="font-size:1.05rem; font-weight:800; color:var(--text-primary);">🛡️ Decision Explainer Trace</h3>
+        <button class="btn-utility" onclick="window.GuardWAF.closeDecisionExplainer()">✕ Close</button>
+      </div>
+      <div id="drawer-content-box">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Command Palette Modal -->
+  <div id="cmd-palette-backdrop" class="cmd-palette-backdrop" onclick="if(event.target===this) window.GuardWAF.closeCmdPalette()">
+    <div class="cmd-palette-box">
+      <div class="cmd-input-wrapper">
+        <span>🔍</span>
+        <input type="text" id="cmd-search-input" placeholder="Type a command or search workspace... (Esc to close)">
+      </div>
+      <div id="cmd-items-list" class="cmd-items-list">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Main JavaScript Application Engine -->
+  <script src="/static/app.js"></script>
+</body>
+</html>

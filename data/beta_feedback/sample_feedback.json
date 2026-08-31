@@ -1,0 +1,17 @@
+{
+  "feedback_id": "fb_sample_2026_001",
+  "date": "2026-08-29T10:00:00Z",
+  "developer_type": "startup_engineer",
+  "experience_level": "intermediate",
+  "framework": "langchain",
+  "integration_type": "adapter",
+  "installation_success": true,
+  "time_to_first_protected_tool_seconds": 240,
+  "time_to_first_policy_block_seconds": 450,
+  "documentation_rating_1_to_5": 5,
+  "category": "GENERAL_FEEDBACK",
+  "integration_friction": "Initial confusion on PolicyConfig YAML syntax, resolved via 60-second quickstart.",
+  "would_use_again": true,
+  "would_recommend": true,
+  "freeform_feedback": "GuardWAF saved us from writing custom authorization checks for our LangChain tools."
+}

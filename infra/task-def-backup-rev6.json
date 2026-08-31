@@ -1,0 +1,71 @@
+{
+  "containerDefinitions": [
+    {
+      "name": "guardwaf-app",
+      "image": "161012475437.dkr.ecr.ap-south-1.amazonaws.com/guardwaf:latest",
+      "cpu": 0,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "hostPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        {
+          "name": "DATABASE_URL",
+          "value": "sqlite:///waf_governance.db"
+        },
+        {
+          "name": "OPENAI_API_KEY",
+          "value": "sk-demo-key"
+        },
+        {
+          "name": "RULES_PATH",
+          "value": "rules.yaml"
+        },
+        {
+          "name": "ENVIRONMENT",
+          "value": "production"
+        },
+        {
+          "name": "SHADOW_MODE_GLOBAL",
+          "value": "false"
+        }
+      ],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/guardwaf",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "app"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/health\")' || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 15
+      },
+      "systemControls": []
+    }
+  ],
+  "family": "guardwaf-task",
+  "taskRoleArn": "arn:aws:iam::161012475437:role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::161012475437:role/ecsTaskExecutionRole",
+  "networkMode": "awsvpc",
+  "volumes": [],
+  "placementConstraints": [],
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "512",
+  "memory": "1024"
+}

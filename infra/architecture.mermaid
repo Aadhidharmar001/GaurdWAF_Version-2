@@ -1,0 +1,29 @@
+graph TD
+    subgraph ClientLayer["Client & AI Agent Layer"]
+        Agent["AI Agent / LLM Client"]
+    end
+
+    subgraph AWSCloud["AWS Cloud (ap-south-1)"]
+        subgraph PublicSubnet["VPC Public Subnet"]
+            IGW["Internet Gateway / Public IP"]
+            
+            subgraph FargateService["AWS ECS Fargate Cluster (guardwaf-cluster)"]
+                WAF["GuardWAF Container<br/>(FastAPI on Port 8000)<br/>guardwaf-service"]
+            end
+        end
+
+        subgraph PrivateSubnet["VPC DB Security Group"]
+            RDS[("Amazon RDS PostgreSQL<br/>(guardwaf-db:5432)")]
+        end
+
+        subgraph SecuritySecrets["Security & Governance"]
+            SM["AWS Secrets Manager<br/>(guardwaf/db_url & openai_key)"]
+            CW["Amazon CloudWatch<br/>(/ecs/guardwaf)"]
+        end
+    end
+
+    Agent -->|"HTTP /proxy/tool"| IGW
+    IGW --> WAF
+    WAF -->|"SQLAlchemy ORM<br/>Audit Logs & HITL Queue"| RDS
+    SM -.->|"Retrieve Credentials"| WAF
+    WAF -.->|"App & Audit Logs"| CW

@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  guardwaf-control-plane:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: guardwaf-control-plane-api
+    ports:
+      - "8000:8000"
+    environment:
+      - GUARDWAF_ENV=production
+      - GUARDWAF_SECRET_KEY=prod_super_secret_master_key_9988776655
+      - POSTGRES_URL=postgresql://guardwaf:securepassword@postgres:5432/guardwaf_prod
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+    restart: always
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: guardwaf-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=guardwaf
+      - POSTGRES_PASSWORD=securepassword
+      - POSTGRES_DB=guardwaf_prod
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: guardwaf-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,0 +1,15 @@
+metadata:
+  policy_name: quickstart_policy
+  version: "1.0.0"
+  description: 60-Second Quickstart Action Policy
+
+rules:
+  bulk_thresholds:
+    - tool: issue_refund
+      param_name: amount
+      max_value: 100.0
+
+  parameter_blocklist:
+    - tool: issue_refund
+      param_name: customer_id
+      blocklist: ["SUSPICIOUS_CUST", "BLOCKED_USER"]

@@ -1,0 +1,12 @@
+metadata:
+  policy_name: external_beta_starter_policy
+  version: 1.0.0
+rules:
+  bulk_thresholds:
+    - tool: send_payment
+      param_name: amount
+      max_value: 100.0
+  hitl_rules:
+    - tool: send_payment
+      condition_param: amount
+      greater_than: 50.0

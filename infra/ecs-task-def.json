@@ -1,0 +1,71 @@
+{
+  "family": "guardwaf-control-plane-production",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::123456789012:role/guardwafEcsExecutionRole",
+  "taskRoleArn": "arn:aws:iam::123456789012:role/guardwafEcsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "guardwaf-control-plane",
+      "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/guardwaf-control-plane:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "hostPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "GUARDWAF_ENVIRONMENT",
+          "value": "production"
+        },
+        {
+          "name": "GUARDWAF_PORT",
+          "value": "8000"
+        },
+        {
+          "name": "DATABASE_DRIVER",
+          "value": "postgresql"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "GUARDWAF_SECRET_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:guardwaf/production/secrets-GUARDWAF_SECRET_KEY"
+        },
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:guardwaf/production/secrets-DATABASE_URL"
+        },
+        {
+          "name": "REDIS_URL",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:guardwaf/production/secrets-REDIS_URL"
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:8000/health/live || exit 1"
+        ],
+        "interval": 15,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 10
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/guardwaf-control-plane-production",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

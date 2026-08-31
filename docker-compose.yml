@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: guardwaf-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: waf_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d waf_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  waf-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: guardwaf-gateway
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgrespassword@db:5432/waf_db
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - SHADOW_MODE_GLOBAL=${SHADOW_MODE_GLOBAL:-false}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

@@ -1,0 +1,38 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache and Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment and secrets
+.env
+.env.local
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Agent metadata
+.agents/
+
+# Beta feedback privacy
+data/beta_feedback/*.json
+!data/beta_feedback/sample_feedback.json
+
