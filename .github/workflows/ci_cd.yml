@@ -41,6 +41,7 @@ jobs:
           pip install -e ".[all]" pytest pytest-asyncio httpx
       - name: Execute Pytest Suite
         env:
+          PYTHONPATH: "."
           GUARDWAF_SECRET_KEY: "ci_pipeline_secret_key_test_only_min_32_bytes_long"
         run: |
           pytest --tb=short
