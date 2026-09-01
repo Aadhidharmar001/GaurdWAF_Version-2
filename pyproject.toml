@@ -50,3 +50,8 @@ ignore = [
     "W291",
     "E741",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+asyncio_mode = "auto"
