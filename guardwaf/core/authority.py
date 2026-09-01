@@ -4,14 +4,17 @@ Represents limited, temporary authority delegated from a VerifiedPrincipal to an
 """
 
 from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any, Tuple
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Any, Dict, List, Optional, Tuple
+
+from pydantic import BaseModel, ConfigDict, Field
+
 
 class DelegatedAuthority(BaseModel):
     """
     Immutable representation of authority delegated by a VerifiedPrincipal to an AgentIdentity.
     Enforces action scopes, parameter limits, tenant boundaries, and expiration.
     """
+
     model_config = ConfigDict(frozen=True)
 
     authority_id: str
@@ -31,7 +34,9 @@ class DelegatedAuthority(BaseModel):
             return True
         return tool_name in self.allowed_actions
 
-    def validate_constraints(self, tool_name: str, parameters: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
+    def validate_constraints(
+        self, tool_name: str, parameters: Dict[str, Any]
+    ) -> Tuple[bool, Optional[str]]:
         """
         Validates tool parameters against delegated constraints (e.g. max_amount, allowed_domains).
         Returns (is_valid, failure_reason).
@@ -45,19 +50,32 @@ class DelegatedAuthority(BaseModel):
             max_amt = float(tool_constraints["max_amount"])
             actual_amt = float(parameters["amount"])
             if actual_amt > max_amt:
-                return False, f"Requested amount ${actual_amt:.2f} exceeds delegated authority limit of ${max_amt:.2f}"
+                return (
+                    False,
+                    f"Requested amount ${actual_amt:.2f} exceeds delegated authority limit of ${max_amt:.2f}",
+                )
 
         if "max_value" in tool_constraints and "value" in parameters:
             max_val = float(tool_constraints["max_value"])
             actual_val = float(parameters["value"])
             if actual_val > max_val:
-                return False, f"Parameter 'value' ({actual_val}) exceeds delegated limit of {max_val}"
+                return (
+                    False,
+                    f"Parameter 'value' ({actual_val}) exceeds delegated limit of {max_val}",
+                )
 
         # 2. Blocklisted / Allowed Target Constraints
         if "allowed_targets" in tool_constraints:
             allowed_targets = tool_constraints["allowed_targets"]
-            target = parameters.get("target") or parameters.get("recipient") or parameters.get("customer_id")
+            target = (
+                parameters.get("target")
+                or parameters.get("recipient")
+                or parameters.get("customer_id")
+            )
             if target and target not in allowed_targets:
-                return False, f"Target '{target}' is not in delegated allowed_targets list."
+                return (
+                    False,
+                    f"Target '{target}' is not in delegated allowed_targets list.",
+                )
 
         return True, None

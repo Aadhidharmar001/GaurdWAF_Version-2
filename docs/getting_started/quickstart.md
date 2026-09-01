@@ -27,10 +27,12 @@ from guardwaf import GuardWAF, protect, GuardWAFSecurityError
 
 waf = GuardWAF(config_path="policy.yaml")
 
+
 @protect(tool_name="issue_refund", client=waf)
 def issue_refund(customer_id: str, amount: float):
     print(f"Refunding ${amount}")
     return {"status": "SUCCESS"}
+
 
 with waf.session(session_id="sess_1"):
     # ALLOWED: $50.00

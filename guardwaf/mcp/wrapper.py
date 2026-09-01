@@ -4,16 +4,22 @@ Wraps MCP server tool registrations with pre-execution GuardWAF authorization.
 Guarantees downstream tool bodies execute ZERO times when blocked.
 """
 
-import inspect
-import asyncio
-from typing import Callable, Any, Dict, Optional
-from guardwaf.sdk.client import GuardWAF
-from guardwaf.sdk.runtime_adapter import AgentRuntimeAdapter
+from typing import Any, Callable, Optional
+
 from guardwaf.core.action_envelope import ActionEnvelope
 from guardwaf.exceptions import GuardWAFSecurityError
+from guardwaf.sdk.client import GuardWAF
+from guardwaf.sdk.runtime_adapter import AgentRuntimeAdapter
+
 
 class MCPToolWrapper:
-    def __init__(self, func: Callable, tool_name: str, waf: GuardWAF, adapter: Optional[AgentRuntimeAdapter] = None):
+    def __init__(
+        self,
+        func: Callable,
+        tool_name: str,
+        waf: GuardWAF,
+        adapter: Optional[AgentRuntimeAdapter] = None,
+    ):
         self.func = func
         self.tool_name = tool_name
         self.waf = waf
@@ -24,7 +30,7 @@ class MCPToolWrapper:
         # Canonicalize arguments
         params = kwargs.copy()
         if args and hasattr(self.func, "__code__"):
-            code_args = self.func.__code__.co_varnames[:len(args)]
+            code_args = self.func.__code__.co_varnames[: len(args)]
             for name, val in zip(code_args, args):
                 params[name] = val
 
@@ -33,16 +39,20 @@ class MCPToolWrapper:
             tenant_id=kwargs.get("tenant_id", "default"),
             agent_id=kwargs.get("agent_id", "mcp_agent"),
             tool_name=self.tool_name,
-            parameters=params
+            parameters=params,
         )
 
         allowed, reason, grant, pending = self.adapter.authorize_action(envelope)
         if not allowed:
-            raise GuardWAFSecurityError(reason or f"MCP tool '{self.tool_name}' blocked by GuardWAF policy.", tool_name=self.tool_name)
+            raise GuardWAFSecurityError(
+                reason or f"MCP tool '{self.tool_name}' blocked by GuardWAF policy.",
+                tool_name=self.tool_name,
+            )
 
         # Execute downstream tool
         self.execution_count += 1
         return self.func(*args, **kwargs)
+
 
 def secure_server(mcp_server: Any, waf: GuardWAF) -> Any:
     """

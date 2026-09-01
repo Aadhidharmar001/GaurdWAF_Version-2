@@ -2,49 +2,52 @@
 Comprehensive Unit Test Suite for Phase 3A Trusted Identity & Delegated Authority Boundary.
 """
 
-import pytest
 import asyncio
-import jwt
 from datetime import datetime, timedelta, timezone
+
+import jwt
+import pytest
+
 from guardwaf import (
-    GuardWAF,
-    protect,
-    session,
-    verified_session,
-    VerifiedPrincipal,
     AgentIdentity,
     DelegatedAuthority,
-    JWTIdentityProvider,
-    StaticIdentityProvider,
-    IdentityCredentials,
-    GuardWAFSecurityError,
-    GuardWAFAuthorizationError,
+    GuardWAF,
     GuardWAFAuthenticationError,
-    GuardWAFAuthorityExpiredError,
-    GuardWAFTenantBoundaryError,
+    GuardWAFAuthorizationError,
     GuardWAFInvalidTokenError,
+    GuardWAFTenantBoundaryError,
     GuardWAFUnverifiedContextError,
+    IdentityCredentials,
+    JWTIdentityProvider,
+    VerifiedPrincipal,
+    protect,
+    verified_session,
 )
+
 
 @pytest.fixture
 def waf_client():
     return GuardWAF(config_path="rules.yaml")
 
+
 @pytest.fixture
 def strict_waf_client():
     return GuardWAF(config_path="rules.yaml", strict_identity=True)
 
+
 # --- 1. Identity & Context Tests ---
+
 
 def test_immutable_verified_principal():
     principal = VerifiedPrincipal(
         principal_id="usr_100",
         tenant_id="tenant_a",
         subject="auth0|100",
-        roles=["admin"]
+        roles=["admin"],
     )
     with pytest.raises(Exception):
         principal.principal_id = "hacked_id"  # Immutable Pydantic model
+
 
 def test_strict_mode_rejects_unverified_context(strict_waf_client):
     @protect(tool_name="lookup_customer")
@@ -55,14 +58,14 @@ def test_strict_mode_rejects_unverified_context(strict_waf_client):
     with pytest.raises(GuardWAFUnverifiedContextError):
         lookup_customer("cust_123")
 
+
 # --- 2. JWT Cryptographic Verification Tests ---
+
 
 def test_jwt_provider_cryptographic_verification():
     secret = "super_secret_jwt_test_key_32bytes_long!"
     provider = JWTIdentityProvider(
-        secret_key=secret,
-        issuer="https://auth.example.com/",
-        audience="guardwaf-api"
+        secret_key=secret, issuer="https://auth.example.com/", audience="guardwaf-api"
     )
 
     # Valid Token
@@ -72,7 +75,7 @@ def test_jwt_provider_cryptographic_verification():
         "iss": "https://auth.example.com/",
         "aud": "guardwaf-api",
         "roles": ["support"],
-        "exp": int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp())
+        "exp": int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp()),
     }
     valid_token = jwt.encode(payload, secret, algorithm="HS256")
     principal = provider.authenticate(IdentityCredentials(raw_token=valid_token))
@@ -86,7 +89,9 @@ def test_jwt_provider_cryptographic_verification():
 
     # Expired Token
     exp_payload = dict(payload)
-    exp_payload["exp"] = int((datetime.now(timezone.utc) - timedelta(seconds=10)).timestamp())
+    exp_payload["exp"] = int(
+        (datetime.now(timezone.utc) - timedelta(seconds=10)).timestamp()
+    )
     exp_token = jwt.encode(exp_payload, secret, algorithm="HS256")
     with pytest.raises(GuardWAFAuthenticationError):
         provider.authenticate(IdentityCredentials(raw_token=exp_token))
@@ -103,7 +108,9 @@ def test_jwt_provider_cryptographic_verification():
     with pytest.raises(GuardWAFInvalidTokenError):
         provider.authenticate(IdentityCredentials(raw_token=alg_none_token))
 
+
 # --- 3. Delegated Authority Boundary Tests ---
+
 
 def test_delegated_authority_tool_and_tenant_scope(waf_client):
     exec_count = 0
@@ -122,7 +129,9 @@ def test_delegated_authority_tool_and_tenant_scope(waf_client):
         exec_count += 1
         return {"status": "deleted"}
 
-    principal = VerifiedPrincipal(principal_id="usr_alice", tenant_id="tenant_acme", subject="alice")
+    principal = VerifiedPrincipal(
+        principal_id="usr_alice", tenant_id="tenant_acme", subject="alice"
+    )
     agent = AgentIdentity(agent_id="agent_v1", tenant_id="tenant_acme")
     authority = DelegatedAuthority(
         authority_id="auth_1",
@@ -131,7 +140,7 @@ def test_delegated_authority_tool_and_tenant_scope(waf_client):
         tenant_id="tenant_acme",
         allowed_actions=["lookup_customer", "process_refund"],
         constraints={"process_refund": {"max_amount": 100.0}},
-        expires_at=datetime.now(timezone.utc) + timedelta(hours=1)
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
     )
 
     with verified_session(principal=principal, agent=agent, authority=authority):
@@ -150,7 +159,9 @@ def test_delegated_authority_tool_and_tenant_scope(waf_client):
         with pytest.raises(GuardWAFAuthorizationError):
             process_refund("cust_1", 250.0)
 
+
 # --- 4. Tenant Boundary Anti-Spoofing Tests ---
+
 
 def test_tenant_boundary_anti_spoofing(waf_client):
     @protect(tool_name="lookup_customer")
@@ -161,7 +172,9 @@ def test_tenant_boundary_anti_spoofing(waf_client):
     def process_refund(customer_id: str, amount: float, tenant_id: str = "tenant_a"):
         return {"status": "ok"}
 
-    principal = VerifiedPrincipal(principal_id="usr_tenant", tenant_id="tenant_a", subject="usr")
+    principal = VerifiedPrincipal(
+        principal_id="usr_tenant", tenant_id="tenant_a", subject="usr"
+    )
     agent = AgentIdentity(agent_id="agent_a", tenant_id="tenant_a")
     authority = DelegatedAuthority(
         authority_id="auth_t",
@@ -169,7 +182,7 @@ def test_tenant_boundary_anti_spoofing(waf_client):
         agent_id="agent_a",
         tenant_id="tenant_a",
         allowed_actions=["lookup_customer", "process_refund"],
-        expires_at=datetime.now(timezone.utc) + timedelta(hours=1)
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
     )
 
     with verified_session(principal=principal, agent=agent, authority=authority):
@@ -179,7 +192,9 @@ def test_tenant_boundary_anti_spoofing(waf_client):
         with pytest.raises(GuardWAFTenantBoundaryError):
             process_refund("cust_1", 50.0, tenant_id="tenant_victim")
 
+
 # --- 5. Async Context Isolation Tests ---
+
 
 @pytest.mark.asyncio
 async def test_async_verified_session_context_isolation(waf_client):
@@ -204,7 +219,9 @@ async def test_async_verified_session_context_isolation(waf_client):
     assert res1["status"] == "ok"
     assert res2["status"] == "ok"
 
+
 # --- 6. ActionGrant Identity Binding Tests ---
+
 
 def test_action_grant_identity_binding(waf_client):
     from guardwaf.core.models import ActionIntent
@@ -214,7 +231,7 @@ def test_action_grant_identity_binding(waf_client):
         agent_id="agent_test",
         tool_name="test_tool",
         parameters={"val": 1},
-        parameter_digest="digest_123"
+        parameter_digest="digest_123",
     )
 
     grant = waf_client.signer.issue_grant(intent, delegated_authority_id="auth_999")

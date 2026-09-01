@@ -15,16 +15,37 @@ if hasattr(sys.stdout, "reconfigure"):
 
 # Patterns representing suspicious hardcoded credentials
 SECRET_PATTERNS = [
-    (re.compile(r'(?i)aws_access_key_id\s*=\s*["\']?(AKIA[0-9A-Z]{16})["\']?'), "AWS Access Key ID"),
-    (re.compile(r'(?i)aws_secret_access_key\s*=\s*["\']?([0-9a-zA-Z/+]{40})["\']?'), "AWS Secret Access Key"),
-    (re.compile(r'-----BEGIN (RSA|EC|DSA|OPENSSH|PRIVATE) KEY-----'), "Private Key Header"),
-    (re.compile(r'(?i)postgres://[^:]+:([^\s@]+)@'), "Postgres Connection Password"),
-    (re.compile(r'(?i)redis://:[^\s@]+@'), "Redis Password"),
-    (re.compile(r'gw_live_[0-9a-f]{32}'), "Plaintext GuardWAF Production API Credential"),
+    (
+        re.compile(r'(?i)aws_access_key_id\s*=\s*["\']?(AKIA[0-9A-Z]{16})["\']?'),
+        "AWS Access Key ID",
+    ),
+    (
+        re.compile(r'(?i)aws_secret_access_key\s*=\s*["\']?([0-9a-zA-Z/+]{40})["\']?'),
+        "AWS Secret Access Key",
+    ),
+    (
+        re.compile(r"-----BEGIN (RSA|EC|DSA|OPENSSH|PRIVATE) KEY-----"),
+        "Private Key Header",
+    ),
+    (re.compile(r"(?i)postgres://[^:]+:([^\s@]+)@"), "Postgres Connection Password"),
+    (re.compile(r"(?i)redis://:[^\s@]+@"), "Redis Password"),
+    (
+        re.compile(r"gw_live_[0-9a-f]{32}"),
+        "Plaintext GuardWAF Production API Credential",
+    ),
 ]
 
-EXCLUDED_DIRS = {".git", ".venv", "__pycache__", ".pytest_cache", "node_modules", "dist", "build"}
+EXCLUDED_DIRS = {
+    ".git",
+    ".venv",
+    "__pycache__",
+    ".pytest_cache",
+    "node_modules",
+    "dist",
+    "build",
+}
 EXCLUDED_FILES = {"scan_secrets.py", "test_p0_security_fixes.py"}
+
 
 def scan_file(filepath: str) -> List[Tuple[int, str, str]]:
     findings = []
@@ -38,6 +59,7 @@ def scan_file(filepath: str) -> List[Tuple[int, str, str]]:
         pass
     return findings
 
+
 def main() -> int:
     print("=================================================================")
     print("🛡️  GUARdWAF AUTOMATED SECRET SCANNER")
@@ -48,14 +70,18 @@ def main() -> int:
     for dirpath, dirnames, filenames in os.walk(root_dir):
         dirnames[:] = [d for d in dirnames if d not in EXCLUDED_DIRS]
         for fname in filenames:
-            if fname in EXCLUDED_FILES or fname.endswith((".pyc", ".db", ".zip", ".png", ".jpg")):
+            if fname in EXCLUDED_FILES or fname.endswith(
+                (".pyc", ".db", ".zip", ".png", ".jpg")
+            ):
                 continue
             fpath = os.path.join(dirpath, fname)
             findings = scan_file(fpath)
             if findings:
                 rel_path = os.path.relpath(fpath, root_dir)
                 for line_num, secret_type, snippet in findings:
-                    print(f"❌ CRITICAL SECRET DETECTED in [{rel_path}:L{line_num}]: {secret_type}")
+                    print(
+                        f"❌ CRITICAL SECRET DETECTED in [{rel_path}:L{line_num}]: {secret_type}"
+                    )
                     total_findings += 1
 
     if total_findings > 0:
@@ -64,6 +90,7 @@ def main() -> int:
 
     print("✅ SECRET SCAN PASSED: Zero hardcoded secrets detected across repository.")
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -3,14 +3,15 @@ GuardWAF Clean-Environment Package Installation & Integration Verifier.
 Installs generated .whl wheel package into an isolated virtual environment and verifies core SDK execution, policy loading, and tool interception without development dependencies.
 """
 
-import sys
 import os
-import subprocess
-import venv
 import shutil
+import subprocess
+import sys
+import venv
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
+
 
 def main():
     print("=================================================================")
@@ -21,7 +22,9 @@ def main():
     dist_dir = os.path.join(root_dir, "dist")
 
     if not os.path.exists(dist_dir):
-        print("❌ FAILED: 'dist/' directory does not exist. Run scripts/build_release.py first.")
+        print(
+            "❌ FAILED: 'dist/' directory does not exist. Run scripts/build_release.py first."
+        )
         sys.exit(1)
 
     wheels = [f for f in os.listdir(dist_dir) if f.endswith(".whl")]
@@ -38,10 +41,19 @@ def main():
     print(f"▶ 1. Creating Isolated Virtual Environment in '{temp_env_dir}'...")
     venv.create(temp_env_dir, with_pip=True)
 
-    venv_python = os.path.join(temp_env_dir, "Scripts", "python.exe") if os.name == "nt" else os.path.join(temp_env_dir, "bin", "python")
+    venv_python = (
+        os.path.join(temp_env_dir, "Scripts", "python.exe")
+        if os.name == "nt"
+        else os.path.join(temp_env_dir, "bin", "python")
+    )
 
     print(f"▶ 2. Installing Wheel '{wheels[0]}' in Clean Environment...")
-    res_inst = subprocess.run([venv_python, "-m", "pip", "install", target_wheel], capture_output=True, text=True, encoding="utf-8")
+    res_inst = subprocess.run(
+        [venv_python, "-m", "pip", "install", target_wheel],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
     if res_inst.returncode != 0:
         print(f"❌ WHEEL INSTALLATION FAILED:\n{res_inst.stderr}")
         shutil.rmtree(temp_env_dir, ignore_errors=True)
@@ -71,7 +83,9 @@ with waf.session(session_id="clean_sess"):
 
 print("CLEAN_VERIFICATION_SUCCESS")
 """
-    res_run = subprocess.run([venv_python, "-c", test_code], capture_output=True, text=True, encoding="utf-8")
+    res_run = subprocess.run(
+        [venv_python, "-c", test_code], capture_output=True, text=True, encoding="utf-8"
+    )
 
     # Clean up temporary virtual environment
     shutil.rmtree(temp_env_dir, ignore_errors=True)
@@ -84,6 +98,7 @@ print("CLEAN_VERIFICATION_SUCCESS")
     print("=================================================================")
     print("✅ PACKAGE INSTALLATION VERIFICATION PASSED PERFECTLY!")
     print("=================================================================")
+
 
 if __name__ == "__main__":
     main()

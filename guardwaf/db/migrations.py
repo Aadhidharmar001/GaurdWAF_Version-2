@@ -2,7 +2,7 @@
 Database Schema Migration Manager for GuardWAF Production Platform.
 """
 
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 MIGRATIONS: List[Dict[str, Any]] = [
     {
@@ -25,7 +25,7 @@ MIGRATIONS: List[Dict[str, Any]] = [
             status VARCHAR(32) DEFAULT 'ACTIVE',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        """
+        """,
     },
     {
         "version": 2,
@@ -50,9 +50,10 @@ MIGRATIONS: List[Dict[str, Any]] = [
             status VARCHAR(32) DEFAULT 'OPEN',
             correlation_id VARCHAR(128)
         );
-        """
-    }
+        """,
+    },
 ]
+
 
 class DatabaseMigrationManager:
     def __init__(self):

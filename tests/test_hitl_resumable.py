@@ -2,25 +2,27 @@
 Comprehensive Test Suite for Phase 2 Resumable HITL Workflows & State Machine Transitions.
 """
 
-import pytest
-import asyncio
-import time
 from datetime import datetime, timedelta, timezone
+
+import pytest
+
 from guardwaf import (
-    GuardWAF,
-    protect,
-    session,
     ActionState,
-    GuardWAFSecurityError,
-    GuardWAFHITLRequiredError,
-    GuardWAFInvalidStateTransitionError,
+    GuardWAF,
     GuardWAFActionExpiredError,
     GuardWAFAlreadyExecutedError,
+    GuardWAFHITLRequiredError,
+    GuardWAFInvalidStateTransitionError,
+    GuardWAFSecurityError,
+    protect,
+    session,
 )
+
 
 @pytest.fixture
 def waf_client():
     return GuardWAF(config_path="rules.yaml")
+
 
 # --- Test 1: Approved action resumes correctly ---
 @pytest.mark.asyncio
@@ -54,7 +56,9 @@ async def test_approved_action_resumes_correctly(waf_client):
         assert side_effect is False  # Function body not executed yet!
 
         # 2. Human Approves Action
-        pending_act = waf_client.approve_pending_action(pending_id, approver_id="security_admin")
+        pending_act = waf_client.approve_pending_action(
+            pending_id, approver_id="security_admin"
+        )
         assert pending_act.status == ActionState.APPROVED
         assert pending_act.approval_token is not None
 
@@ -68,6 +72,7 @@ async def test_approved_action_resumes_correctly(waf_client):
         final_action = waf_client.state_store.get_pending_action(pending_id)
         assert final_action.status == ActionState.EXECUTED
         assert final_action.execution_status == "EXECUTED"
+
 
 # --- Test 2: Denied action never executes ---
 @pytest.mark.asyncio
@@ -92,7 +97,9 @@ async def test_denied_action_never_executes(waf_client):
             pending_id = e.pending_action_id
 
         # Human Denies Action
-        waf_client.deny_pending_action(pending_id, approver_id="security_admin", reason="Over spending limit")
+        waf_client.deny_pending_action(
+            pending_id, approver_id="security_admin", reason="Over spending limit"
+        )
 
         # Resume attempt MUST fail
         with pytest.raises(GuardWAFSecurityError) as exc:
@@ -100,6 +107,7 @@ async def test_denied_action_never_executes(waf_client):
 
         assert "DENIED" in str(exc.value)
         assert executed is False
+
 
 # --- Test 3: Expired action never executes ---
 @pytest.mark.asyncio
@@ -132,6 +140,7 @@ async def test_expired_action_never_executes(waf_client):
         with pytest.raises(GuardWAFActionExpiredError):
             await waf_client.resume(pending_id, "dummy_token")
 
+
 # --- Test 4: Replaying an already executed action fails ---
 @pytest.mark.asyncio
 async def test_replay_approval_fails(waf_client):
@@ -159,6 +168,7 @@ async def test_replay_approval_fails(waf_client):
         # Second Resume (REPLAY ATTEMPT) MUST FAIL
         with pytest.raises(GuardWAFAlreadyExecutedError):
             await waf_client.resume(pending_id, appr_act.approval_token)
+
 
 # --- Test 5: Parameter tampering invalidates grant ---
 @pytest.mark.asyncio
@@ -191,6 +201,7 @@ async def test_modified_parameters_fail_verification(waf_client):
 
         assert "digest mismatch" in str(exc.value).lower()
 
+
 # --- Test 6: Wrong session cannot resume action ---
 @pytest.mark.asyncio
 async def test_wrong_session_cannot_resume_action(waf_client):
@@ -216,6 +227,7 @@ async def test_wrong_session_cannot_resume_action(waf_client):
         with pytest.raises(GuardWAFSecurityError) as exc:
             await waf_client.resume(pending_id, appr_act.approval_token)
         assert "session mismatch" in str(exc.value).lower()
+
 
 # --- Test 7: Invalid state machine transition rejected ---
 def test_invalid_state_transitions(waf_client):

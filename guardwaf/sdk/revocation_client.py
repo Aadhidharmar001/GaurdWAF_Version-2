@@ -3,27 +3,30 @@ SDK Real-Time Revocation Client with Cryptographic Event Verification,
 Monotonic Sequence Validation, Revocation Freshness SLA, and Local O(1) Hot-Path Kill Switches.
 """
 
-import time
 import threading
-from typing import Optional, Set, Dict, Any, Callable
+import time
+from typing import Optional, Set
+
 from guardwaf.control_plane.events.events import (
-    SignedRevocationEvent,
+    EventSequenceValidator,
     EventSignatureVerifier,
-    EventSequenceValidator
+    SignedRevocationEvent,
 )
 from guardwaf.core.keys import KeyManager
 from guardwaf.exceptions import GuardWAFSecurityError
+
 
 class RevocationClient:
     """
     Local SDK Revocation Client managing real-time agent/tenant kill switches.
     Checks revocation state locally in O(1) constant time without Control Plane HTTP requests in the hot path.
     """
+
     def __init__(
         self,
         key_manager: Optional[KeyManager] = None,
         freshness_sla_seconds: int = 300,
-        mode: str = "GRACE_PERIOD"  # "STRICT", "GRACE_PERIOD", "DEVELOPMENT"
+        mode: str = "GRACE_PERIOD",  # "STRICT", "GRACE_PERIOD", "DEVELOPMENT"
     ):
         self.key_manager = key_manager or KeyManager()
         self.verifier = EventSignatureVerifier(key_manager=self.key_manager)
@@ -44,12 +47,18 @@ class RevocationClient:
         with self._lock:
             # 1. Cryptographic Signature Verification
             if not self.verifier.verify_event_signature(event):
-                print(f"⚠️ [GuardWAF RevocationClient] REJECTED EVENT {event.event_id}: Invalid cryptographic signature.")
+                print(
+                    f"⚠️ [GuardWAF RevocationClient] REJECTED EVENT {event.event_id}: Invalid cryptographic signature."
+                )
                 return False
 
             # 2. Sequence Validation (Anti-Replay / Monotonic Order)
-            if not self.sequence_validator.is_valid_sequence(event.tenant_id, event.sequence_number, event.agent_id):
-                print(f"⚠️ [GuardWAF RevocationClient] REJECTED EVENT {event.event_id}: Stale sequence number ({event.sequence_number}).")
+            if not self.sequence_validator.is_valid_sequence(
+                event.tenant_id, event.sequence_number, event.agent_id
+            ):
+                print(
+                    f"⚠️ [GuardWAF RevocationClient] REJECTED EVENT {event.event_id}: Stale sequence number ({event.sequence_number})."
+                )
                 return False
 
             # 3. Apply Revocation State
@@ -86,14 +95,14 @@ class RevocationClient:
             if tenant_id in self._locked_tenants:
                 raise GuardWAFSecurityError(
                     f"CRITICAL: Tenant '{tenant_id}' is under EMERGENCY LOCKDOWN. Action denied.",
-                    tool_name="kill_switch"
+                    tool_name="kill_switch",
                 )
 
             # 2. Check Agent Revocation
             if agent_id in self._revoked_agents:
                 raise GuardWAFSecurityError(
                     f"CRITICAL: Agent '{agent_id}' has been REVOKED. Action denied.",
-                    tool_name="kill_switch"
+                    tool_name="kill_switch",
                 )
 
             # 3. Check Revocation Freshness SLA
@@ -102,5 +111,5 @@ class RevocationClient:
                 if self.mode == "STRICT":
                     raise GuardWAFSecurityError(
                         f"CRITICAL: Revocation freshness SLA ({self.freshness_sla_seconds}s) exceeded. Failing closed in STRICT mode.",
-                        tool_name="kill_switch"
+                        tool_name="kill_switch",
                     )

@@ -4,17 +4,18 @@ Acts as the unified contract between external runtime adapters (LangChain, CrewA
 """
 
 import uuid
-import hashlib
-import json
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any
+from typing import Any, Dict
+
 from pydantic import BaseModel, Field
+
 
 def compute_envelope_digest(parameters: Dict[str, Any]) -> str:
     """
     Computes a SHA-256 canonical digest of parameter values matching the core engine specification.
     """
     from guardwaf.core.canonical import compute_parameter_digest
+
     return compute_parameter_digest(parameters)
 
 
@@ -22,6 +23,7 @@ class ActionEnvelope(BaseModel):
     """
     Universal transport-neutral action envelope representing a tool call request across any agent framework or transport protocol.
     """
+
     envelope_id: str = Field(default_factory=lambda: f"env_{uuid.uuid4().hex[:10]}")
     protocol: str = "python"  # "python", "langchain", "crewai", "mcp", "http", "custom"
     tenant_id: str = "default"

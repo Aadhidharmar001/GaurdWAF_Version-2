@@ -3,13 +3,16 @@ Signed Policy Bundle Model & Digest Cryptographic Schema.
 """
 
 from datetime import datetime, timezone
-from typing import Optional, Dict, List, Any
+from typing import Any, Dict, List
+
 from pydantic import BaseModel, Field
+
 
 class SignedPolicyBundle(BaseModel):
     """
     Immutable signed policy bundle compiled by the Control Plane for high-speed local SDK enforcement.
     """
+
     bundle_id: str
     tenant_id: str
     agent_id: str

@@ -3,23 +3,24 @@ Authority Engine & Evaluation Coordinator.
 Evaluates VerifiedPrincipal, AgentIdentity, Tenant Boundaries, and DelegatedAuthority BEFORE tool execution.
 """
 
-from typing import Optional, Dict, Any, Tuple
-from guardwaf.sdk.context import ExecutionContext
-from guardwaf.core.authority import DelegatedAuthority
+from typing import Any, Dict, Optional, Tuple
+
 from guardwaf.exceptions import (
-    GuardWAFSecurityError,
     GuardWAFAuthenticationError,
-    GuardWAFAuthorizationError,
     GuardWAFAuthorityExpiredError,
+    GuardWAFAuthorizationError,
     GuardWAFTenantBoundaryError,
     GuardWAFUnverifiedContextError,
 )
+from guardwaf.sdk.context import ExecutionContext
+
 
 class AuthorityEvaluator:
     """
     Evaluates trusted identity and delegated authority boundaries before tool execution.
     Fails closed if identity context is unverified in strict mode or if delegated boundaries are violated.
     """
+
     def __init__(self, strict_mode: bool = False):
         self.strict_mode = strict_mode
 
@@ -27,7 +28,7 @@ class AuthorityEvaluator:
         self,
         context: Optional[ExecutionContext],
         tool_name: str,
-        parameters: Dict[str, Any]
+        parameters: Dict[str, Any],
     ) -> Tuple[bool, Optional[str]]:
         # 1. Execution Context Exists?
         if not context or not context.principal:
@@ -55,7 +56,7 @@ class AuthorityEvaluator:
             if param_tenant != context.tenant_id:
                 raise GuardWAFTenantBoundaryError(
                     f"Action '{tool_name}' blocked: Parameter tenant_id '{param_tenant}' violates verified tenant boundary '{context.tenant_id}'.",
-                    tool_name=tool_name
+                    tool_name=tool_name,
                 )
 
         # 4. Delegated Authority Verification (if present)
@@ -64,7 +65,7 @@ class AuthorityEvaluator:
             if authority.is_expired():
                 raise GuardWAFAuthorityExpiredError(
                     f"Action '{tool_name}' blocked: DelegatedAuthority token '{authority.authority_id}' has expired.",
-                    tool_name=tool_name
+                    tool_name=tool_name,
                 )
 
             # Check Principal Binding
@@ -72,7 +73,7 @@ class AuthorityEvaluator:
                 raise GuardWAFAuthorizationError(
                     f"Action '{tool_name}' blocked: DelegatedAuthority '{authority.authority_id}' belongs to principal '{authority.principal_id}', not caller '{principal.principal_id}'.",
                     tool_name=tool_name,
-                    code="AUTHORITY_PRINCIPAL_MISMATCH"
+                    code="AUTHORITY_PRINCIPAL_MISMATCH",
                 )
 
             # Check Agent Binding
@@ -80,14 +81,14 @@ class AuthorityEvaluator:
                 raise GuardWAFAuthorizationError(
                     f"Action '{tool_name}' blocked: DelegatedAuthority '{authority.authority_id}' was issued for agent '{authority.agent_id}', not executing agent '{agent.agent_id}'.",
                     tool_name=tool_name,
-                    code="AUTHORITY_AGENT_MISMATCH"
+                    code="AUTHORITY_AGENT_MISMATCH",
                 )
 
             # Check Tenant Binding
             if authority.tenant_id != context.tenant_id:
                 raise GuardWAFTenantBoundaryError(
                     f"Action '{tool_name}' blocked: DelegatedAuthority tenant '{authority.tenant_id}' does not match context tenant '{context.tenant_id}'.",
-                    tool_name=tool_name
+                    tool_name=tool_name,
                 )
 
             # Check Tool Authorization Scope
@@ -95,16 +96,18 @@ class AuthorityEvaluator:
                 raise GuardWAFAuthorizationError(
                     f"Action '{tool_name}' blocked: Tool is not included in DelegatedAuthority allowed_actions {authority.allowed_actions}.",
                     tool_name=tool_name,
-                    code="TOOL_SCOPE_EXCEEDED"
+                    code="TOOL_SCOPE_EXCEEDED",
                 )
 
             # Check Parameter Constraints
-            valid_params, constraint_reason = authority.validate_constraints(tool_name, parameters)
+            valid_params, constraint_reason = authority.validate_constraints(
+                tool_name, parameters
+            )
             if not valid_params:
                 raise GuardWAFAuthorizationError(
                     f"Action '{tool_name}' blocked by DelegatedAuthority constraint: {constraint_reason}",
                     tool_name=tool_name,
-                    code="DELEGATED_CONSTRAINT_VIOLATION"
+                    code="DELEGATED_CONSTRAINT_VIOLATION",
                 )
 
         return True, None

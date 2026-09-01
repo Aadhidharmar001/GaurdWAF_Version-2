@@ -3,14 +3,15 @@ SQLite Persistent Implementation of StateStore.
 Provides durable, file-backed state persistence for local development and single-node deployments.
 """
 
+import json
 import sqlite3
 import threading
-import json
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 
+from guardwaf.core.models import ActionState, PendingAction
 from guardwaf.state.base import StateStore
-from guardwaf.core.models import PendingAction, ActionState
+
 
 class SQLiteStateStore(StateStore):
     def __init__(self, db_path: str = "guardwaf_state.db"):
@@ -72,7 +73,9 @@ class SQLiteStateStore(StateStore):
             finally:
                 conn.close()
 
-    def record_tool_call(self, session_id: str, tool_name: str, status: str = "allowed") -> None:
+    def record_tool_call(
+        self, session_id: str, tool_name: str, status: str = "allowed"
+    ) -> None:
         if status not in ["allowed", "shadow_blocked"]:
             return
         with self._lock:
@@ -81,21 +84,25 @@ class SQLiteStateStore(StateStore):
                 now_str = datetime.now(timezone.utc).isoformat()
                 conn.execute(
                     "INSERT INTO tool_calls (session_id, tool_name, timestamp, status) VALUES (?, ?, ?, ?)",
-                    (session_id, tool_name, now_str, status)
+                    (session_id, tool_name, now_str, status),
                 )
                 conn.commit()
             finally:
                 conn.close()
 
-    def get_tool_call_count(self, session_id: str, tool_name: str, window_seconds: int) -> int:
+    def get_tool_call_count(
+        self, session_id: str, tool_name: str, window_seconds: int
+    ) -> int:
         with self._lock:
             conn = self._get_connection()
             try:
-                cutoff = (datetime.now(timezone.utc) - timedelta(seconds=window_seconds)).isoformat()
+                cutoff = (
+                    datetime.now(timezone.utc) - timedelta(seconds=window_seconds)
+                ).isoformat()
                 cursor = conn.cursor()
                 cursor.execute(
                     "SELECT COUNT(*) FROM tool_calls WHERE session_id = ? AND tool_name = ? AND timestamp >= ?",
-                    (session_id, tool_name, cutoff)
+                    (session_id, tool_name, cutoff),
                 )
                 row = cursor.fetchone()
                 return row[0] if row else 0
@@ -109,7 +116,7 @@ class SQLiteStateStore(StateStore):
                 cursor = conn.cursor()
                 cursor.execute(
                     "SELECT 1 FROM sequence_state WHERE session_id = ? AND tool_name = ?",
-                    (session_id, predecessor_tool)
+                    (session_id, predecessor_tool),
                 )
                 return cursor.fetchone() is not None
             finally:
@@ -121,7 +128,7 @@ class SQLiteStateStore(StateStore):
             try:
                 conn.execute(
                     "INSERT OR IGNORE INTO sequence_state (session_id, tool_name) VALUES (?, ?)",
-                    (session_id, tool_name)
+                    (session_id, tool_name),
                 )
                 conn.commit()
             finally:
@@ -131,8 +138,12 @@ class SQLiteStateStore(StateStore):
         with self._lock:
             conn = self._get_connection()
             try:
-                conn.execute("DELETE FROM tool_calls WHERE session_id = ?", (session_id,))
-                conn.execute("DELETE FROM sequence_state WHERE session_id = ?", (session_id,))
+                conn.execute(
+                    "DELETE FROM tool_calls WHERE session_id = ?", (session_id,)
+                )
+                conn.execute(
+                    "DELETE FROM sequence_state WHERE session_id = ?", (session_id,)
+                )
                 conn.commit()
             finally:
                 conn.close()
@@ -143,35 +154,40 @@ class SQLiteStateStore(StateStore):
         with self._lock:
             conn = self._get_connection()
             try:
-                conn.execute("""
+                conn.execute(
+                    """
                     INSERT OR REPLACE INTO pending_actions (
                         pending_action_id, agent_id, delegating_principal, session_id, tool_name,
                         canonical_parameters, parameters_json, parameter_digest, action_intent_digest,
                         policy_decision, matched_rule, created_at, expires_at, status,
                         approver_id, approved_at, denied_reason, execution_status, idempotency_key, approval_token
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    pending_action.pending_action_id,
-                    pending_action.agent_id,
-                    pending_action.delegating_principal,
-                    pending_action.session_id,
-                    pending_action.tool_name,
-                    pending_action.canonical_parameters,
-                    json.dumps(pending_action.parameters),
-                    pending_action.parameter_digest,
-                    pending_action.action_intent_digest,
-                    pending_action.policy_decision,
-                    pending_action.matched_rule,
-                    pending_action.created_at.isoformat(),
-                    pending_action.expires_at.isoformat(),
-                    pending_action.status.value,
-                    pending_action.approver_id,
-                    pending_action.approved_at.isoformat() if pending_action.approved_at else None,
-                    pending_action.denied_reason,
-                    pending_action.execution_status,
-                    pending_action.idempotency_key,
-                    pending_action.approval_token
-                ))
+                """,
+                    (
+                        pending_action.pending_action_id,
+                        pending_action.agent_id,
+                        pending_action.delegating_principal,
+                        pending_action.session_id,
+                        pending_action.tool_name,
+                        pending_action.canonical_parameters,
+                        json.dumps(pending_action.parameters),
+                        pending_action.parameter_digest,
+                        pending_action.action_intent_digest,
+                        pending_action.policy_decision,
+                        pending_action.matched_rule,
+                        pending_action.created_at.isoformat(),
+                        pending_action.expires_at.isoformat(),
+                        pending_action.status.value,
+                        pending_action.approver_id,
+                        pending_action.approved_at.isoformat()
+                        if pending_action.approved_at
+                        else None,
+                        pending_action.denied_reason,
+                        pending_action.execution_status,
+                        pending_action.idempotency_key,
+                        pending_action.approval_token,
+                    ),
+                )
                 conn.commit()
             finally:
                 conn.close()
@@ -179,8 +195,10 @@ class SQLiteStateStore(StateStore):
     def _row_to_pending_action(self, row: sqlite3.Row) -> PendingAction:
         created_at = datetime.fromisoformat(row["created_at"])
         expires_at = datetime.fromisoformat(row["expires_at"])
-        approved_at = datetime.fromisoformat(row["approved_at"]) if row["approved_at"] else None
-        
+        approved_at = (
+            datetime.fromisoformat(row["approved_at"]) if row["approved_at"] else None
+        )
+
         status_val = ActionState(row["status"])
         now = datetime.now(timezone.utc)
         if status_val == ActionState.PENDING and now > expires_at:
@@ -206,7 +224,7 @@ class SQLiteStateStore(StateStore):
             denied_reason=row["denied_reason"],
             execution_status=row["execution_status"],
             idempotency_key=row["idempotency_key"],
-            approval_token=row["approval_token"]
+            approval_token=row["approval_token"],
         )
 
     def get_pending_action(self, pending_action_id: str) -> Optional[PendingAction]:
@@ -214,7 +232,10 @@ class SQLiteStateStore(StateStore):
             conn = self._get_connection()
             try:
                 cursor = conn.cursor()
-                cursor.execute("SELECT * FROM pending_actions WHERE pending_action_id = ?", (pending_action_id,))
+                cursor.execute(
+                    "SELECT * FROM pending_actions WHERE pending_action_id = ?",
+                    (pending_action_id,),
+                )
                 row = cursor.fetchone()
                 if not row:
                     return None
@@ -229,14 +250,17 @@ class SQLiteStateStore(StateStore):
         expected_old_status: ActionState,
         approver_id: Optional[str] = None,
         denied_reason: Optional[str] = None,
-        approval_token: Optional[str] = None
+        approval_token: Optional[str] = None,
     ) -> bool:
         with self._lock:
             conn = self._get_connection()
             try:
                 conn.execute("BEGIN IMMEDIATE")
                 cursor = conn.cursor()
-                cursor.execute("SELECT * FROM pending_actions WHERE pending_action_id = ?", (pending_action_id,))
+                cursor.execute(
+                    "SELECT * FROM pending_actions WHERE pending_action_id = ?",
+                    (pending_action_id,),
+                )
                 row = cursor.fetchone()
                 if not row:
                     conn.rollback()
@@ -247,7 +271,6 @@ class SQLiteStateStore(StateStore):
                     conn.rollback()
                     return False
 
-
                 now_iso = datetime.now(timezone.utc).isoformat()
                 exec_status = action.execution_status
                 if new_status == ActionState.EXECUTED:
@@ -255,9 +278,16 @@ class SQLiteStateStore(StateStore):
                 elif new_status == ActionState.EXECUTING:
                     exec_status = "EXECUTING"
 
-                appr_time = now_iso if approver_id else (action.approved_at.isoformat() if action.approved_at else None)
+                appr_time = (
+                    now_iso
+                    if approver_id
+                    else (
+                        action.approved_at.isoformat() if action.approved_at else None
+                    )
+                )
 
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE pending_actions SET
                         status = ?,
                         approver_id = COALESCE(?, approver_id),
@@ -266,28 +296,35 @@ class SQLiteStateStore(StateStore):
                         approval_token = COALESCE(?, approval_token),
                         execution_status = ?
                     WHERE pending_action_id = ? AND status = ?
-                """, (
-                    new_status.value,
-                    approver_id,
-                    appr_time,
-                    denied_reason,
-                    approval_token,
-                    exec_status,
-                    pending_action_id,
-                    expected_old_status.value
-                ))
+                """,
+                    (
+                        new_status.value,
+                        approver_id,
+                        appr_time,
+                        denied_reason,
+                        approval_token,
+                        exec_status,
+                        pending_action_id,
+                        expected_old_status.value,
+                    ),
+                )
                 conn.commit()
                 return cursor.rowcount > 0
             finally:
                 conn.close()
 
-    def list_pending_actions(self, status: Optional[ActionState] = None) -> List[PendingAction]:
+    def list_pending_actions(
+        self, status: Optional[ActionState] = None
+    ) -> List[PendingAction]:
         with self._lock:
             conn = self._get_connection()
             try:
                 cursor = conn.cursor()
                 if status:
-                    cursor.execute("SELECT * FROM pending_actions WHERE status = ?", (status.value,))
+                    cursor.execute(
+                        "SELECT * FROM pending_actions WHERE status = ?",
+                        (status.value,),
+                    )
                 else:
                     cursor.execute("SELECT * FROM pending_actions")
                 rows = cursor.fetchall()

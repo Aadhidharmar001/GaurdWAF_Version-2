@@ -3,9 +3,9 @@
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
   "name": "GuardWAF-Platform-SBOM",
-  "documentNamespace": "https://guardwaf.io/spdxdocs/guardwaf-v1.0-1787933553",
+  "documentNamespace": "https://guardwaf.io/spdxdocs/guardwaf-v1.0-1788250372",
   "creationInfo": {
-    "created": "2026-08-28T16:12:33.346281+00:00",
+    "created": "2026-09-01T08:12:52.489216+00:00",
     "creators": [
       "Tool: GuardWAF-SBOM-Generator-1.0"
     ]
@@ -40,6 +40,14 @@
       "SPDXID": "SPDXRef-Package-anyio-4.14.2",
       "versionInfo": "4.14.2",
       "summary": "High-level concurrency and networking framework on top of asyncio or Trio",
+      "licenseConcluded": "Unknown",
+      "supplier": "NOASSERTION"
+    },
+    {
+      "name": "build",
+      "SPDXID": "SPDXRef-Package-build-1.6.0",
+      "versionInfo": "1.6.0",
+      "summary": "A simple, correct Python build frontend",
       "licenseConcluded": "Unknown",
       "supplier": "NOASSERTION"
     },
@@ -97,6 +105,14 @@
       "versionInfo": "0.141.1",
       "summary": "FastAPI framework, high performance, easy to learn, fast to code, ready for production",
       "licenseConcluded": "Unknown",
+      "supplier": "NOASSERTION"
+    },
+    {
+      "name": "flake8",
+      "SPDXID": "SPDXRef-Package-flake8-7.3.0",
+      "versionInfo": "7.3.0",
+      "summary": "the modular source code checker: pep8 pyflakes and co",
+      "licenseConcluded": "MIT",
       "supplier": "NOASSERTION"
     },
     {
@@ -172,6 +188,14 @@
       "supplier": "NOASSERTION"
     },
     {
+      "name": "mccabe",
+      "SPDXID": "SPDXRef-Package-mccabe-0.7.0",
+      "versionInfo": "0.7.0",
+      "summary": "McCabe checker, plugin for flake8",
+      "licenseConcluded": "Expat license",
+      "supplier": "NOASSERTION"
+    },
+    {
       "name": "openai",
       "SPDXID": "SPDXRef-Package-openai-2.52.0",
       "versionInfo": "2.52.0",
@@ -212,6 +236,14 @@
       "supplier": "NOASSERTION"
     },
     {
+      "name": "pycodestyle",
+      "SPDXID": "SPDXRef-Package-pycodestyle-2.14.0",
+      "versionInfo": "2.14.0",
+      "summary": "Python style guide checker",
+      "licenseConcluded": "MIT",
+      "supplier": "NOASSERTION"
+    },
+    {
       "name": "pycparser",
       "SPDXID": "SPDXRef-Package-pycparser-3.0",
       "versionInfo": "3.0",
@@ -244,6 +276,14 @@
       "supplier": "NOASSERTION"
     },
     {
+      "name": "pyflakes",
+      "SPDXID": "SPDXRef-Package-pyflakes-3.4.0",
+      "versionInfo": "3.4.0",
+      "summary": "passive checker of Python programs",
+      "licenseConcluded": "MIT",
+      "supplier": "NOASSERTION"
+    },
+    {
       "name": "Pygments",
       "SPDXID": "SPDXRef-Package-Pygments-2.20.0",
       "versionInfo": "2.20.0",
@@ -256,6 +296,14 @@
       "SPDXID": "SPDXRef-Package-PyJWT-2.13.0",
       "versionInfo": "2.13.0",
       "summary": "JSON Web Token implementation in Python",
+      "licenseConcluded": "Unknown",
+      "supplier": "NOASSERTION"
+    },
+    {
+      "name": "pyproject_hooks",
+      "SPDXID": "SPDXRef-Package-pyproject_hooks-1.2.0",
+      "versionInfo": "1.2.0",
+      "summary": "Wrappers to call pyproject.toml-based build backend hooks.",
       "licenseConcluded": "Unknown",
       "supplier": "NOASSERTION"
     },
@@ -289,6 +337,14 @@
       "versionInfo": "6.0.3",
       "summary": "YAML parser and emitter for Python",
       "licenseConcluded": "MIT",
+      "supplier": "NOASSERTION"
+    },
+    {
+      "name": "ruff",
+      "SPDXID": "SPDXRef-Package-ruff-0.16.5",
+      "versionInfo": "0.16.5",
+      "summary": "An extremely fast Python linter and code formatter, written in Rust.",
+      "licenseConcluded": "Unknown",
       "supplier": "NOASSERTION"
     },
     {

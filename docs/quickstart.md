@@ -21,23 +21,35 @@ pip install "guardwaf[langchain,mcp,redis]"
 Wrap your AI agent tools using the `@protect` decorator:
 
 ```python
-from guardwaf import GuardWAF, protect, session, GuardWAFSecurityError, GuardWAFHITLRequiredError
+from guardwaf import (
+    GuardWAF,
+    protect,
+    session,
+    GuardWAFSecurityError,
+    GuardWAFHITLRequiredError,
+)
 from guardwaf.core.models import PolicyConfig, PolicyRules, BulkThresholdRule, HITLRule
 
 # 1. Define Declarative Security Policy Rules
 rules = PolicyRules(
-    bulk_thresholds=[BulkThresholdRule(tool="process_refund", param_name="amount", max_value=5000)],
-    hitl_rules=[HITLRule(tool="process_refund", condition_param="amount", greater_than=100.0)]
+    bulk_thresholds=[
+        BulkThresholdRule(tool="process_refund", param_name="amount", max_value=5000)
+    ],
+    hitl_rules=[
+        HITLRule(tool="process_refund", condition_param="amount", greater_than=100.0)
+    ],
 )
 policy = PolicyConfig(metadata={"policy_name": "refund_policy"}, rules=rules)
 
 # 2. Initialize GuardWAF Engine
 waf = GuardWAF(policy=policy, secret_key="your_production_secret_key")
 
+
 # 3. Protect Agent Tool Body
 @protect(tool_name="process_refund")
 def process_refund(customer_id: str, amount: float):
     return {"status": "SUCCESS", "refunded": amount}
+
 
 waf.register_tool("process_refund", process_refund)
 ```
@@ -72,8 +84,7 @@ When a Human Approver approves the pending action via the Control Plane, resume 
 ```python
 with waf.session(session_id="sess_101", tenant_id="org_acme"):
     resumed_result = waf.resume_sync(
-        pending_action_id=pending_action_id,
-        approval_token=approval_token
+        pending_action_id=pending_action_id, approval_token=approval_token
     )
     print("Resumed Action Execution Result:", resumed_result)
 ```

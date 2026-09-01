@@ -3,13 +3,14 @@ GuardWAF Automated Release Builder.
 Builds source distribution (sdist) and wheel (.whl) packages into the dist/ directory.
 """
 
-import sys
 import os
-import subprocess
 import shutil
+import subprocess
+import sys
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
+
 
 def main():
     print("=================================================================")
@@ -33,11 +34,14 @@ def main():
         sys.exit(1)
 
     artifacts = os.listdir(dist_dir)
-    print(f"✅ BUILD SUCCESSFUL: Generated {len(artifacts)} release artifact(s) in 'dist/':")
+    print(
+        f"✅ BUILD SUCCESSFUL: Generated {len(artifacts)} release artifact(s) in 'dist/':"
+    )
     for a in artifacts:
         print(f"   - dist/{a}")
 
     print("=================================================================")
+
 
 if __name__ == "__main__":
     main()

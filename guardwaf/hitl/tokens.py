@@ -3,12 +3,14 @@ Cryptographically Signed HITL Approval Token issuance and Verification Module.
 Binds human approval tokens to exact pending_action_id, action_intent_digest, parameter_digest, session_id, agent_id, approver_id, and key_id.
 """
 
-import hmac
 import hashlib
+import hmac
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict
+from typing import Dict, Optional
+
 from guardwaf.core.keys import KeyManager
+
 
 class HITLTokenManager:
     def __init__(
@@ -17,13 +19,13 @@ class HITLTokenManager:
         key_id: str = "k1",
         keyring: Optional[Dict[str, str]] = None,
         environment: Optional[str] = None,
-        key_manager: Optional[KeyManager] = None
+        key_manager: Optional[KeyManager] = None,
     ):
         self.key_manager = key_manager or KeyManager(
             secret_key=secret_key,
             key_id=key_id,
             keyring=keyring,
-            environment=environment
+            environment=environment,
         )
 
     def generate_approval_token(
@@ -35,7 +37,7 @@ class HITLTokenManager:
         agent_id: str,
         approver_id: str = "admin",
         ttl_seconds: int = 600,
-        nonce: Optional[str] = None
+        nonce: Optional[str] = None,
     ) -> str:
         now = datetime.now(timezone.utc)
         expires_at = now + timedelta(seconds=ttl_seconds)
@@ -47,11 +49,15 @@ class HITLTokenManager:
             f"{pending_action_id}:{action_intent_digest}:{parameter_digest}:"
             f"{session_id}:{agent_id}:{approver_id}:{active_key_id}:{expires_at.isoformat()}:{nonce_val}"
         )
-        signature = hmac.new(active_secret, raw_payload.encode('utf-8'), hashlib.sha256).hexdigest()
+        signature = hmac.new(
+            active_secret, raw_payload.encode("utf-8"), hashlib.sha256
+        ).hexdigest()
 
         exp_ts = int(expires_at.timestamp())
         # Format: hitl_apprv.<key_id>.<pending_action_id>.<exp_ts>.<sig>
-        return f"hitl_apprv.{active_key_id}.{pending_action_id}.{exp_ts}.{signature[:24]}"
+        return (
+            f"hitl_apprv.{active_key_id}.{pending_action_id}.{exp_ts}.{signature[:24]}"
+        )
 
     def verify_approval_token(
         self,
@@ -60,7 +66,7 @@ class HITLTokenManager:
         action_intent_digest: str,
         parameter_digest: str,
         session_id: str,
-        agent_id: str
+        agent_id: str,
     ) -> bool:
         if not token or not token.startswith("hitl_apprv."):
             return False

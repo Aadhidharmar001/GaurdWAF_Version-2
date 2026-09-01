@@ -3,16 +3,15 @@ GuardWAF Enterprise Developer CLI & Product Diagnostics.
 Subcommands: doctor, validate-policy, verify-bundle, runtime-status.
 """
 
-import sys
-import os
-import json
 import argparse
-from typing import Optional
-from guardwaf.core.policy import load_policy_from_yaml
+import json
+import os
+import sys
+
 from guardwaf.control_plane.models.bundle import SignedPolicyBundle
 from guardwaf.core.keys import KeyManager
-from guardwaf.sdk.policy_client import PolicyClient
-from guardwaf.exceptions import GuardWAFConfigurationError
+from guardwaf.core.policy import load_policy_from_yaml
+
 
 def run_doctor():
     print("=" * 70)
@@ -25,11 +24,17 @@ def run_doctor():
     print(f"\n▶ Environment: {env}")
     if env.lower() in ["prod", "production"]:
         if not secret_key:
-            print("   ❌ FAIL: GUARDWAF_SECRET_KEY is missing in production environment!")
+            print(
+                "   ❌ FAIL: GUARDWAF_SECRET_KEY is missing in production environment!"
+            )
         else:
-            print(f"   ✅ PASS: GUARDWAF_SECRET_KEY set (length: {len(secret_key)} bytes)")
+            print(
+                f"   ✅ PASS: GUARDWAF_SECRET_KEY set (length: {len(secret_key)} bytes)"
+            )
     else:
-        print(f"   ℹ️  Non-production environment ({env}). Secret key configured or mock active.")
+        print(
+            f"   ℹ️  Non-production environment ({env}). Secret key configured or mock active."
+        )
 
     # 2. KeyManager Diagnostics
     try:
@@ -50,23 +55,27 @@ def run_doctor():
     print("✅ GUARdWAF DOCTOR CHECK COMPLETE")
     print("=" * 70)
 
+
 def validate_policy_cmd(filepath: str):
     try:
         policy = load_policy_from_yaml(filepath)
-        print(f"✅ Policy '{policy.metadata.policy_name}' (v{policy.metadata.version}) validation PASSED.")
+        print(
+            f"✅ Policy '{policy.metadata.policy_name}' (v{policy.metadata.version}) validation PASSED."
+        )
         rule_count = (
-            len(policy.rules.rate_limits) +
-            len(policy.rules.sequences) +
-            len(policy.rules.bulk_thresholds) +
-            len(policy.rules.data_scope) +
-            len(policy.rules.parameter_blocklist) +
-            len(policy.rules.hitl_rules)
+            len(policy.rules.rate_limits)
+            + len(policy.rules.sequences)
+            + len(policy.rules.bulk_thresholds)
+            + len(policy.rules.data_scope)
+            + len(policy.rules.parameter_blocklist)
+            + len(policy.rules.hitl_rules)
         )
         print(f"   - Configured Rules Count: {rule_count}")
         sys.exit(0)
     except Exception as e:
-        print(f"❌ Policy Validation Failed: {str(e)}", file=sys.stderr)
+        print(f"❌ Policy Validation Failed: {e!s}", file=sys.stderr)
         sys.exit(1)
+
 
 def verify_bundle_cmd(filepath: str):
     if not os.path.exists(filepath):
@@ -80,21 +89,27 @@ def verify_bundle_cmd(filepath: str):
 
         km = KeyManager()
         is_expired = bundle.is_expired()
-        
-        print(f"📄 Bundle ID: '{bundle.bundle_id}' (Tenant: '{bundle.tenant_id}', Agent: '{bundle.agent_id}')")
+
+        print(
+            f"📄 Bundle ID: '{bundle.bundle_id}' (Tenant: '{bundle.tenant_id}', Agent: '{bundle.agent_id}')"
+        )
         print(f"   - Key ID: '{bundle.key_id}'")
         print(f"   - SHA-256 Digest: {bundle.bundle_digest[:25]}...")
         print(f"   - Expiration Status: {'EXPIRED' if is_expired else 'VALID'}")
-        
+
         if is_expired:
-            print("❌ Bundle Signature Verification Failed: Bundle is EXPIRED.", file=sys.stderr)
+            print(
+                "❌ Bundle Signature Verification Failed: Bundle is EXPIRED.",
+                file=sys.stderr,
+            )
             sys.exit(1)
         else:
             print("✅ Bundle Validation and SHA-256 Digest Verification PASSED.")
             sys.exit(0)
     except Exception as e:
-        print(f"❌ Bundle Verification Error: {str(e)}", file=sys.stderr)
+        print(f"❌ Bundle Verification Error: {e!s}", file=sys.stderr)
         sys.exit(1)
+
 
 def runtime_status_cmd():
     print("=" * 70)
@@ -106,23 +121,34 @@ def runtime_status_cmd():
     print("▶ Revocation Freshness SLA: Active (Target < 1s over SSE)")
     print("=" * 70)
 
+
 def main():
-    parser = argparse.ArgumentParser(prog="guardwaf", description="GuardWAF Security & Policy Platform CLI")
+    parser = argparse.ArgumentParser(
+        prog="guardwaf", description="GuardWAF Security & Policy Platform CLI"
+    )
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
 
     # Doctor
     subparsers.add_parser("doctor", help="Run product environment & system diagnostics")
 
     # Validate Policy
-    val_parser = subparsers.add_parser("validate-policy", help="Validate a YAML policy configuration file")
+    val_parser = subparsers.add_parser(
+        "validate-policy", help="Validate a YAML policy configuration file"
+    )
     val_parser.add_argument("policy_file", help="Path to policy YAML file")
 
     # Verify Bundle
-    bundle_parser = subparsers.add_parser("verify-bundle", help="Verify a signed policy bundle JSON file")
-    bundle_parser.add_argument("bundle_file", help="Path to signed policy bundle JSON file")
+    bundle_parser = subparsers.add_parser(
+        "verify-bundle", help="Verify a signed policy bundle JSON file"
+    )
+    bundle_parser.add_argument(
+        "bundle_file", help="Path to signed policy bundle JSON file"
+    )
 
     # Runtime Status
-    subparsers.add_parser("runtime-status", help="Inspect local SDK runtime & revocation status")
+    subparsers.add_parser(
+        "runtime-status", help="Inspect local SDK runtime & revocation status"
+    )
 
     args = parser.parse_args()
 
@@ -137,6 +163,7 @@ def main():
     else:
         parser.print_help()
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

@@ -3,8 +3,10 @@ Immutable Audit Logging Models for Control Plane Operations.
 """
 
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any
+from typing import Any, Dict
+
 from pydantic import BaseModel, Field
+
 
 class AuditEvent(BaseModel):
     event_id: str

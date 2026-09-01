@@ -5,8 +5,12 @@ Telemetry streaming is strictly fault-isolated from local runtime enforcement.
 
 import asyncio
 import json
-from typing import Dict, List, Set, Any, AsyncGenerator
-from guardwaf.observability.events import StructuredSecurityEvent, redact_sensitive_parameters
+from collections.abc import AsyncGenerator
+from typing import Any, Dict, Set
+
+from guardwaf.observability.events import (
+    redact_sensitive_parameters,
+)
 
 
 class SSEBroadcaster:
@@ -38,8 +42,9 @@ class SSEBroadcaster:
 
         # Redact sensitive parameters
         if "parameters" in event_data and isinstance(event_data["parameters"], dict):
-            event_data["parameters"] = redact_sensitive_parameters(event_data["parameters"])
-
+            event_data["parameters"] = redact_sensitive_parameters(
+                event_data["parameters"]
+            )
 
         dead_queues = set()
         for q in list(self._subscribers[tenant_id]):

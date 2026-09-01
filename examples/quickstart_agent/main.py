@@ -4,8 +4,9 @@ Demonstrates sub-15 minute integration: Install ➔ Configure ➔ Protect ➔ Ex
 """
 
 import sys
-from guardwaf import GuardWAF, protect, GuardWAFSecurityError
-from guardwaf.core.models import PolicyConfig, PolicyRules, BulkThresholdRule
+
+from guardwaf import GuardWAF, GuardWAFSecurityError, protect
+from guardwaf.core.models import BulkThresholdRule, PolicyConfig, PolicyRules
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -16,14 +17,18 @@ rules = PolicyRules(
         BulkThresholdRule(tool="process_payment", param_name="amount", max_value=500.0)
     ]
 )
-policy = PolicyConfig(metadata={"policy_name": "developer_quickstart_policy"}, rules=rules)
+policy = PolicyConfig(
+    metadata={"policy_name": "developer_quickstart_policy"}, rules=rules
+)
 waf = GuardWAF(policy=policy, secret_key="quickstart_dev_secret_key_32bytes_long")
+
 
 # 2. Protect AI Agent Tool
 @protect(tool_name="process_payment", client=waf)
 def process_payment(customer_id: str, amount: float) -> str:
     # Target function body only executes if GuardWAF authorizes the action
     return f"Payment of ${amount:.2f} processed for {customer_id}."
+
 
 def main():
     print("=================================================================")
@@ -45,6 +50,7 @@ def main():
     print("=================================================================")
     print("✅ QUICKSTART COMPLETE: GuardWAF Integration Working Successfully!")
     print("=================================================================")
+
 
 if __name__ == "__main__":
     main()

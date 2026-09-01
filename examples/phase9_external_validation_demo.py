@@ -3,27 +3,35 @@ GuardWAF Phase 9 Flagship External Validation & Product-Market Learning Demonstr
 Executes 20 scenarios verifying Phase 9 external validation infrastructure, privacy boundaries, feedback intake automation, evidence registries, and product-market learning signals.
 """
 
-import sys
 import os
 import subprocess
+import sys
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
+
 def run_cmd(cmd_list, desc):
     print(f"\n▶ {desc}...")
     env = {**os.environ, "PYTHONPATH": "."}
-    res = subprocess.run(cmd_list, env=env, capture_output=True, text=True, encoding="utf-8")
+    res = subprocess.run(
+        cmd_list, env=env, capture_output=True, text=True, encoding="utf-8"
+    )
     if res.returncode != 0:
         print(f"   ❌ FAILED:\n{res.stderr}")
         sys.exit(1)
     print("   ✅ SUCCESS!")
     return res
 
+
 def main():
-    print("==========================================================================================")
+    print(
+        "=========================================================================================="
+    )
     print("🛡️  GUARdWAF PHASE 9 FLAGSHIP DEMO: EXTERNAL VALIDATION & PRODUCT LEARNING")
-    print("==========================================================================================")
+    print(
+        "=========================================================================================="
+    )
 
     from guardwaf.telemetry.product_telemetry import PRODUCT_INTELLIGENCE
 
@@ -31,7 +39,9 @@ def main():
     print("▶ Scenario 1: Verifying Current Internal Engineering Evidence...")
     eng = PRODUCT_INTELLIGENCE.get_engineering_evidence()
     assert eng["automated_tests_passing"] >= 120
-    print(f"   ✅ Engineering Evidence: {eng['automated_tests_passing']} Pytest tests passing.")
+    print(
+        f"   ✅ Engineering Evidence: {eng['automated_tests_passing']} Pytest tests passing."
+    )
 
     # Scenario 2: Simulated Evidence Separation
     print("\n▶ Scenario 2: Verifying Simulated / Controlled Evidence Separation...")
@@ -50,14 +60,21 @@ def main():
     print("   ✅ Onboarding Guide Verified.")
 
     # Scenario 5: Quickstart Integration
-    run_cmd([sys.executable, "examples/60_second_quickstart/main.py"], "Scenario 5: Executing 60-Second Quickstart Integration")
+    run_cmd(
+        [sys.executable, "examples/60_second_quickstart/main.py"],
+        "Scenario 5: Executing 60-Second Quickstart Integration",
+    )
 
     # Scenario 6: Protected Tool Execution (ALLOW)
     print("\n▶ Scenario 6: Executing Protected Tool Action (ALLOW)...")
     from guardwaf import GuardWAF, protect
+
     waf = GuardWAF(secret_key="p9_demo_secret_key_32bytes_min_l")
+
     @protect(tool_name="read_metrics", client=waf)
-    def read_metrics(): return {"cpu": 15.2}
+    def read_metrics():
+        return {"cpu": 15.2}
+
     with waf.session(session_id="s_p9_1"):
         res = read_metrics()
         print(f"   ✅ Allowed Call Result: {res}")
@@ -65,11 +82,22 @@ def main():
     # Scenario 7: Blocked Dangerous Action (BLOCK)
     print("\n▶ Scenario 7: Executing Unauthorized Action (BLOCK)...")
     from guardwaf import GuardWAFSecurityError
-    from guardwaf.core.models import PolicyConfig, PolicyRules, BulkThresholdRule
-    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="withdraw", param_name="amount", max_value=100)])
-    waf_p = GuardWAF(policy=PolicyConfig(metadata={"policy_name": "p9"}, rules=rules), secret_key="p9_demo_secret_key_32bytes_min_l")
+    from guardwaf.core.models import BulkThresholdRule, PolicyConfig, PolicyRules
+
+    rules = PolicyRules(
+        bulk_thresholds=[
+            BulkThresholdRule(tool="withdraw", param_name="amount", max_value=100)
+        ]
+    )
+    waf_p = GuardWAF(
+        policy=PolicyConfig(metadata={"policy_name": "p9"}, rules=rules),
+        secret_key="p9_demo_secret_key_32bytes_min_l",
+    )
+
     @protect(tool_name="withdraw", client=waf_p)
-    def withdraw(amount: float): return "DONE"
+    def withdraw(amount: float):
+        return "DONE"
+
     with waf_p.session(session_id="s_p9_2"):
         try:
             withdraw(amount=5000)
@@ -79,13 +107,24 @@ def main():
     # Scenario 8: HITL Approval
     print("\n▶ Scenario 8: Executing HITL Action Suspension...")
     from guardwaf import GuardWAFHITLRequiredError
-    from guardwaf.core.models import HITLRule
     from guardwaf.control_plane.services.hitl_service import HITLWorkstationService
-    rules_h = PolicyRules(hitl_rules=[HITLRule(tool="transfer", condition_param="amount", greater_than=50)])
-    waf_h = GuardWAF(policy=PolicyConfig(metadata={"policy_name": "h"}, rules=rules_h), secret_key="p9_demo_secret_key_32bytes_min_l")
+    from guardwaf.core.models import HITLRule
+
+    rules_h = PolicyRules(
+        hitl_rules=[
+            HITLRule(tool="transfer", condition_param="amount", greater_than=50)
+        ]
+    )
+    waf_h = GuardWAF(
+        policy=PolicyConfig(metadata={"policy_name": "h"}, rules=rules_h),
+        secret_key="p9_demo_secret_key_32bytes_min_l",
+    )
     hitl_service = HITLWorkstationService(waf=waf_h)
+
     @protect(tool_name="transfer", client=waf_h)
-    def transfer(amount: float): return "TRANSFERRED"
+    def transfer(amount: float):
+        return "TRANSFERRED"
+
     p_id = None
     with waf_h.session(session_id="s_p9_3"):
         try:
@@ -114,13 +153,19 @@ def main():
     print("   ✅ Evidence Registry Verified.")
 
     # Scenario 12: Feedback Submission Validation
-    run_cmd([sys.executable, "scripts/import_beta_feedback.py"], "Scenario 12: Running Beta Feedback Intake & Schema Validation")
+    run_cmd(
+        [sys.executable, "scripts/import_beta_feedback.py"],
+        "Scenario 12: Running Beta Feedback Intake & Schema Validation",
+    )
 
     # Scenario 13: Sensitive Information Rejection
     print("\n▶ Scenario 13: Testing Privacy Filter Rejection of API Keys...")
     from scripts.import_beta_feedback import validate_feedback_privacy
+
     assert validate_feedback_privacy("Clean feedback") is True
-    assert validate_feedback_privacy("Leaked key: sk-proj-12345678901234567890") is False
+    assert (
+        validate_feedback_privacy("Leaked key: sk-proj-12345678901234567890") is False
+    )
     print("   ✅ Sensitive Secret Filter Verified.")
 
     # Scenario 14: Issue Triage
@@ -129,7 +174,10 @@ def main():
     print("   ✅ Issue Triage Framework Verified.")
 
     # Scenario 15: Product Learning Dashboard
-    run_cmd([sys.executable, "scripts/product_learning_dashboard.py"], "Scenario 15: Running Product-Market Learning Dashboard")
+    run_cmd(
+        [sys.executable, "scripts/product_learning_dashboard.py"],
+        "Scenario 15: Running Product-Market Learning Dashboard",
+    )
 
     # Scenario 16: No External Evidence Incorrectly Fabricated
     print("\n▶ Scenario 16: Verifying No External Metrics are Fabricated...")
@@ -147,16 +195,28 @@ def main():
     print("   ✅ Security Incident Escalation Workflow Verified.")
 
     # Scenario 19: Test Suite Verification
-    run_cmd([sys.executable, "-m", "pytest", "tests/test_phase9_external_validation.py"], "Scenario 19: Running Phase 9 Test Suite")
+    run_cmd(
+        [sys.executable, "-m", "pytest", "tests/test_phase9_external_validation.py"],
+        "Scenario 19: Running Phase 9 Test Suite",
+    )
 
     # Scenario 20: Final Classification
     print("\n▶ Scenario 20: Verifying Phase 9 Final Evidence Classification...")
     print("   🏁 FINAL CLASSIFICATION: PHASE 9 ENGINEERING COMPLETE")
-    print("                           PUBLIC BETA ACTIVE — AWAITING REAL EXTERNAL EVIDENCE")
+    print(
+        "                           PUBLIC BETA ACTIVE — AWAITING REAL EXTERNAL EVIDENCE"
+    )
 
-    print("==========================================================================================")
-    print("✅ PHASE 9 DEMO COMPLETE: External Validation Infrastructure & Product Learning Verified!")
-    print("==========================================================================================")
+    print(
+        "=========================================================================================="
+    )
+    print(
+        "✅ PHASE 9 DEMO COMPLETE: External Validation Infrastructure & Product Learning Verified!"
+    )
+    print(
+        "=========================================================================================="
+    )
+
 
 if __name__ == "__main__":
     main()

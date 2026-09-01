@@ -1,15 +1,20 @@
-from typing import Dict, Any
 from sqlalchemy.orm import Session
 
-from app.models import ToolCallRequest, PolicyConfig, RuleResult
-from app.proxy.rate_limiter import evaluate_rate_limit
-from app.proxy.param_validator import evaluate_bulk_threshold, evaluate_parameter_blocklist
+from app.models import PolicyConfig, RuleResult, ToolCallRequest
 from app.proxy.data_scope import evaluate_data_scope
+from app.proxy.ml_risk_engine import evaluate_ml_risk_score
+from app.proxy.param_validator import (
+    evaluate_bulk_threshold,
+    evaluate_parameter_blocklist,
+)
+from app.proxy.rate_limiter import evaluate_rate_limit
 from app.proxy.sequence_guard import evaluate_sequence
 from app.proxy.shadow_mode import apply_shadow_mode_transformation
-from app.proxy.ml_risk_engine import evaluate_ml_risk_score
 
-def evaluate_tool_call_request(req: ToolCallRequest, policy: PolicyConfig, db: Session) -> RuleResult:
+
+def evaluate_tool_call_request(
+    req: ToolCallRequest, policy: PolicyConfig, db: Session
+) -> RuleResult:
     global_shadow = policy.shadow_mode
     rules = policy.rules
 

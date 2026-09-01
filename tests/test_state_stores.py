@@ -3,31 +3,37 @@ Contract Tests for MemoryStateStore, SQLiteStateStore, and RedisStateStore Adapt
 Verifies rate limit counters, sequence history, and durable PendingAction atomic state transitions.
 """
 
-import os
-import pytest
 from datetime import datetime, timedelta, timezone
+
+import pytest
+
 from guardwaf import (
-    MemoryStateStore,
-    SQLiteStateStore,
-    RedisStateStore,
-    PendingAction,
     ActionState,
+    MemoryStateStore,
+    PendingAction,
+    RedisStateStore,
+    SQLiteStateStore,
 )
+
 
 @pytest.fixture
 def memory_store():
     return MemoryStateStore()
+
 
 @pytest.fixture
 def sqlite_store(tmp_path):
     db_file = str(tmp_path / "test_state.db")
     return SQLiteStateStore(db_path=db_file)
 
+
 @pytest.fixture
 def redis_store():
     return RedisStateStore()
 
+
 # --- Contract Tests for State Stores ---
+
 
 @pytest.mark.parametrize("store_fixture", ["memory_store", "sqlite_store"])
 def test_rate_limiting_counter_contract(request, store_fixture):
@@ -39,9 +45,12 @@ def test_rate_limiting_counter_contract(request, store_fixture):
 
     store.record_tool_call(session_id, tool_name, "allowed")
     store.record_tool_call(session_id, tool_name, "allowed")
-    store.record_tool_call(session_id, tool_name, "blocked")  # Blocked calls do not increment allowed counter
+    store.record_tool_call(
+        session_id, tool_name, "blocked"
+    )  # Blocked calls do not increment allowed counter
 
     assert store.get_tool_call_count(session_id, tool_name, window_seconds=60) == 2
+
 
 @pytest.mark.parametrize("store_fixture", ["memory_store", "sqlite_store"])
 def test_sequence_state_contract(request, store_fixture):
@@ -54,10 +63,11 @@ def test_sequence_state_contract(request, store_fixture):
     store.record_sequence_state(session_id, tool_name)
     assert store.has_executed_predecessor(session_id, tool_name) is True
 
+
 @pytest.mark.parametrize("store_fixture", ["memory_store", "sqlite_store"])
 def test_pending_action_persistence_and_atomic_transitions(request, store_fixture):
     store = request.getfixturevalue(store_fixture)
-    
+
     pending_action = PendingAction(
         pending_action_id="pa_contract_100",
         agent_id="test_agent",
@@ -70,7 +80,7 @@ def test_pending_action_persistence_and_atomic_transitions(request, store_fixtur
         created_at=datetime.now(timezone.utc),
         expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
         status=ActionState.PENDING,
-        idempotency_key="idemp_100"
+        idempotency_key="idemp_100",
     )
 
     # 1. Save Action
@@ -88,7 +98,7 @@ def test_pending_action_persistence_and_atomic_transitions(request, store_fixtur
         new_status=ActionState.APPROVED,
         expected_old_status=ActionState.PENDING,
         approver_id="test_admin",
-        approval_token="tok_123"
+        approval_token="tok_123",
     )
     assert success is True
 
@@ -102,9 +112,10 @@ def test_pending_action_persistence_and_atomic_transitions(request, store_fixtur
     bad_transition = store.update_pending_action_status(
         pending_action_id="pa_contract_100",
         new_status=ActionState.EXECUTED,
-        expected_old_status=ActionState.PENDING  # Expected PENDING, but current state is APPROVED!
+        expected_old_status=ActionState.PENDING,  # Expected PENDING, but current state is APPROVED!
     )
     assert bad_transition is False  # Atomic check rejected invalid old_status match!
+
 
 def test_redis_state_store_adapter_interface(redis_store):
     # Verify RedisStateStore exposes complete StateStore API contract cleanly

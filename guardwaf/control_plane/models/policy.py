@@ -2,16 +2,19 @@
 Control Plane Enterprise Policy Management Models, Versioning, and Assignments.
 """
 
-from enum import Enum
 from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any
+from enum import Enum
+from typing import Any, Dict, Optional
+
 from pydantic import BaseModel, Field
+
 
 class PolicyStatus(str, Enum):
     DRAFT = "DRAFT"
     VALIDATED = "VALIDATED"
     PUBLISHED = "PUBLISHED"
     ACTIVE = "ACTIVE"
+
 
 class PolicyVersion(BaseModel):
     version_id: str
@@ -22,6 +25,7 @@ class PolicyVersion(BaseModel):
     created_by: str = "admin"
     content_digest: str  # SHA-256 hash of rules content
 
+
 class PolicyRecord(BaseModel):
     policy_id: str
     tenant_id: str
@@ -31,6 +35,7 @@ class PolicyRecord(BaseModel):
     active_version: Optional[int] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: str = "admin"
+
 
 class PolicyAssignment(BaseModel):
     assignment_id: str

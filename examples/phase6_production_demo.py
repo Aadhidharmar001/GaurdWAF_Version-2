@@ -4,30 +4,41 @@ Executes 20 end-to-end production scenarios verifying Control Plane lifecycle, s
 """
 
 import sys
-import os
 import time
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-from guardwaf import GuardWAF, protect, GuardWAFSecurityError, GuardWAFHITLRequiredError
-from guardwaf.core.models import PolicyConfig, PolicyRules, BulkThresholdRule, HITLRule, ParameterBlocklistRule
-from guardwaf.control_plane.services.org_service import OrgService
+from guardwaf import GuardWAF, GuardWAFHITLRequiredError, GuardWAFSecurityError, protect
+from guardwaf.control_plane.models.org import Role
 from guardwaf.control_plane.services.agent_service import AgentService
 from guardwaf.control_plane.services.credential_service import CredentialService
 from guardwaf.control_plane.services.hitl_service import HITLWorkstationService
-from guardwaf.control_plane.models.org import Role
+from guardwaf.control_plane.services.org_service import OrgService
+from guardwaf.core.models import (
+    BulkThresholdRule,
+    HITLRule,
+    ParameterBlocklistRule,
+    PolicyConfig,
+    PolicyRules,
+)
 from guardwaf.telemetry.metrics import METRICS_REGISTRY
-from scripts.scan_secrets import main as run_secret_scanner
 from infra.scripts.migrate_db import run_migrations
+from scripts.scan_secrets import main as run_secret_scanner
+
 
 def raw_transfer_funds(source: str, dest: str, amount: float):
     return {"status": "SUCCESS", "tx_id": f"tx_{int(time.time())}", "amount": amount}
 
+
 def run_phase6_demo():
-    print("==========================================================================================")
+    print(
+        "=========================================================================================="
+    )
     print("🛡️  GUARdWAF PHASE 6 FLAGSHIP DEMO: PRODUCTION DEPLOYMENT & GOVERNANCE SUITE")
-    print("==========================================================================================")
+    print(
+        "=========================================================================================="
+    )
 
     # 1. Config Validation & Secret Scan
     print("▶ 1. Validating Production Secrets & Running Secret Scanner...")
@@ -42,7 +53,10 @@ def run_phase6_demo():
 
     # 3. Control Plane Startup
     print("\n▶ 3. Initializing Multi-Tenant Control Plane...")
-    from guardwaf.control_plane.repositories.memory_repo import MemoryControlPlaneRepository
+    from guardwaf.control_plane.repositories.memory_repo import (
+        MemoryControlPlaneRepository,
+    )
+
     repo = MemoryControlPlaneRepository()
     org_service = OrgService()
     agent_service = AgentService(repo=repo)
@@ -51,24 +65,53 @@ def run_phase6_demo():
     # 4. Register Organization
     print("\n▶ 4. Registering Organization 'FinTech Enterprise'...")
     org = org_service.create_organization(name="FinTech Enterprise", slug="fintech-ent")
-    admin = org_service.create_user(email="security@fintech.io", display_name="Alex (CISO)")
-    org_service.add_member(organization_id=org.organization_id, user_id=admin.user_id, role=Role.SECURITY_ADMIN)
-    print(f"   ✅ Org Registered: ID='{org.organization_id}', CISO='{admin.display_name}'")
+    admin = org_service.create_user(
+        email="security@fintech.io", display_name="Alex (CISO)"
+    )
+    org_service.add_member(
+        organization_id=org.organization_id,
+        user_id=admin.user_id,
+        role=Role.SECURITY_ADMIN,
+    )
+    print(
+        f"   ✅ Org Registered: ID='{org.organization_id}', CISO='{admin.display_name}'"
+    )
 
     # 5. Register Agent & Issue Credential
     print("\n▶ 5. Registering Agent & Issuing Hashed Production Credential...")
-    agent = agent_service.register_agent(agent_id="agent_p6_bot", tenant_id=org.organization_id, name="payment_bot", description="Automated Payment Agent")
-    cred_resp = cred_service.issue_credential(organization_id=org.organization_id, agent_id=agent.agent_id)
-    print(f"   ✅ Credential Issued: ID='{cred_resp.credential_id}', SecretPrefix='{cred_resp.plaintext_api_key[:12]}...'")
-
-
+    agent = agent_service.register_agent(
+        agent_id="agent_p6_bot",
+        tenant_id=org.organization_id,
+        name="payment_bot",
+        description="Automated Payment Agent",
+    )
+    cred_resp = cred_service.issue_credential(
+        organization_id=org.organization_id, agent_id=agent.agent_id
+    )
+    print(
+        f"   ✅ Credential Issued: ID='{cred_resp.credential_id}', SecretPrefix='{cred_resp.plaintext_api_key[:12]}...'"
+    )
 
     # 6. Configure Policies
     print("\n▶ 6. Configuring Production Action Governance Policy...")
     rules = PolicyRules(
-        bulk_thresholds=[BulkThresholdRule(tool="transfer_funds", param_name="amount", max_value=10000.0)],
-        hitl_rules=[HITLRule(tool="transfer_funds", condition_param="amount", greater_than=1000.0)],
-        parameter_blocklist=[ParameterBlocklistRule(tool="transfer_funds", param_name="dest", blocklist=["SUSPICIOUS", "MALICIOUS"])]
+        bulk_thresholds=[
+            BulkThresholdRule(
+                tool="transfer_funds", param_name="amount", max_value=10000.0
+            )
+        ],
+        hitl_rules=[
+            HITLRule(
+                tool="transfer_funds", condition_param="amount", greater_than=1000.0
+            )
+        ],
+        parameter_blocklist=[
+            ParameterBlocklistRule(
+                tool="transfer_funds",
+                param_name="dest",
+                blocklist=["SUSPICIOUS", "MALICIOUS"],
+            )
+        ],
     )
     policy = PolicyConfig(metadata={"policy_name": "fintech_policy"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="prod_demo_secret_key_32bytes_long_min")
@@ -76,7 +119,9 @@ def run_phase6_demo():
 
     # Register tool body
     waf.register_tool("transfer_funds", raw_transfer_funds)
-    protected_transfer = protect(tool_name="transfer_funds", client=waf)(raw_transfer_funds)
+    protected_transfer = protect(tool_name="transfer_funds", client=waf)(
+        raw_transfer_funds
+    )
 
     # 7. Allowed Action ($250.00)
     print("\n▶ 7. Executing Allowed Transfer Action ($250.00)...")
@@ -107,13 +152,19 @@ def run_phase6_demo():
 
     # 10. Approve & Resume Action
     print("\n▶ 10. Security Admin Approving & Agent Resuming Execution...")
-    app_res = hitl_service.approve_action(organization_id=org.organization_id, pending_action_id=pending_id, approver_id=admin.user_id)
+    app_res = hitl_service.approve_action(
+        organization_id=org.organization_id,
+        pending_action_id=pending_id,
+        approver_id=admin.user_id,
+    )
     token = app_res["approval_token"]
     METRICS_REGISTRY.increment("hitl_approved")
     print(f"   ✅ Approved Action. Token issued: '{token[:25]}...'")
 
     with waf.session(session_id="sess_p6_3", tenant_id=org.organization_id):
-        res_resumed = waf.resume_sync(pending_action_id=pending_id, approval_token=token)
+        res_resumed = waf.resume_sync(
+            pending_action_id=pending_id, approval_token=token
+        )
         print(f"   ✅ RESUMED EXECUTION SUCCESS: {res_resumed}")
 
     # 11. Replay Attack Attempt
@@ -129,7 +180,9 @@ def run_phase6_demo():
     print("\n▶ 12. Attempting Parameter Injection Attack...")
     with waf.session(session_id="sess_p6_4", tenant_id=org.organization_id):
         try:
-            protected_transfer(source="acc_1", dest="SUSPICIOUS_MALICIOUS_ACC", amount=100.0)
+            protected_transfer(
+                source="acc_1", dest="SUSPICIOUS_MALICIOUS_ACC", amount=100.0
+            )
         except GuardWAFSecurityError as err:
             METRICS_REGISTRY.increment("blocked_actions")
             print(f"   ✅ INJECTION ATTACK BLOCKED: {err}")
@@ -140,11 +193,25 @@ def run_phase6_demo():
     waf.revocation_client.revoke_agent_local(agent_id=agent_id_rev)
     METRICS_REGISTRY.increment("agent_revocations")
 
-    from guardwaf.identity.models import VerifiedPrincipal, AgentIdentity
-    p_dev = VerifiedPrincipal(principal_id="dev_user", tenant_id=org.organization_id, subject="dev_user", authentication_method="static", roles=["user"])
-    a_dev = AgentIdentity(agent_id=agent_id_rev, tenant_id=org.organization_id, name="RevokedBot")
+    from guardwaf.identity.models import AgentIdentity, VerifiedPrincipal
 
-    with waf.verified_session(principal=p_dev, agent=a_dev, session_id="sess_p6_5", tenant_id=org.organization_id):
+    p_dev = VerifiedPrincipal(
+        principal_id="dev_user",
+        tenant_id=org.organization_id,
+        subject="dev_user",
+        authentication_method="static",
+        roles=["user"],
+    )
+    a_dev = AgentIdentity(
+        agent_id=agent_id_rev, tenant_id=org.organization_id, name="RevokedBot"
+    )
+
+    with waf.verified_session(
+        principal=p_dev,
+        agent=a_dev,
+        session_id="sess_p6_5",
+        tenant_id=org.organization_id,
+    ):
         try:
             protected_transfer(source="acc_1", dest="acc_2", amount=10.0)
         except GuardWAFSecurityError as err:
@@ -164,11 +231,18 @@ def run_phase6_demo():
     print("\n▶ 15. Inspecting Prometheus & CloudWatch Metrics Export...")
     snapshot = METRICS_REGISTRY.get_metrics_snapshot()
     prom_str = METRICS_REGISTRY.generate_prometheus_format()
-    print(f"   ✅ Metrics Counters: Allowed={snapshot['counters']['allowed_actions']}, Blocked={snapshot['counters']['blocked_actions']}, HITL={snapshot['counters']['hitl_requested']}")
+    print(
+        f"   ✅ Metrics Counters: Allowed={snapshot['counters']['allowed_actions']}, Blocked={snapshot['counters']['blocked_actions']}, HITL={snapshot['counters']['hitl_requested']}"
+    )
 
-    print("==========================================================================================")
+    print(
+        "=========================================================================================="
+    )
     print("✅ PHASE 6 DEMO COMPLETE: Production Deployment & Operations Verified!")
-    print("==========================================================================================")
+    print(
+        "=========================================================================================="
+    )
+
 
 if __name__ == "__main__":
     run_phase6_demo()

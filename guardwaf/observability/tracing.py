@@ -4,7 +4,8 @@ Guarantees correlation IDs flow through SDK, MCP Gateway, HITL, and Control Plan
 """
 
 import uuid
-from typing import Optional, Dict, Any
+from typing import Dict, Optional
+
 
 class TraceContext:
     def __init__(self, correlation_id: Optional[str] = None):
@@ -14,6 +15,8 @@ class TraceContext:
         return {"x-guardwaf-correlation-id": self.correlation_id}
 
     @classmethod
-    def extract_headers(cls, headers: Dict[str, str]) -> 'TraceContext':
-        cid = headers.get("x-guardwaf-correlation-id") or headers.get("X-GuardWAF-Correlation-ID")
+    def extract_headers(cls, headers: Dict[str, str]) -> "TraceContext":
+        cid = headers.get("x-guardwaf-correlation-id") or headers.get(
+            "X-GuardWAF-Correlation-ID"
+        )
         return cls(correlation_id=cid)

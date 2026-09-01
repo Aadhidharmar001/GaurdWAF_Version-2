@@ -3,22 +3,26 @@ SDK Policy Client with Background Periodic Refresh, Signed Bundle Verification,
 Multi-Tier Local Memory / LKG Caching, and Zero-Latency Hot-Path Enforcement (< 1ms).
 """
 
-import time
-import threading
+import hashlib
+import hmac
 import json
-from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict, Any, Callable
+import threading
+import time
+from typing import Callable, Optional
+
 from guardwaf.control_plane.models.bundle import SignedPolicyBundle
 from guardwaf.control_plane.services.bundle_service import BundleService
+from guardwaf.core.keys import KeyManager
 from guardwaf.core.models import PolicyConfig
 from guardwaf.core.policy import parse_policy_dict
-from guardwaf.core.keys import KeyManager
-from guardwaf.exceptions import GuardWAFSecurityError, GuardWAFConfigurationError
+from guardwaf.exceptions import GuardWAFSecurityError
+
 
 class PolicyClientMode:
     STRICT = "STRICT"
     GRACE_PERIOD = "GRACE_PERIOD"
     DEVELOPMENT = "DEVELOPMENT"
+
 
 class PolicyClient:
     """
@@ -26,6 +30,7 @@ class PolicyClient:
     Fetches, cryptographically verifies, and atomically caches signed policy bundles from the Control Plane.
     Never performs synchronous network calls in the tool execution hot path.
     """
+
     def __init__(
         self,
         tenant_id: str = "default",
@@ -37,7 +42,7 @@ class PolicyClient:
         mode: str = PolicyClientMode.GRACE_PERIOD,
         refresh_interval_seconds: int = 60,
         grace_period_seconds: int = 86400,
-        initial_policy: Optional[PolicyConfig] = None
+        initial_policy: Optional[PolicyConfig] = None,
     ):
         self.tenant_id = tenant_id
         self.agent_id = agent_id
@@ -70,10 +75,14 @@ class PolicyClient:
         with self._lock:
             # 1. Tenant & Agent Binding Check
             if bundle.tenant_id != self.tenant_id:
-                print(f"⚠️ [GuardWAF PolicyClient] Rejected bundle: Tenant mismatch ('{bundle.tenant_id}' != '{self.tenant_id}')")
+                print(
+                    f"⚠️ [GuardWAF PolicyClient] Rejected bundle: Tenant mismatch ('{bundle.tenant_id}' != '{self.tenant_id}')"
+                )
                 return False
             if bundle.agent_id != self.agent_id:
-                print(f"⚠️ [GuardWAF PolicyClient] Rejected bundle: Agent mismatch ('{bundle.agent_id}' != '{self.agent_id}')")
+                print(
+                    f"⚠️ [GuardWAF PolicyClient] Rejected bundle: Agent mismatch ('{bundle.agent_id}' != '{self.agent_id}')"
+                )
                 return False
 
             # 2. Cryptographic Signature & SHA-256 Digest Verification
@@ -84,14 +93,18 @@ class PolicyClient:
                 valid_sig = self._verify_bundle_signature_local(bundle)
 
             if not valid_sig:
-                print(f"⚠️ [GuardWAF PolicyClient] REJECTED TAMPERED BUNDLE '{bundle.bundle_id}'. Retaining Last Known Good policy.")
+                print(
+                    f"⚠️ [GuardWAF PolicyClient] REJECTED TAMPERED BUNDLE '{bundle.bundle_id}'. Retaining Last Known Good policy."
+                )
                 return False
 
             # 3. Compile PolicyConfig instance
             try:
                 new_config = parse_policy_dict(bundle.policy_payload)
             except Exception as e:
-                print(f"⚠️ [GuardWAF PolicyClient] Failed to parse bundle policy payload: {e}")
+                print(
+                    f"⚠️ [GuardWAF PolicyClient] Failed to parse bundle policy payload: {e}"
+                )
                 return False
 
             # 4. Atomic Swap
@@ -111,12 +124,14 @@ class PolicyClient:
 
         # Digest verification
         payload_json = json.dumps(bundle.policy_payload, sort_keys=True)
-        expected_digest = hashlib.sha256(payload_json.encode('utf-8')).hexdigest()
+        expected_digest = hashlib.sha256(payload_json.encode("utf-8")).hexdigest()
         if expected_digest != bundle.bundle_digest:
             return False
 
         signature_payload = f"{bundle.bundle_id}:{bundle.tenant_id}:{bundle.agent_id}:{bundle.environment}:{bundle.bundle_digest}:{bundle.key_id}:{bundle.issued_at.isoformat()}:{bundle.expires_at.isoformat()}"
-        expected_sig = hmac.new(secret_bytes, signature_payload.encode('utf-8'), hashlib.sha256).hexdigest()
+        expected_sig = hmac.new(
+            secret_bytes, signature_payload.encode("utf-8"), hashlib.sha256
+        ).hexdigest()
         return hmac.compare_digest(bundle.signature, expected_sig)
 
     def fetch_and_apply_remote(self) -> bool:
@@ -131,11 +146,13 @@ class PolicyClient:
                 bundle = self.bundle_service.compile_and_sign_bundle(
                     tenant_id=self.tenant_id,
                     agent_id=self.agent_id,
-                    environment=self.environment
+                    environment=self.environment,
                 )
             return self.verify_and_apply_bundle(bundle)
         except Exception as err:
-            print(f"⚠️ [GuardWAF PolicyClient] Remote fetch failed ({err}). Retaining Last Known Good policy.")
+            print(
+                f"⚠️ [GuardWAF PolicyClient] Remote fetch failed ({err}). Retaining Last Known Good policy."
+            )
             return False
 
     def start_background_refresh(self) -> None:
@@ -144,12 +161,15 @@ class PolicyClient:
             return
 
         self._stop_event.clear()
+
         def _loop():
             while not self._stop_event.is_set():
                 self.fetch_and_apply_remote()
                 self._stop_event.wait(timeout=self.refresh_interval)
 
-        self._refresh_thread = threading.Thread(target=_loop, daemon=True, name="GuardWAFPolicyRefresh")
+        self._refresh_thread = threading.Thread(
+            target=_loop, daemon=True, name="GuardWAFPolicyRefresh"
+        )
         self._refresh_thread.start()
 
     def stop_background_refresh(self) -> None:
@@ -176,12 +196,12 @@ class PolicyClient:
                     if not self._active_policy_config:
                         raise GuardWAFSecurityError(
                             "CRITICAL: No valid signed policy bundle available in production STRICT mode. Failing closed.",
-                            tool_name="policy_client"
+                            tool_name="policy_client",
                         )
                     if self._active_bundle and self._active_bundle.is_expired():
                         raise GuardWAFSecurityError(
                             "CRITICAL: Signed policy bundle has EXPIRED in production STRICT mode. Failing closed.",
-                            tool_name="policy_client"
+                            tool_name="policy_client",
                         )
 
             elif self.mode == PolicyClientMode.GRACE_PERIOD:
@@ -192,7 +212,7 @@ class PolicyClient:
                 elif self.environment == "production":
                     raise GuardWAFSecurityError(
                         f"CRITICAL: Policy grace period ({self.grace_period_seconds}s) exceeded. Failing closed in production.",
-                        tool_name="policy_client"
+                        tool_name="policy_client",
                     )
 
             return self._active_policy_config or self._lkg_policy_config

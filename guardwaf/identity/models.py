@@ -3,14 +3,17 @@ Immutable VerifiedPrincipal and AgentIdentity Data Models.
 """
 
 from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
+
 
 class VerifiedPrincipal(BaseModel):
     """
     Immutable representation of a cryptographically verified human or system principal.
     Must NEVER be constructed directly from untrusted LLM tool parameters.
     """
+
     model_config = ConfigDict(frozen=True)
 
     principal_id: str
@@ -36,11 +39,13 @@ class VerifiedPrincipal(BaseModel):
     def has_role(self, role: str) -> bool:
         return role in self.roles
 
+
 class AgentIdentity(BaseModel):
     """
     Immutable identity of the autonomous agent executing the action.
     Distinguishes WHO the human principal is from WHICH agent is running.
     """
+
     model_config = ConfigDict(frozen=True)
 
     agent_id: str
@@ -49,10 +54,12 @@ class AgentIdentity(BaseModel):
     version: str = "1.0.0"
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
+
 class IdentityCredentials(BaseModel):
     """
     Container for identity credentials presented to an IdentityProvider.
     """
+
     token_type: str = "bearer"  # "bearer", "jwt", "static"
     raw_token: str
     metadata: Dict[str, Any] = Field(default_factory=dict)

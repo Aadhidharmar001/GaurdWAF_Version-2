@@ -2,15 +2,16 @@
 Unit Tests for P0 Security Fixes: Production Secret Key Enforcement & Key Rotation.
 """
 
-import os
 import pytest
+
 from guardwaf import (
     GuardWAF,
+    GuardWAFConfigurationError,
+    GuardWAFHITLRequiredError,
     protect,
     session,
-    GuardWAFConfigurationError,
-    GuardWAFHITLRequiredError
 )
+
 
 def test_production_mode_refuses_default_key(monkeypatch):
     # Ensure environment variable is clear
@@ -28,7 +29,12 @@ def test_production_mode_refuses_default_key(monkeypatch):
 
     # 3. Explicit default dev key in production MUST FAIL
     with pytest.raises(GuardWAFConfigurationError):
-        GuardWAF(config_path="rules.yaml", environment="production", secret_key="gw_secret_default_development_key")
+        GuardWAF(
+            config_path="rules.yaml",
+            environment="production",
+            secret_key="gw_secret_default_development_key",
+        )
+
 
 def test_production_mode_accepts_strong_custom_secret(monkeypatch):
     monkeypatch.setenv("GUARDWAF_ENV", "production")
@@ -37,6 +43,7 @@ def test_production_mode_accepts_strong_custom_secret(monkeypatch):
     # Should initialize cleanly in production with strong custom secret!
     waf = GuardWAF(config_path="rules.yaml")
     assert waf.key_manager.get_active_key()[1] == b"prod_super_secret_key_123456789_xyz"
+
 
 @pytest.mark.asyncio
 async def test_zero_downtime_key_rotation_with_keyring():
@@ -66,16 +73,13 @@ async def test_zero_downtime_key_rotation_with_keyring():
 
     # Phase 2: Key Rotation occurs on Server!
     # Active key updated to "k2" ("secret_key_v2"), but "k1" retained in keyring
-    keyring = {
-        "k1": "secret_key_v1",
-        "k2": "secret_key_v2"
-    }
+    keyring = {"k1": "secret_key_v1", "k2": "secret_key_v2"}
     waf_v2 = GuardWAF(
         config_path="rules.yaml",
         key_id="k2",
         secret_key="secret_key_v2",
         keyring=keyring,
-        state_store=waf_v1.state_store
+        state_store=waf_v1.state_store,
     )
     # Re-register tools on new instance
     waf_v2.register_tool("lookup_customer", lookup_customer)

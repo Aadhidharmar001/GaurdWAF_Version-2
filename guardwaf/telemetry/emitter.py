@@ -4,9 +4,10 @@ Buffers events in memory or sends them to external subscribers without adding la
 """
 
 import threading
-import queue
-from typing import List, Callable, Optional
+from typing import Callable, List
+
 from guardwaf.telemetry.events import TelemetryEvent
+
 
 class TelemetryEmitter:
     def __init__(self):
@@ -24,7 +25,7 @@ class TelemetryEmitter:
             # Retain last 1000 events in memory
             if len(self._events_history) > 1000:
                 self._events_history = self._events_history[-1000:]
-            
+
             listeners_copy = list(self._listeners)
 
         # Notify listeners

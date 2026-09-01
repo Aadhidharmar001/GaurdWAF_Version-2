@@ -4,24 +4,29 @@ Demonstrates securing LangChain tools via LangChainAdapter and ActionEnvelope.
 """
 
 import sys
-import os
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 from guardwaf import GuardWAF, GuardWAFSecurityError
-from guardwaf.core.models import PolicyConfig, PolicyRules, BulkThresholdRule
-from guardwaf.integrations.langchain import LangChainAdapter, DummyLangChainTool
+from guardwaf.core.models import BulkThresholdRule, PolicyConfig, PolicyRules
+from guardwaf.integrations.langchain import DummyLangChainTool, LangChainAdapter
+
 
 def raw_database_query(query: str, max_rows: int = 100):
     return {"status": "SUCCESS", "rows_returned": min(max_rows, 50), "query": query}
+
 
 def main():
     print("=================================================================")
     print("🛡️  GUARdWAF LANGCHAIN FRAMEWORK INTEGRATION DEMO")
     print("=================================================================")
 
-    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="query_db", param_name="max_rows", max_value=500)])
+    rules = PolicyRules(
+        bulk_thresholds=[
+            BulkThresholdRule(tool="query_db", param_name="max_rows", max_value=500)
+        ]
+    )
     policy = PolicyConfig(metadata={"policy_name": "langchain_policy"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="langchain_demo_secret_key_32bytes")
 
@@ -42,6 +47,7 @@ def main():
             print(f"▶ 2. 🚨 BLOCKED LangChain Tool Execution: {err}")
 
     print("=================================================================")
+
 
 if __name__ == "__main__":
     main()

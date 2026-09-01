@@ -3,15 +3,16 @@ GuardWAF Software Bill of Materials (SBOM) Generator.
 Generates an SPDX-compliant SBOM JSON file documenting all Python dependencies, version specs, and metadata.
 """
 
-import sys
-import json
 import argparse
+import json
+import sys
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-from datetime import datetime, timezone
 import importlib.metadata
+from datetime import datetime, timezone
+
 
 def generate_sbom() -> dict:
     packages = []
@@ -20,14 +21,16 @@ def generate_sbom() -> dict:
         version = dist.version
         summary = dist.metadata.get("Summary", "")
         license_type = dist.metadata.get("License", "Unknown")
-        packages.append({
-            "name": name,
-            "SPDXID": f"SPDXRef-Package-{name}-{version}",
-            "versionInfo": version,
-            "summary": summary,
-            "licenseConcluded": license_type,
-            "supplier": "NOASSERTION"
-        })
+        packages.append(
+            {
+                "name": name,
+                "SPDXID": f"SPDXRef-Package-{name}-{version}",
+                "versionInfo": version,
+                "summary": summary,
+                "licenseConcluded": license_type,
+                "supplier": "NOASSERTION",
+            }
+        )
 
     sbom = {
         "spdxVersion": "SPDX-2.3",
@@ -37,11 +40,12 @@ def generate_sbom() -> dict:
         "documentNamespace": f"https://guardwaf.io/spdxdocs/guardwaf-v1.0-{int(datetime.now(timezone.utc).timestamp())}",
         "creationInfo": {
             "created": datetime.now(timezone.utc).isoformat(),
-            "creators": ["Tool: GuardWAF-SBOM-Generator-1.0"]
+            "creators": ["Tool: GuardWAF-SBOM-Generator-1.0"],
         },
-        "packages": sorted(packages, key=lambda p: p["name"].lower())
+        "packages": sorted(packages, key=lambda p: p["name"].lower()),
     }
     return sbom
+
 
 def main():
     parser = argparse.ArgumentParser(description="Generate SPDX SBOM JSON")
@@ -52,7 +56,10 @@ def main():
     with open(args.output, "w", encoding="utf-8") as f:
         json.dump(sbom_data, f, indent=2)
 
-    print(f"✅ SBOM successfully generated: '{args.output}' ({len(sbom_data['packages'])} packages documented).")
+    print(
+        f"✅ SBOM successfully generated: '{args.output}' ({len(sbom_data['packages'])} packages documented)."
+    )
+
 
 if __name__ == "__main__":
     main()

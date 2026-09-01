@@ -1,31 +1,32 @@
 import json
 import time
-from fastapi import FastAPI, Depends, HTTPException
+
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
+from app.audit.logger import log_audit_event
+from app.compliance.report_generator import generate_compliance_report
 from app.config import settings
 from app.db.database import get_db, init_db
-from app.db.orm_models import AuditLog, HitlQueue, SequenceState
+from app.db.orm_models import AuditLog
+from app.health.routes import router as health_router
+from app.hitl.queue_manager import create_hitl_request
+from app.hitl.routes import router as hitl_router
+from app.llm.agent_client import run_agent_prompt
 from app.models import ToolCallRequest, ToolCallResponse
-from app.rules_engine.loader import load_policy_from_yaml, parse_policy_yaml
 from app.proxy.interceptor import evaluate_tool_call_request
 from app.proxy.sequence_guard import record_sequence_state
-from app.audit.logger import log_audit_event
-from app.hitl.routes import router as hitl_router
-from app.hitl.queue_manager import create_hitl_request
-from app.health.routes import router as health_router
-from app.llm.agent_client import run_agent_prompt
 from app.realtime.broker import stream_dashboard_events
-from app.red_team.scenarios import get_scenario_list, RED_TEAM_SCENARIOS
-from app.compliance.report_generator import generate_compliance_report
+from app.red_team.scenarios import RED_TEAM_SCENARIOS, get_scenario_list
+from app.rules_engine.loader import load_policy_from_yaml, parse_policy_yaml
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="Enterprise Agent WAF & Action Guardrail Gateway (PS-5.1)"
+    description="Enterprise Agent WAF & Action Guardrail Gateway (PS-5.1)",
 )
 
 app.add_middleware(
@@ -44,37 +45,44 @@ INDEX_PATH = os.path.join(STATIC_DIR, "index.html")
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+
 @app.get("/")
 def read_root():
     if os.path.exists(INDEX_PATH):
         return FileResponse(INDEX_PATH)
     return {"status": "GuardWAF API Gateway Running", "docs": "/docs"}
 
+
 app.include_router(hitl_router)
 app.include_router(health_router)
+
 
 @app.on_event("startup")
 def startup_event():
     init_db()
 
+
 @app.get("/logs")
 def get_audit_logs(limit: int = 100, db: Session = Depends(get_db)):
     logs = db.query(AuditLog).order_by(AuditLog.id.desc()).limit(limit).all()
     results = []
-    for l in logs:
-        results.append({
-            "id": l.id,
-            "timestamp": l.timestamp.isoformat(),
-            "agent_id": l.agent_id,
-            "session_id": l.session_id,
-            "tool": l.tool,
-            "parameters": json.loads(l.parameters),
-            "evaluation_outcome": l.evaluation_outcome,
-            "matched_rule": l.matched_rule,
-            "status": l.status,
-            "latency_ms": getattr(l, "latency_ms", 0.0) or 0.0
-        })
+    for log_item in logs:
+        results.append(
+            {
+                "id": log_item.id,
+                "timestamp": log_item.timestamp.isoformat(),
+                "agent_id": log_item.agent_id,
+                "session_id": log_item.session_id,
+                "tool": log_item.tool,
+                "parameters": json.loads(log_item.parameters),
+                "evaluation_outcome": log_item.evaluation_outcome,
+                "matched_rule": log_item.matched_rule,
+                "status": log_item.status,
+                "latency_ms": getattr(log_item, "latency_ms", 0.0) or 0.0,
+            }
+        )
     return results
+
 
 @app.get("/stream/events")
 async def stream_events():
@@ -83,7 +91,10 @@ async def stream_events():
         "Connection": "keep-alive",
         "X-Accel-Buffering": "no",
     }
-    return StreamingResponse(stream_dashboard_events(), media_type="text/event-stream", headers=headers)
+    return StreamingResponse(
+        stream_dashboard_events(), media_type="text/event-stream", headers=headers
+    )
+
 
 @app.post("/proxy/tool", response_model=ToolCallResponse)
 def proxy_tool_call(req: ToolCallRequest, db: Session = Depends(get_db)):
@@ -104,51 +115,106 @@ def proxy_tool_call(req: ToolCallRequest, db: Session = Depends(get_db)):
         "entropy": eval_res.entropy,
         "owasp_code": eval_res.owasp_code,
         "risk_factors": eval_res.risk_factors,
-        "latency_ms": latency_ms
+        "latency_ms": latency_ms,
     }
 
     if status == "allowed":
         record_sequence_state(req.session_id, req.tool, db)
-        log_audit_event(db, req.agent_id, req.session_id, req.tool, req.parameters, outcome, matched_rule, "allowed", latency_ms=latency_ms)
+        log_audit_event(
+            db,
+            req.agent_id,
+            req.session_id,
+            req.tool,
+            req.parameters,
+            outcome,
+            matched_rule,
+            "allowed",
+            latency_ms=latency_ms,
+        )
         return ToolCallResponse(
             status="allowed",
             message="Action permitted by GuardWAF.",
             evaluation_details=eval_details,
-            result={"success": True, "details": f"Execution of '{req.tool}' completed."}
+            result={
+                "success": True,
+                "details": f"Execution of '{req.tool}' completed.",
+            },
         )
     elif status == "blocked":
-        log_audit_event(db, req.agent_id, req.session_id, req.tool, req.parameters, outcome, matched_rule, "blocked", latency_ms=latency_ms)
+        log_audit_event(
+            db,
+            req.agent_id,
+            req.session_id,
+            req.tool,
+            req.parameters,
+            outcome,
+            matched_rule,
+            "blocked",
+            latency_ms=latency_ms,
+        )
         return ToolCallResponse(
             status="blocked",
             message=f"Action blocked by GuardWAF: {outcome}",
-            evaluation_details=eval_details
+            evaluation_details=eval_details,
         )
     elif status == "pending_hitl":
-        hitl_entry = create_hitl_request(db, req.agent_id, req.session_id, req.tool, req.parameters, matched_rule=matched_rule)
-        log_audit_event(db, req.agent_id, req.session_id, req.tool, req.parameters, f"Paused for HITL approval (ID: {hitl_entry.id})", matched_rule, "pending_hitl", latency_ms=latency_ms)
+        hitl_entry = create_hitl_request(
+            db,
+            req.agent_id,
+            req.session_id,
+            req.tool,
+            req.parameters,
+            matched_rule=matched_rule,
+        )
+        log_audit_event(
+            db,
+            req.agent_id,
+            req.session_id,
+            req.tool,
+            req.parameters,
+            f"Paused for HITL approval (ID: {hitl_entry.id})",
+            matched_rule,
+            "pending_hitl",
+            latency_ms=latency_ms,
+        )
         eval_details["hitl_id"] = hitl_entry.id
         eval_details["fraud_score"] = hitl_entry.fraud_score
         eval_details["confidence_score"] = hitl_entry.confidence_score
         return ToolCallResponse(
             status="pending_hitl",
             message=f"Action paused for human-in-the-loop review (ID: {hitl_entry.id}).",
-            evaluation_details=eval_details
+            evaluation_details=eval_details,
         )
     elif status == "shadow_blocked":
         record_sequence_state(req.session_id, req.tool, db)
-        log_audit_event(db, req.agent_id, req.session_id, req.tool, req.parameters, outcome, matched_rule, "shadow_blocked", latency_ms=latency_ms)
+        log_audit_event(
+            db,
+            req.agent_id,
+            req.session_id,
+            req.tool,
+            req.parameters,
+            outcome,
+            matched_rule,
+            "shadow_blocked",
+            latency_ms=latency_ms,
+        )
         eval_details["shadow_mode"] = True
         return ToolCallResponse(
             status="allowed",
             message="Action permitted by GuardWAF (Shadow Mode).",
             evaluation_details=eval_details,
-            result={"success": True, "details": f"Execution of '{req.tool}' completed (Shadow Mode)."}
+            result={
+                "success": True,
+                "details": f"Execution of '{req.tool}' completed (Shadow Mode).",
+            },
         )
+
 
 # --- Red Teaming Endpoints ---
 @app.get("/redteam/scenarios")
 def list_redteam_scenarios():
     return get_scenario_list()
+
 
 @app.post("/redteam/simulate/{scenario_id}")
 def simulate_redteam_scenario(scenario_id: str, db: Session = Depends(get_db)):
@@ -163,13 +229,15 @@ def simulate_redteam_scenario(scenario_id: str, db: Session = Depends(get_db)):
         "scenario": scenario_info["name"],
         "category": scenario_info["category"],
         "owasp": scenario_info["owasp"],
-        "result": response
+        "result": response,
     }
+
 
 # --- Compliance & Governance Endpoints ---
 @app.get("/compliance/report")
 def get_compliance_report(db: Session = Depends(get_db)):
     return generate_compliance_report(db)
+
 
 # --- Policy Testing & Dry-Run Endpoints ---
 @app.post("/policy/validate")
@@ -182,13 +250,15 @@ def validate_policy_content(data: dict):
             "message": "Policy YAML syntax & schema validation passed.",
             "policy_name": policy.metadata.policy_name,
             "version": policy.metadata.version,
-            "rule_count": len(policy.rules.rate_limits) + len(policy.rules.sequences) + len(policy.rules.bulk_thresholds) + len(policy.rules.data_scope) + len(policy.rules.parameter_blocklist)
+            "rule_count": len(policy.rules.rate_limits)
+            + len(policy.rules.sequences)
+            + len(policy.rules.bulk_thresholds)
+            + len(policy.rules.data_scope)
+            + len(policy.rules.parameter_blocklist),
         }
     except Exception as e:
-        return {
-            "valid": False,
-            "error": str(e)
-        }
+        return {"valid": False, "error": str(e)}
+
 
 @app.post("/agent/run")
 def trigger_agent_run(prompt_data: dict, db: Session = Depends(get_db)):
@@ -196,4 +266,3 @@ def trigger_agent_run(prompt_data: dict, db: Session = Depends(get_db)):
     agent_id = prompt_data.get("agent_id", "demo-agent-01")
     session_id = prompt_data.get("session_id", "demo-session-01")
     return run_agent_prompt(prompt, agent_id, session_id, db)
-

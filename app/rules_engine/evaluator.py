@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
-from app.models import ToolCallRequest, PolicyConfig, RuleResult
+
+from app.models import PolicyConfig, RuleResult, ToolCallRequest
 from app.proxy.interceptor import evaluate_tool_call_request
+
 
 class RuleEngineEvaluator:
     def __init__(self, policy: PolicyConfig):

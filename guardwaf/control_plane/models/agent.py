@@ -2,15 +2,18 @@
 Control Plane Agent Registration Models & Status Enums.
 """
 
-from enum import Enum
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any
+from enum import Enum
+from typing import Any, Dict, Optional
+
 from pydantic import BaseModel, Field
+
 
 class AgentStatus(str, Enum):
     ACTIVE = "ACTIVE"
     DISABLED = "DISABLED"
     REVOKED = "REVOKED"
+
 
 class AgentRecord(BaseModel):
     agent_id: str

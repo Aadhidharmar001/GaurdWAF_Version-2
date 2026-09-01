@@ -4,12 +4,15 @@ Verifies JWT signatures, expiration, issuer, audience, and maps claims to Verifi
 Explicitly rejects alg=none and unverified tokens.
 """
 
-import jwt
 from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any
+from typing import List, Optional
+
+import jwt
+
+from guardwaf.exceptions import GuardWAFAuthenticationError, GuardWAFInvalidTokenError
 from guardwaf.identity.base import IdentityProvider
 from guardwaf.identity.models import IdentityCredentials, VerifiedPrincipal
-from guardwaf.exceptions import GuardWAFAuthenticationError, GuardWAFInvalidTokenError
+
 
 class JWTIdentityProvider(IdentityProvider):
     def __init__(
@@ -22,7 +25,7 @@ class JWTIdentityProvider(IdentityProvider):
         principal_id_claim: str = "sub",
         tenant_id_claim: str = "tenant_id",
         roles_claim: str = "roles",
-        permissions_claim: str = "permissions"
+        permissions_claim: str = "permissions",
     ):
         self.secret_key = secret_key
         self.public_key = public_key
@@ -39,23 +42,29 @@ class JWTIdentityProvider(IdentityProvider):
             return self.public_key
         if self.secret_key:
             return self.secret_key
-        raise GuardWAFAuthenticationError("JWTIdentityProvider requires either secret_key or public_key for verification.")
+        raise GuardWAFAuthenticationError(
+            "JWTIdentityProvider requires either secret_key or public_key for verification."
+        )
 
     def authenticate(self, credentials: IdentityCredentials) -> VerifiedPrincipal:
         raw_token = credentials.raw_token
         if not raw_token:
-            raise GuardWAFInvalidTokenError("Empty or missing raw_token in IdentityCredentials.")
+            raise GuardWAFInvalidTokenError(
+                "Empty or missing raw_token in IdentityCredentials."
+            )
 
         # Check for alg=none in unverified header
         try:
             unverified_header = jwt.get_unverified_header(raw_token)
             alg = unverified_header.get("alg", "").lower()
             if alg == "none" or "none" in self.algorithms:
-                raise GuardWAFInvalidTokenError("CRITICAL SECURITY ERROR: alg=none JWT tokens are strictly prohibited.")
+                raise GuardWAFInvalidTokenError(
+                    "CRITICAL SECURITY ERROR: alg=none JWT tokens are strictly prohibited."
+                )
         except Exception as err:
             if isinstance(err, GuardWAFInvalidTokenError):
                 raise err
-            raise GuardWAFInvalidTokenError(f"Failed to parse JWT header: {str(err)}")
+            raise GuardWAFInvalidTokenError(f"Failed to parse JWT header: {err!s}")
 
         key = self._get_verification_key(raw_token)
 
@@ -75,21 +84,29 @@ class JWTIdentityProvider(IdentityProvider):
                 algorithms=self.algorithms,
                 issuer=self.issuer,
                 audience=self.audience,
-                options=options
+                options=options,
             )
         except jwt.ExpiredSignatureError:
             raise GuardWAFAuthenticationError("JWT signature has expired.")
         except jwt.InvalidIssuerError:
-            raise GuardWAFAuthenticationError(f"JWT issuer mismatch. Expected '{self.issuer}'.")
+            raise GuardWAFAuthenticationError(
+                f"JWT issuer mismatch. Expected '{self.issuer}'."
+            )
         except jwt.InvalidAudienceError:
-            raise GuardWAFAuthenticationError(f"JWT audience mismatch. Expected '{self.audience}'.")
+            raise GuardWAFAuthenticationError(
+                f"JWT audience mismatch. Expected '{self.audience}'."
+            )
         except jwt.PyJWTError as e:
-            raise GuardWAFInvalidTokenError(f"Cryptographic JWT verification failed: {str(e)}")
+            raise GuardWAFInvalidTokenError(
+                f"Cryptographic JWT verification failed: {e!s}"
+            )
 
         # Extract Claims
         principal_id = payload.get(self.principal_id_claim) or payload.get("sub")
         if not principal_id:
-            raise GuardWAFInvalidTokenError(f"JWT missing required principal claim '{self.principal_id_claim}'.")
+            raise GuardWAFInvalidTokenError(
+                f"JWT missing required principal claim '{self.principal_id_claim}'."
+            )
 
         tenant_id = payload.get(self.tenant_id_claim, "default")
         roles = payload.get(self.roles_claim, [])
@@ -104,7 +121,11 @@ class JWTIdentityProvider(IdentityProvider):
         expires_at = datetime.fromtimestamp(exp_ts, tz=timezone.utc) if exp_ts else None
 
         iat_ts = payload.get("iat")
-        issued_at = datetime.fromtimestamp(iat_ts, tz=timezone.utc) if iat_ts else datetime.now(timezone.utc)
+        issued_at = (
+            datetime.fromtimestamp(iat_ts, tz=timezone.utc)
+            if iat_ts
+            else datetime.now(timezone.utc)
+        )
 
         return VerifiedPrincipal(
             principal_id=str(principal_id),
@@ -117,5 +138,5 @@ class JWTIdentityProvider(IdentityProvider):
             permissions=permissions,
             issued_at=issued_at,
             expires_at=expires_at,
-            claims=payload
+            claims=payload,
         )

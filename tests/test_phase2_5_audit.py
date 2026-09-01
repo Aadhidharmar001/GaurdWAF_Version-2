@@ -9,27 +9,30 @@ Tests:
 6. SQLite / Memory Atomicity under concurrent threads.
 """
 
-import pytest
 import asyncio
 import threading
 from datetime import datetime, timedelta, timezone
+
+import pytest
+
 from guardwaf import (
+    ActionState,
     GuardWAF,
+    GuardWAFAlreadyExecutedError,
+    GuardWAFHITLRequiredError,
+    GuardWAFSecurityError,
+    SQLiteStateStore,
     protect,
     session,
-    ActionState,
-    GuardWAFSecurityError,
-    GuardWAFHITLRequiredError,
-    GuardWAFAlreadyExecutedError,
-    GuardWAFActionExpiredError,
-    SQLiteStateStore,
 )
+
 
 @pytest.fixture
 def waf_client(tmp_path):
     db_file = str(tmp_path / "audit_state.db")
     state_store = SQLiteStateStore(db_path=db_file)
     return GuardWAF(config_path="rules.yaml", state_store=state_store)
+
 
 # --- Test 1: Parallel Concurrent Resume Race (Proves Exactly-Once Claim) ---
 @pytest.mark.asyncio
@@ -79,24 +82,26 @@ async def test_concurrent_resume_race_condition(waf_client):
     assert execution_counter == 1
     assert all(isinstance(e, GuardWAFAlreadyExecutedError) for e in errors)
 
+
 # --- Test 2: Multithreaded State Store Race Protection ---
 def test_multithreaded_sqlite_state_transition(tmp_path):
     db_file = str(tmp_path / "mt_state.db")
     store = SQLiteStateStore(db_path=db_file)
 
     from guardwaf.core.models import PendingAction
+
     act = PendingAction(
         pending_action_id="pa_mt_100",
         agent_id="agent_1",
         session_id="sess_1",
         tool_name="test_tool",
-        canonical_parameters='{}',
+        canonical_parameters="{}",
         parameters={},
         parameter_digest="digest",
         action_intent_digest="intent_digest",
         expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
         status=ActionState.APPROVED,
-        idempotency_key="idemp_1"
+        idempotency_key="idemp_1",
     )
     store.save_pending_action(act)
 
@@ -109,7 +114,7 @@ def test_multithreaded_sqlite_state_transition(tmp_path):
         res = store.update_pending_action_status(
             pending_action_id="pa_mt_100",
             new_status=ActionState.EXECUTING,
-            expected_old_status=ActionState.APPROVED
+            expected_old_status=ActionState.APPROVED,
         )
         with lock:
             if res:
@@ -125,6 +130,7 @@ def test_multithreaded_sqlite_state_transition(tmp_path):
 
     assert successful_claims == 1
     assert failed_claims == 9
+
 
 # --- Test 3: Telemetry Fault Isolation (Telemetry Error Does NOT Block Enforcement) ---
 @pytest.mark.asyncio
@@ -143,6 +149,7 @@ async def test_telemetry_failure_does_not_block_execution(waf_client):
         # Execution should succeed despite telemetry listener failure!
         res = lookup_customer("cust_telem")
         assert res["status"] == "found"
+
 
 # --- Test 4: Unwrapped Function Bypass Demonstration ---
 def test_unwrapped_python_function_bypass_reality(waf_client):

@@ -5,44 +5,47 @@ Audit Explorer, Incident Management, JWT Auth, SSE Event Streams, and Prometheus
 """
 
 import os
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Header, Response
+from typing import Any, Dict, Optional
+
+from fastapi import APIRouter, FastAPI, Header, HTTPException, Response
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from typing import Optional, List, Dict, Any
 
+from guardwaf.control_plane.auth.jwt import (
+    create_jwt_token,
+    verify_jwt_token,
+)
+from guardwaf.control_plane.events.sse import SSEBroadcaster
+from guardwaf.control_plane.models.org import Role
 from guardwaf.control_plane.repositories.memory_repo import MemoryControlPlaneRepository
-from guardwaf.control_plane.services.audit_service import AuditService
 from guardwaf.control_plane.services.agent_service import AgentService
-from guardwaf.control_plane.services.policy_service import PolicyService
+from guardwaf.control_plane.services.audit_service import AuditService
 from guardwaf.control_plane.services.authority_service import AuthorityService
 from guardwaf.control_plane.services.bundle_service import BundleService
-from guardwaf.control_plane.services.org_service import OrgService
 from guardwaf.control_plane.services.credential_service import CredentialService
 from guardwaf.control_plane.services.dashboard_service import DashboardService
 from guardwaf.control_plane.services.hitl_service import HITLWorkstationService
 from guardwaf.control_plane.services.incident_service import IncidentService
-
-from guardwaf.control_plane.auth.jwt import create_jwt_token, verify_jwt_token, hash_password
-from guardwaf.control_plane.events.sse import SSEBroadcaster
-from guardwaf.db.migrations import DatabaseMigrationManager
-
-from guardwaf.control_plane.models.org import Role
-from guardwaf.control_plane.auth.rbac import (
-    RBACManager,
-    ACTION_REGISTER_AGENT, ACTION_REVOKE_AGENT, ACTION_CREATE_POLICY,
-    ACTION_PUBLISH_POLICY, ACTION_ROLLBACK_POLICY, ACTION_GENERATE_CREDENTIAL,
-    ACTION_APPROVE_HITL, ACTION_TENANT_LOCKDOWN, ACTION_VIEW_AUDIT, ACTION_VIEW_INCIDENTS
-)
+from guardwaf.control_plane.services.org_service import OrgService
+from guardwaf.control_plane.services.policy_service import PolicyService
 from guardwaf.core.keys import KeyManager
+from guardwaf.db.migrations import DatabaseMigrationManager
 from guardwaf.sdk.client import GuardWAF
-from guardwaf.exceptions import GuardWAFSecurityError
+
 
 # Global Control Plane Service Container
 class ControlPlaneContainer:
-    def __init__(self, repo: Optional[MemoryControlPlaneRepository] = None, key_manager: Optional[KeyManager] = None, waf: Optional[GuardWAF] = None):
+    def __init__(
+        self,
+        repo: Optional[MemoryControlPlaneRepository] = None,
+        key_manager: Optional[KeyManager] = None,
+        waf: Optional[GuardWAF] = None,
+    ):
         self.repo = repo or MemoryControlPlaneRepository()
         self.key_manager = key_manager or KeyManager()
-        self.waf = waf or GuardWAF(secret_key=self.key_manager.get_active_key()[1].decode('utf-8'))
+        self.waf = waf or GuardWAF(
+            secret_key=self.key_manager.get_active_key()[1].decode("utf-8")
+        )
 
         self.audit_service = AuditService(self.repo)
         self.agent_service = AgentService(self.repo, self.audit_service)
@@ -53,7 +56,7 @@ class ControlPlaneContainer:
             policy_repo=self.repo,
             authority_service=self.authority_service,
             key_manager=self.key_manager,
-            audit_service=self.audit_service
+            audit_service=self.audit_service,
         )
         self.org_service = OrgService()
         self.credential_service = CredentialService()
@@ -63,7 +66,9 @@ class ControlPlaneContainer:
         self.sse_broadcaster = SSEBroadcaster()
         self.migration_mgr = DatabaseMigrationManager()
 
+
 _CONTAINER: Optional[ControlPlaneContainer] = None
+
 
 def get_container() -> ControlPlaneContainer:
     global _CONTAINER
@@ -71,7 +76,10 @@ def get_container() -> ControlPlaneContainer:
         _CONTAINER = ControlPlaneContainer()
     return _CONTAINER
 
-def create_control_plane_app(container: Optional[ControlPlaneContainer] = None) -> FastAPI:
+
+def create_control_plane_app(
+    container: Optional[ControlPlaneContainer] = None,
+) -> FastAPI:
     global _CONTAINER
     if container:
         _CONTAINER = container
@@ -79,7 +87,7 @@ def create_control_plane_app(container: Optional[ControlPlaneContainer] = None) 
     app = FastAPI(
         title="GuardWAF Enterprise Control Plane & Console",
         description="Production SaaS Platform for Action Authorization, Policy Distribution, and Real-Time Agent Governance",
-        version="0.5.0"
+        version="0.5.0",
     )
 
     router = APIRouter(prefix="/api/v1")
@@ -95,12 +103,18 @@ def create_control_plane_app(container: Optional[ControlPlaneContainer] = None) 
         if os.path.exists(html_path):
             with open(html_path, "r", encoding="utf-8") as f:
                 return HTMLResponse(content=f.read())
-        return HTMLResponse(content="<h1>GuardWAF Console UI Index Not Found</h1>", status_code=404)
+        return HTMLResponse(
+            content="<h1>GuardWAF Console UI Index Not Found</h1>", status_code=404
+        )
 
     # --- Health & Observability Endpoints ---
     @app.get("/health")
     def health_check():
-        return {"status": "HEALTHY", "component": "guardwaf-control-plane", "version": "0.5.0"}
+        return {
+            "status": "HEALTHY",
+            "component": "guardwaf-control-plane",
+            "version": "0.5.0",
+        }
 
     @app.get("/health/live")
     def health_live():
@@ -141,19 +155,25 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
             user_id=f"usr_{email.split('@')[0]}",
             email=email,
             organization_id=org_id,
-            role="SECURITY_ADMIN"
+            role="SECURITY_ADMIN",
         )
         return {
             "access_token": token,
             "token_type": "bearer",
             "expires_in": 86400,
-            "user": {"email": email, "organization_id": org_id, "role": "SECURITY_ADMIN"}
+            "user": {
+                "email": email,
+                "organization_id": org_id,
+                "role": "SECURITY_ADMIN",
+            },
         }
 
     @router.get("/auth/me")
     def get_auth_me(authorization: Optional[str] = Header(None)):
         if not authorization or not authorization.startswith("Bearer "):
-            raise HTTPException(status_code=401, detail="Missing or invalid Authorization header.")
+            raise HTTPException(
+                status_code=401, detail="Missing or invalid Authorization header."
+            )
         token = authorization.split(" ")[1]
         try:
             payload = verify_jwt_token(token)
@@ -167,25 +187,31 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
         c = get_container()
         return StreamingResponse(
             c.sse_broadcaster.sse_event_generator(tenant_id),
-            media_type="text/event-stream"
+            media_type="text/event-stream",
         )
 
     # --- Organization Endpoints ---
     @router.post("/organizations")
     def create_organization(payload: Dict[str, Any]):
         c = get_container()
-        return c.org_service.create_organization(name=payload["name"], slug=payload["slug"])
+        return c.org_service.create_organization(
+            name=payload["name"], slug=payload["slug"]
+        )
 
     @router.post("/users")
     def create_user(payload: Dict[str, Any]):
         c = get_container()
-        return c.org_service.create_user(email=payload["email"], display_name=payload["display_name"])
+        return c.org_service.create_user(
+            email=payload["email"], display_name=payload["display_name"]
+        )
 
     @router.post("/organizations/{org_id}/members")
     def add_member(org_id: str, payload: Dict[str, Any]):
         c = get_container()
         role = Role(payload["role"])
-        return c.org_service.add_member(organization_id=org_id, user_id=payload["user_id"], role=role)
+        return c.org_service.add_member(
+            organization_id=org_id, user_id=payload["user_id"], role=role
+        )
 
     # --- Agent Credential Endpoints ---
     @router.post("/credentials")
@@ -193,7 +219,7 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
         c = get_container()
         return c.credential_service.issue_credential(
             organization_id=payload.get("organization_id", "default"),
-            agent_id=payload["agent_id"]
+            agent_id=payload["agent_id"],
         )
 
     # --- Agent Endpoints ---
@@ -206,7 +232,7 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
             name=payload["name"],
             description=payload.get("description"),
             version=payload.get("version", "1.0.0"),
-            environment=payload.get("environment", "production")
+            environment=payload.get("environment", "production"),
         )
 
     @router.get("/agents/{agent_id}")
@@ -214,7 +240,9 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
         c = get_container()
         agent = c.agent_service.get_agent(agent_id)
         if not agent:
-            raise HTTPException(status_code=404, detail=f"Agent '{agent_id}' not found.")
+            raise HTTPException(
+                status_code=404, detail=f"Agent '{agent_id}' not found."
+            )
         return agent
 
     @router.post("/agents/{agent_id}/revoke")
@@ -233,7 +261,7 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
         return c.policy_service.create_policy(
             tenant_id=payload.get("tenant_id", "default"),
             name=payload["name"],
-            description=payload.get("description")
+            description=payload.get("description"),
         )
 
     @router.post("/policies/{policy_id}/versions")
@@ -248,7 +276,9 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
     def activate_policy(policy_id: str, payload: Dict[str, Any]):
         c = get_container()
         try:
-            return c.policy_service.publish_and_activate(policy_id, version_number=payload["version_number"])
+            return c.policy_service.publish_and_activate(
+                policy_id, version_number=payload["version_number"]
+            )
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
 
@@ -256,7 +286,9 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
     def rollback_policy(policy_id: str, payload: Dict[str, Any]):
         c = get_container()
         try:
-            return c.policy_service.rollback_version(policy_id, target_version_number=payload["version_number"])
+            return c.policy_service.rollback_version(
+                policy_id, target_version_number=payload["version_number"]
+            )
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
 
@@ -269,7 +301,7 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
                 tenant_id=payload.get("tenant_id", "default"),
                 agent_id=payload["agent_id"],
                 environment=payload.get("environment", "production"),
-                ttl_seconds=payload.get("ttl_seconds", 3600)
+                ttl_seconds=payload.get("ttl_seconds", 3600),
             )
             return bundle.model_dump()
         except Exception as e:
@@ -288,7 +320,7 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
             return c.hitl_service.approve_action(
                 organization_id=payload.get("organization_id", "default"),
                 pending_action_id=pending_action_id,
-                approver_id=payload.get("approver_id", "admin_approver")
+                approver_id=payload.get("approver_id", "admin_approver"),
             )
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
@@ -302,12 +334,14 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
         agents = c.agent_service.list_agents(tenant_id=org_id)
         revoked_count = 0
         for agent in agents:
-            c.agent_service.revoke_agent(agent.agent_id, reason="EMERGENCY_TENANT_LOCKDOWN")
+            c.agent_service.revoke_agent(
+                agent.agent_id, reason="EMERGENCY_TENANT_LOCKDOWN"
+            )
             revoked_count += 1
         return {
             "status": "EMERGENCY_LOCKDOWN_ACTIVATED",
             "organization_id": org_id,
-            "revoked_agents_count": revoked_count
+            "revoked_agents_count": revoked_count,
         }
 
     # --- Dashboard & Audit Endpoints ---
@@ -330,7 +364,7 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
             agent_id=payload["agent_id"],
             title=payload["title"],
             description=payload.get("description"),
-            correlation_id=payload.get("correlation_id")
+            correlation_id=payload.get("correlation_id"),
         )
 
     @router.get("/incidents/{organization_id}")

@@ -3,19 +3,20 @@ Redis Implementation of StateStore for Distributed Runtime Deployments.
 Provides atomic rate-limit counters, sequence state, and distributed pending action locks.
 """
 
-import json
 from datetime import datetime, timezone
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
+
+from guardwaf.core.models import ActionState, PendingAction
 from guardwaf.state.base import StateStore
-from guardwaf.core.models import PendingAction, ActionState
-from guardwaf.exceptions import GuardWAFConfigurationError
 
 try:
     import redis
+
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
     redis = None
+
 
 class RedisStateStore(StateStore):
     def __init__(self, redis_url: str = "redis://localhost:6379/0", client=None):
@@ -23,12 +24,16 @@ class RedisStateStore(StateStore):
             # We provide a contract-compatible fallback mock if redis library is not installed
             self._client = None
         else:
-            self._client = client or redis.Redis.from_url(redis_url, decode_responses=True)
+            self._client = client or redis.Redis.from_url(
+                redis_url, decode_responses=True
+            )
 
     def is_available(self) -> bool:
         return self._client is not None
 
-    def record_tool_call(self, session_id: str, tool_name: str, status: str = "allowed") -> None:
+    def record_tool_call(
+        self, session_id: str, tool_name: str, status: str = "allowed"
+    ) -> None:
         if status not in ["allowed", "shadow_blocked"]:
             return
         if not self._client:
@@ -40,7 +45,9 @@ class RedisStateStore(StateStore):
         pipe.expire(key, 3600)
         pipe.execute()
 
-    def get_tool_call_count(self, session_id: str, tool_name: str, window_seconds: int) -> int:
+    def get_tool_call_count(
+        self, session_id: str, tool_name: str, window_seconds: int
+    ) -> int:
         if not self._client:
             return 0
         key = f"gw:rate:{session_id}:{tool_name}"
@@ -103,12 +110,12 @@ class RedisStateStore(StateStore):
         expected_old_status: ActionState,
         approver_id: Optional[str] = None,
         denied_reason: Optional[str] = None,
-        approval_token: Optional[str] = None
+        approval_token: Optional[str] = None,
     ) -> bool:
         if not self._client:
             return False
         key = f"gw:pending:{pending_action_id}"
-        
+
         # Redis Watch for optimistic atomic state update
         with self._client.pipeline() as pipe:
             try:
@@ -142,7 +149,9 @@ class RedisStateStore(StateStore):
             except Exception:
                 return False
 
-    def list_pending_actions(self, status: Optional[ActionState] = None) -> List[PendingAction]:
+    def list_pending_actions(
+        self, status: Optional[ActionState] = None
+    ) -> List[PendingAction]:
         if not self._client:
             return []
         keys = self._client.keys("gw:pending:*")

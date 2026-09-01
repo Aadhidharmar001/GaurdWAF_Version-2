@@ -36,7 +36,7 @@ rules = PolicyRules(
     ],
     hitl_rules=[
         HITLRule(tool="process_payment", condition_param="amount", greater_than=200.0)
-    ]
+    ],
 )
 policy = PolicyConfig(metadata={"policy_name": "my_app_policy"}, rules=rules)
 waf = GuardWAF(policy=policy, secret_key="your_32_byte_secret_key_here")
@@ -45,6 +45,7 @@ waf = GuardWAF(policy=policy, secret_key="your_32_byte_secret_key_here")
 ### Step 3: Decorate Agent Tools
 ```python
 from guardwaf import protect
+
 
 @protect(tool_name="process_payment", client=waf)
 def process_payment(customer_id: str, amount: float):

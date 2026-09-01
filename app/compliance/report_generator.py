@@ -1,8 +1,10 @@
-import json
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
+
 from sqlalchemy.orm import Session
+
 from app.db.orm_models import AuditLog, HitlQueue
+
 
 def generate_compliance_report(db: Session) -> Dict[str, Any]:
     """Generates an executive SOC 2 / OWASP LLM Top 10 security compliance report based on DB audit history."""
@@ -10,13 +12,23 @@ def generate_compliance_report(db: Session) -> Dict[str, Any]:
     allowed_count = db.query(AuditLog).filter(AuditLog.status == "allowed").count()
     blocked_count = db.query(AuditLog).filter(AuditLog.status == "blocked").count()
     hitl_count = db.query(AuditLog).filter(AuditLog.status == "pending_hitl").count()
-    shadow_count = db.query(AuditLog).filter(AuditLog.status == "shadow_blocked").count()
+    shadow_count = (
+        db.query(AuditLog).filter(AuditLog.status == "shadow_blocked").count()
+    )
 
-    pending_hitl_queue = db.query(HitlQueue).filter(HitlQueue.status == "pending").count()
-    approved_hitl_queue = db.query(HitlQueue).filter(HitlQueue.status == "approved").count()
-    rejected_hitl_queue = db.query(HitlQueue).filter(HitlQueue.status == "rejected").count()
+    pending_hitl_queue = (
+        db.query(HitlQueue).filter(HitlQueue.status == "pending").count()
+    )
+    approved_hitl_queue = (
+        db.query(HitlQueue).filter(HitlQueue.status == "approved").count()
+    )
+    rejected_hitl_queue = (
+        db.query(HitlQueue).filter(HitlQueue.status == "rejected").count()
+    )
 
-    block_rate = round((blocked_count / total_audits * 100), 1) if total_audits > 0 else 0.0
+    block_rate = (
+        round((blocked_count / total_audits * 100), 1) if total_audits > 0 else 0.0
+    )
 
     timestamp_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
 
@@ -73,7 +85,7 @@ def generate_compliance_report(db: Session) -> Dict[str, Any]:
             "interception_rate_pct": block_rate,
             "hitl_pending": pending_hitl_queue,
             "hitl_approved": approved_hitl_queue,
-            "hitl_rejected": rejected_hitl_queue
+            "hitl_rejected": rejected_hitl_queue,
         },
-        "report_markdown": report_markdown
+        "report_markdown": report_markdown,
     }

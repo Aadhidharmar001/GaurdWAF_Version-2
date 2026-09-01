@@ -2,16 +2,19 @@
 Control Plane Authority Lifecycle Management Models.
 """
 
-from enum import Enum
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any, List
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
+
 
 class AuthorityStatus(str, Enum):
     ISSUED = "ISSUED"
     ACTIVE = "ACTIVE"
     REVOKED = "REVOKED"
     EXPIRED = "EXPIRED"
+
 
 class CentralAuthorityRecord(BaseModel):
     authority_id: str

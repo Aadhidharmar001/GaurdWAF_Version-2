@@ -2,13 +2,16 @@
 Model Context Protocol (MCP) Security Gateway Data Models.
 """
 
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, Optional
+
 from pydantic import BaseModel, Field
+
 
 class MCPToolMetadata(BaseModel):
     name: str
     description: Optional[str] = None
     input_schema: Dict[str, Any] = Field(default_factory=dict)
+
 
 class MCPToolRequest(BaseModel):
     jsonrpc: str = "2.0"
@@ -19,11 +22,13 @@ class MCPToolRequest(BaseModel):
     tool_name: str
     arguments: Dict[str, Any] = Field(default_factory=dict)
 
+
 class MCPSecurityDecision(BaseModel):
     allowed: bool
     reason: Optional[str] = None
     grant_id: Optional[str] = None
     pending_action_id: Optional[str] = None
+
 
 class MCPToolResponse(BaseModel):
     jsonrpc: str = "2.0"

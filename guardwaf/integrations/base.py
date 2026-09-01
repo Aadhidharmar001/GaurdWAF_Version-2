@@ -4,10 +4,12 @@ Enforces thin framework translation layers without duplicating security or polic
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional, Callable
+from typing import Any, Dict
+
+from guardwaf.core.action_envelope import ActionEnvelope
 from guardwaf.sdk.client import GuardWAF
 from guardwaf.sdk.runtime_adapter import AgentRuntimeAdapter
-from guardwaf.core.action_envelope import ActionEnvelope
+
 
 class BaseFrameworkAdapter(ABC):
     """
@@ -15,6 +17,7 @@ class BaseFrameworkAdapter(ABC):
     Adapters ONLY translate framework-specific tool invocations into an ActionEnvelope.
     Zero security or policy logic is implemented inside adapters!
     """
+
     def __init__(self, waf: GuardWAF, protocol_name: str = "custom"):
         self.waf = waf
         self.protocol_name = protocol_name
@@ -31,7 +34,7 @@ class BaseFrameworkAdapter(ABC):
         tenant_id: str = "default",
         agent_id: str = "default_agent",
         principal_id: str = "anonymous",
-        session_id: str = "sess_default"
+        session_id: str = "sess_default",
     ):
         envelope = ActionEnvelope(
             protocol=self.protocol_name,
@@ -40,6 +43,6 @@ class BaseFrameworkAdapter(ABC):
             principal_id=principal_id,
             session_id=session_id,
             tool_name=tool_name,
-            parameters=parameters
+            parameters=parameters,
         )
         return self.runtime_adapter.authorize_action(envelope)

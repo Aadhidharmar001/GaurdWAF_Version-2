@@ -3,13 +3,16 @@ CrewAI Framework Adapter for GuardWAF Pre-Execution Tool Governance.
 Translates CrewAI tool invocations to ActionEnvelope and delegates 100% of policy evaluation to GuardWAF engine.
 """
 
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Optional
+
+from guardwaf.exceptions import GuardWAFSecurityError
 from guardwaf.integrations.base import BaseFrameworkAdapter
 from guardwaf.sdk.client import GuardWAF
-from guardwaf.exceptions import GuardWAFSecurityError
+
 
 class DummyCrewAITool:
     """Mock/Fallback CrewAI tool container for testing when crewai package is not installed."""
+
     def __init__(self, name: str, func: Callable, description: str = ""):
         self.name = name
         self.func = func
@@ -31,7 +34,9 @@ class CrewAIAdapter(BaseFrameworkAdapter):
         super().__init__(waf=waf, protocol_name="crewai")
 
     def wrap_tool(self, tool: Any, tool_name: Optional[str] = None) -> Any:
-        t_name = tool_name or getattr(tool, "name", getattr(tool, "__name__", "crewai_tool"))
+        t_name = tool_name or getattr(
+            tool, "name", getattr(tool, "__name__", "crewai_tool")
+        )
         execution_counter = {"count": 0}
 
         target_func = getattr(tool, "_run", tool)
@@ -45,11 +50,14 @@ class CrewAIAdapter(BaseFrameworkAdapter):
                 tool_name=t_name,
                 parameters=params,
                 tenant_id=kwargs.get("tenant_id", "default"),
-                agent_id=kwargs.get("agent_id", "crewai_agent")
+                agent_id=kwargs.get("agent_id", "crewai_agent"),
             )
 
             if not allowed:
-                raise GuardWAFSecurityError(reason or f"CrewAI tool '{t_name}' blocked by GuardWAF policy.", tool_name=t_name)
+                raise GuardWAFSecurityError(
+                    reason or f"CrewAI tool '{t_name}' blocked by GuardWAF policy.",
+                    tool_name=t_name,
+                )
 
             execution_counter["count"] += 1
             if callable(target_func):
@@ -62,12 +70,16 @@ class CrewAIAdapter(BaseFrameworkAdapter):
             tool._run = _protected_run
             return tool
 
-        return DummyCrewAITool(name=t_name, func=_protected_run, description=getattr(tool, "description", ""))
+        return DummyCrewAITool(
+            name=t_name,
+            func=_protected_run,
+            description=getattr(tool, "description", ""),
+        )
+
 
 def protect_tool(tool: Any, waf: GuardWAF, tool_name: Optional[str] = None) -> Any:
     adapter = CrewAIAdapter(waf=waf)
     return adapter.wrap_tool(tool, tool_name=tool_name)
 
+
 protect_crewai_tool = protect_tool
-
-

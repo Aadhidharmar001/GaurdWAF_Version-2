@@ -3,10 +3,10 @@ Phase 7 Package & Distribution Integrity Test Suite.
 Verifies pyproject.toml package metadata, build release scripts, and clean package importability.
 """
 
-import pytest
 import os
-import sys
 import subprocess
+import sys
+
 
 def test_release_build_script():
     env = {**os.environ, "PYTHONPATH": "."}
@@ -14,6 +14,7 @@ def test_release_build_script():
     res = subprocess.run(cmd, env=env, capture_output=True, text=True, encoding="utf-8")
     assert res.returncode == 0
     assert "BUILD SUCCESSFUL" in res.stdout
+
 
 def test_package_verification_script():
     env = {**os.environ, "PYTHONPATH": "."}

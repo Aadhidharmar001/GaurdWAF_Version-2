@@ -4,25 +4,33 @@ Provides secure secret key resolution, environment checks, and multi-key keyring
 """
 
 import os
-from typing import Optional, Dict, Tuple
+from typing import Dict, Optional, Tuple
+
 from guardwaf.exceptions import GuardWAFConfigurationError
 
 DEFAULT_DEV_KEY = "gw_secret_default_development_key"
+
 
 class KeyManager:
     """
     Manages secret keys and keyring dictionaries for signing and verifying Action Grants and HITL tokens.
     Supports key rotation via key_ids (e.g., 'k1', 'k2').
     """
+
     def __init__(
         self,
         secret_key: Optional[str] = None,
         key_id: str = "k1",
         keyring: Optional[Dict[str, str]] = None,
-        environment: Optional[str] = None
+        environment: Optional[str] = None,
     ):
         self.active_key_id = key_id
-        env = (environment or os.getenv("GUARDWAF_ENV") or os.getenv("ENVIRONMENT") or "development").lower()
+        env = (
+            environment
+            or os.getenv("GUARDWAF_ENV")
+            or os.getenv("ENVIRONMENT")
+            or "development"
+        ).lower()
 
         # 1. Resolve primary secret key
         resolved_primary = secret_key or os.getenv("GUARDWAF_SECRET_KEY")
@@ -42,10 +50,10 @@ class KeyManager:
 
         if keyring:
             for k_id, k_val in keyring.items():
-                self._keyring[k_id] = k_val.encode('utf-8')
-        
+                self._keyring[k_id] = k_val.encode("utf-8")
+
         # Ensure active key_id is registered in keyring
-        self._keyring[self.active_key_id] = primary_key.encode('utf-8')
+        self._keyring[self.active_key_id] = primary_key.encode("utf-8")
 
     def get_active_key(self) -> Tuple[str, bytes]:
         """Returns (active_key_id, secret_key_bytes)."""
@@ -57,6 +65,5 @@ class KeyManager:
 
     def rotate_key(self, new_key_id: str, new_secret_key: str) -> None:
         """Rotates active signing key to a new key_id while maintaining backward keyring lookup."""
-        self._keyring[new_key_id] = new_secret_key.encode('utf-8')
+        self._keyring[new_key_id] = new_secret_key.encode("utf-8")
         self.active_key_id = new_key_id
-

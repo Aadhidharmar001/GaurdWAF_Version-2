@@ -3,9 +3,11 @@ Core Data Models for GuardWAF Action Authorization Engine.
 """
 
 import enum
-from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
+
 
 class ActionState(str, enum.Enum):
     CREATED = "CREATED"
@@ -16,6 +18,7 @@ class ActionState(str, enum.Enum):
     EXECUTING = "EXECUTING"
     EXECUTED = "EXECUTED"
 
+
 class SessionContext(BaseModel):
     session_id: str
     principal_id: Optional[str] = None
@@ -24,11 +27,13 @@ class SessionContext(BaseModel):
     user_role: Optional[str] = "user"
     allowed_scope_ids: List[str] = Field(default_factory=list)
 
+
 class AgentIdentity(BaseModel):
     agent_id: str
     owning_team: Optional[str] = "engineering"
     approved_scopes: List[str] = Field(default_factory=list)
     status: str = "active"
+
 
 class ActionIntent(BaseModel):
     intent_id: str
@@ -38,6 +43,7 @@ class ActionIntent(BaseModel):
     parameters: Dict[str, Any] = Field(default_factory=dict)
     parameter_digest: str
     session_context: Optional[SessionContext] = None
+
 
 class ActionGrant(BaseModel):
     grant_id: str
@@ -82,6 +88,7 @@ class PendingAction(BaseModel):
     idempotency_key: str
     approval_token: Optional[str] = None
 
+
 class RuleResult(BaseModel):
     status: str  # "allowed", "blocked", "pending_hitl", "shadow_blocked"
     outcome: str
@@ -95,7 +102,9 @@ class RuleResult(BaseModel):
     hitl_approval_token: Optional[str] = None
     pending_action: Optional[PendingAction] = None
 
+
 # --- Policy Rule Configurations ---
+
 
 class RateLimitRule(BaseModel):
     tool: str
@@ -106,6 +115,7 @@ class RateLimitRule(BaseModel):
 
     class Config:
         populate_by_name = True
+
 
 class SequenceRule(BaseModel):
     tool: str
@@ -121,12 +131,14 @@ class SequenceRule(BaseModel):
             return [self.required_predecessor]
         return []
 
+
 class BulkThresholdRule(BaseModel):
     tool: str
     param_name: str
     max_value: int
     action: str = "block"
     shadow_mode: bool = False
+
 
 class DataScopeRule(BaseModel):
     tool: str
@@ -136,6 +148,7 @@ class DataScopeRule(BaseModel):
     action: str = "block"
     shadow_mode: bool = False
 
+
 class ParameterBlocklistRule(BaseModel):
     tool: str
     param_name: str
@@ -143,12 +156,14 @@ class ParameterBlocklistRule(BaseModel):
     action: str = "block"
     shadow_mode: bool = False
 
+
 class HITLRule(BaseModel):
     tool: str
     condition_param: Optional[str] = None
     greater_than: Optional[float] = None
     action: str = "require_hitl"
     shadow_mode: bool = False
+
 
 class PolicyRules(BaseModel):
     rate_limits: List[RateLimitRule] = Field(default_factory=list)
@@ -158,10 +173,12 @@ class PolicyRules(BaseModel):
     parameter_blocklist: List[ParameterBlocklistRule] = Field(default_factory=list)
     hitl_rules: List[HITLRule] = Field(default_factory=list)
 
+
 class PolicyMetadata(BaseModel):
     policy_name: str
     version: str = "1.0"
     description: Optional[str] = "GuardWAF Security Policy"
+
 
 class PolicyConfig(BaseModel):
     metadata: PolicyMetadata

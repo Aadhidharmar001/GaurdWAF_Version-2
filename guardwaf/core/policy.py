@@ -3,20 +3,23 @@ Policy Loader and YAML Parser Module for GuardWAF.
 """
 
 import os
+from typing import Any, Dict
+
 import yaml
-from typing import Dict, Any, Union
+
 from guardwaf.core.models import (
+    BulkThresholdRule,
+    DataScopeRule,
+    HITLRule,
+    ParameterBlocklistRule,
     PolicyConfig,
     PolicyMetadata,
     PolicyRules,
     RateLimitRule,
     SequenceRule,
-    BulkThresholdRule,
-    DataScopeRule,
-    ParameterBlocklistRule,
-    HITLRule,
 )
 from guardwaf.exceptions import GuardWAFConfigurationError
+
 
 def parse_policy_dict(data: Dict[str, Any]) -> PolicyConfig:
     """
@@ -32,12 +35,19 @@ def parse_policy_dict(data: Dict[str, Any]) -> PolicyConfig:
         shadow_mode = data.get("shadow_mode", False)
 
         rules_raw = data.get("rules", {})
-        
-        rate_limits = [RateLimitRule(**item) for item in rules_raw.get("rate_limits", [])]
+
+        rate_limits = [
+            RateLimitRule(**item) for item in rules_raw.get("rate_limits", [])
+        ]
         sequences = [SequenceRule(**item) for item in rules_raw.get("sequences", [])]
-        bulk_thresholds = [BulkThresholdRule(**item) for item in rules_raw.get("bulk_thresholds", [])]
+        bulk_thresholds = [
+            BulkThresholdRule(**item) for item in rules_raw.get("bulk_thresholds", [])
+        ]
         data_scope = [DataScopeRule(**item) for item in rules_raw.get("data_scope", [])]
-        parameter_blocklist = [ParameterBlocklistRule(**item) for item in rules_raw.get("parameter_blocklist", [])]
+        parameter_blocklist = [
+            ParameterBlocklistRule(**item)
+            for item in rules_raw.get("parameter_blocklist", [])
+        ]
         hitl_rules = [HITLRule(**item) for item in rules_raw.get("hitl_rules", [])]
 
         rules = PolicyRules(
@@ -51,7 +61,10 @@ def parse_policy_dict(data: Dict[str, Any]) -> PolicyConfig:
 
         return PolicyConfig(metadata=metadata, shadow_mode=shadow_mode, rules=rules)
     except Exception as e:
-        raise GuardWAFConfigurationError(f"Failed to parse policy configuration: {str(e)}") from e
+        raise GuardWAFConfigurationError(
+            f"Failed to parse policy configuration: {e!s}"
+        ) from e
+
 
 def load_policy_from_yaml(filepath_or_content: str) -> PolicyConfig:
     """
@@ -66,9 +79,11 @@ def load_policy_from_yaml(filepath_or_content: str) -> PolicyConfig:
     try:
         data = yaml.safe_load(content)
         if not isinstance(data, dict):
-            raise GuardWAFConfigurationError("YAML content must evaluate to a dictionary.")
+            raise GuardWAFConfigurationError(
+                "YAML content must evaluate to a dictionary."
+            )
         return parse_policy_dict(data)
     except Exception as e:
         if isinstance(e, GuardWAFConfigurationError):
             raise e
-        raise GuardWAFConfigurationError(f"Invalid YAML syntax in policy: {str(e)}") from e
+        raise GuardWAFConfigurationError(f"Invalid YAML syntax in policy: {e!s}") from e

@@ -1,5 +1,6 @@
 from app.models import RuleResult
 
+
 def apply_shadow_mode_transformation(result: RuleResult) -> RuleResult:
     """
     If a rule result is shadow_blocked, transform its disposition so that the agent call
@@ -9,6 +10,6 @@ def apply_shadow_mode_transformation(result: RuleResult) -> RuleResult:
         return RuleResult(
             status="allowed",
             outcome=f"[SHADOW MODE] Violation detected: {result.outcome}. Action allowed in shadow mode.",
-            matched_rule=f"[SHADOW] {result.matched_rule}"
+            matched_rule=f"[SHADOW] {result.matched_rule}",
         )
     return result

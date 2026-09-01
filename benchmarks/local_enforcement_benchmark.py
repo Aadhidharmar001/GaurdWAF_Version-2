@@ -5,21 +5,25 @@ Measures p50, p95, p99 latency and throughput (requests/sec) over 10,000 protect
 
 import sys
 import time
-import math
-import statistics
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 from guardwaf import GuardWAF, protect
-from guardwaf.core.models import PolicyConfig, PolicyRules, BulkThresholdRule
+from guardwaf.core.models import BulkThresholdRule, PolicyConfig, PolicyRules
+
 
 @protect(tool_name="benchmark_tool")
 def benchmark_tool(x: int):
     return x * 2
 
+
 def run_local_benchmark(total_calls: int = 10000):
-    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="benchmark_tool", param_name="x", max_value=1000000)])
+    rules = PolicyRules(
+        bulk_thresholds=[
+            BulkThresholdRule(tool="benchmark_tool", param_name="x", max_value=1000000)
+        ]
+    )
     policy = PolicyConfig(metadata={"policy_name": "bench_policy"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="secret_bench_key")
     waf.register_tool("benchmark_tool", benchmark_tool)
@@ -50,7 +54,7 @@ def run_local_benchmark(total_calls: int = 10000):
         "p50_latency_ms": round(p50, 4),
         "p95_latency_ms": round(p95, 4),
         "p99_latency_ms": round(p99, 4),
-        "max_latency_ms": round(max_lat, 4)
+        "max_latency_ms": round(max_lat, 4),
     }
 
     print("=" * 65)
@@ -65,6 +69,7 @@ def run_local_benchmark(total_calls: int = 10000):
     print(f" Max Latency:         {report['max_latency_ms']} ms")
     print("=" * 65)
     return report
+
 
 if __name__ == "__main__":
     run_local_benchmark()

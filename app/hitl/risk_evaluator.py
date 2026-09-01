@@ -1,5 +1,5 @@
-import re
-from typing import Dict, Any, Optional, List, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
+
 
 class RiskEvaluationResult(TypedDict):
     fraud_score: float
@@ -7,7 +7,10 @@ class RiskEvaluationResult(TypedDict):
     risk_level: str
     risk_reasons: List[str]
 
-def evaluate_hitl_risk(tool: str, parameters: Dict[str, Any], matched_rule: Optional[str] = None) -> RiskEvaluationResult:
+
+def evaluate_hitl_risk(
+    tool: str, parameters: Dict[str, Any], matched_rule: Optional[str] = None
+) -> RiskEvaluationResult:
     """
     Evaluates an HITL-quarantined tool request to determine:
     1. fraud_score: 0.0 - 100.0 (% probability request is fraudulent/unauthorized)
@@ -33,7 +36,15 @@ def evaluate_hitl_risk(tool: str, parameters: Dict[str, Any], matched_rule: Opti
             confidence_score += 4.0
 
     # Rule 2: SQL Injection or Destructive Parameters
-    sql_keywords = ["drop table", "truncate", "shutdown", "delete from", "grant all", "--", "or 1=1"]
+    sql_keywords = [
+        "drop table",
+        "truncate",
+        "shutdown",
+        "delete from",
+        "grant all",
+        "--",
+        "or 1=1",
+    ]
     matched_sql = [kw for kw in sql_keywords if kw in params_str]
     if matched_sql:
         fraud_score += 45.0
@@ -61,7 +72,9 @@ def evaluate_hitl_risk(tool: str, parameters: Dict[str, Any], matched_rule: Opti
 
     # Fallback reason if none matched specifically
     if not risk_reasons:
-        risk_reasons.append(f"Pattern trigger on policy rule: {matched_rule or 'Data Scope Filter'}")
+        risk_reasons.append(
+            f"Pattern trigger on policy rule: {matched_rule or 'Data Scope Filter'}"
+        )
 
     # Clamp scores
     fraud_score = max(10.0, min(99.0, round(fraud_score, 1)))
@@ -81,5 +94,5 @@ def evaluate_hitl_risk(tool: str, parameters: Dict[str, Any], matched_rule: Opti
         "fraud_score": fraud_score,
         "confidence_score": confidence_score,
         "risk_level": risk_level,
-        "risk_reasons": risk_reasons
+        "risk_reasons": risk_reasons,
     }

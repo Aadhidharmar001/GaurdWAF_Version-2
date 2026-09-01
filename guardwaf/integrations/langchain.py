@@ -3,13 +3,16 @@ LangChain Framework Adapter for GuardWAF Pre-Execution Tool Governance.
 Translates LangChain tool invocations to ActionEnvelope and delegates 100% of policy evaluation to GuardWAF engine.
 """
 
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Optional
+
+from guardwaf.exceptions import GuardWAFSecurityError
 from guardwaf.integrations.base import BaseFrameworkAdapter
 from guardwaf.sdk.client import GuardWAF
-from guardwaf.exceptions import GuardWAFSecurityError
+
 
 class DummyLangChainTool:
     """Mock/Fallback LangChain tool container for testing when langchain package is not installed."""
+
     def __init__(self, name: str, func: Callable, description: str = ""):
         self.name = name
         self.func = func
@@ -27,14 +30,15 @@ class DummyLangChainTool:
         return self.run(**kwargs)
 
 
-
 class LangChainAdapter(BaseFrameworkAdapter):
     def __init__(self, waf: GuardWAF):
         super().__init__(waf=waf, protocol_name="langchain")
 
     def wrap_tool(self, tool: Any, tool_name: Optional[str] = None) -> Any:
 
-        t_name = tool_name or getattr(tool, "name", getattr(tool, "__name__", "langchain_tool"))
+        t_name = tool_name or getattr(
+            tool, "name", getattr(tool, "__name__", "langchain_tool")
+        )
 
         # Extract target function body
         if hasattr(tool, "_run"):
@@ -59,6 +63,7 @@ class LangChainAdapter(BaseFrameworkAdapter):
             ctx_agent = "langchain_agent"
             ctx_session = "sess_default"
             from guardwaf.sdk.context import get_current_execution_context
+
             exec_ctx = get_current_execution_context()
             if exec_ctx and exec_ctx.tenant_id:
                 ctx_tenant = exec_ctx.tenant_id
@@ -67,45 +72,49 @@ class LangChainAdapter(BaseFrameworkAdapter):
             if exec_ctx and exec_ctx.session_id:
                 ctx_session = exec_ctx.session_id
 
-
             allowed, reason, grant, pending = self.evaluate_envelope(
                 tool_name=t_name,
                 parameters=params,
                 tenant_id=kwargs.get("tenant_id") or ctx_tenant,
                 agent_id=kwargs.get("agent_id") or ctx_agent,
-                session_id=kwargs.get("session_id") or ctx_session
+                session_id=kwargs.get("session_id") or ctx_session,
             )
-
-
-
 
             if not allowed:
                 if pending:
                     from guardwaf.exceptions import GuardWAFHITLRequiredError
+
                     raise GuardWAFHITLRequiredError(
-                        message=reason or f"Action '{t_name}' requires Human-in-the-Loop approval.",
+                        message=reason
+                        or f"Action '{t_name}' requires Human-in-the-Loop approval.",
                         pending_action_id=pending.pending_action_id,
                         tool_name=t_name,
-                        hitl_id=pending.pending_action_id
+                        hitl_id=pending.pending_action_id,
                     )
-                raise GuardWAFSecurityError(reason or f"LangChain tool '{t_name}' blocked by GuardWAF policy.", tool_name=t_name)
-
+                raise GuardWAFSecurityError(
+                    reason or f"LangChain tool '{t_name}' blocked by GuardWAF policy.",
+                    tool_name=t_name,
+                )
 
             execution_counter["count"] += 1
-            if hasattr(tool, "run") and callable(getattr(tool, "run")):
+            if hasattr(tool, "run") and callable(tool.run):
                 return target_func(*args, **kwargs)
             return target_func(*args, **kwargs)
 
         # Attach wrapper counter
         _protected_run.execution_counter = execution_counter
-        
+
         if hasattr(tool, "run"):
             tool.run = _protected_run
             return tool
-        
-        return DummyLangChainTool(name=t_name, func=_protected_run, description=getattr(tool, "description", ""))
+
+        return DummyLangChainTool(
+            name=t_name,
+            func=_protected_run,
+            description=getattr(tool, "description", ""),
+        )
+
 
 def protect_tool(tool: Any, waf: GuardWAF, tool_name: Optional[str] = None) -> Any:
     adapter = LangChainAdapter(waf=waf)
     return adapter.wrap_tool(tool, tool_name=tool_name)
-

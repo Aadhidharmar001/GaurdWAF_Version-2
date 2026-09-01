@@ -5,57 +5,87 @@ Verifies Invariant A: Downstream execution count == 0 on BLOCKED / HITL / REVOKE
 """
 
 import sys
-import os
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-from guardwaf import GuardWAF, protect, GuardWAFSecurityError, GuardWAFHITLRequiredError
-from guardwaf.core.models import PolicyConfig, PolicyRules, BulkThresholdRule, HITLRule, ParameterBlocklistRule
+from guardwaf import GuardWAF, GuardWAFHITLRequiredError, GuardWAFSecurityError, protect
 from guardwaf.control_plane.services.hitl_service import HITLWorkstationService
+from guardwaf.core.models import (
+    BulkThresholdRule,
+    HITLRule,
+    ParameterBlocklistRule,
+    PolicyConfig,
+    PolicyRules,
+)
 
 execution_counters = {
     "lookup_customer": 0,
     "view_orders": 0,
     "issue_refund": 0,
     "cancel_order": 0,
-    "update_address": 0
+    "update_address": 0,
 }
+
 
 def raw_lookup_customer(customer_id: str):
     execution_counters["lookup_customer"] += 1
     return {"customer_id": customer_id, "name": "Alice Smith"}
 
+
 def raw_view_orders(customer_id: str):
     execution_counters["view_orders"] += 1
     return {"customer_id": customer_id, "orders": [{"id": "ord_101", "total": 150.0}]}
+
 
 def raw_issue_refund(customer_id: str, amount: float):
     execution_counters["issue_refund"] += 1
     return {"status": "REFUNDED", "amount": amount}
 
+
 def raw_cancel_order(order_id: str):
     execution_counters["cancel_order"] += 1
     return {"status": "CANCELLED", "order_id": order_id}
+
 
 def raw_update_address(customer_id: str, new_address: str):
     execution_counters["update_address"] += 1
     return {"status": "UPDATED", "address": new_address}
 
+
 def main():
-    print("==========================================================================================")
+    print(
+        "=========================================================================================="
+    )
     print("🛡️  PHASE 10 REAL-WORLD CUSTOMER SUPPORT AGENT INTEGRATION")
-    print("==========================================================================================")
+    print(
+        "=========================================================================================="
+    )
 
     rules = PolicyRules(
-        bulk_thresholds=[BulkThresholdRule(tool="issue_refund", param_name="amount", max_value=500.0)],
-        hitl_rules=[HITLRule(tool="issue_refund", condition_param="amount", greater_than=100.0)],
-        parameter_blocklist=[ParameterBlocklistRule(tool="cancel_order", param_name="order_id", blocklist=["CRITICAL_SYSTEM_ORDER"])]
+        bulk_thresholds=[
+            BulkThresholdRule(tool="issue_refund", param_name="amount", max_value=500.0)
+        ],
+        hitl_rules=[
+            HITLRule(tool="issue_refund", condition_param="amount", greater_than=100.0)
+        ],
+        parameter_blocklist=[
+            ParameterBlocklistRule(
+                tool="cancel_order",
+                param_name="order_id",
+                blocklist=["CRITICAL_SYSTEM_ORDER"],
+            )
+        ],
     )
-    waf = GuardWAF(policy=PolicyConfig(metadata={"policy_name": "cs"}, rules=rules), secret_key="cs_p10_secret_key_32bytes_long_min")
+    waf = GuardWAF(
+        policy=PolicyConfig(metadata={"policy_name": "cs"}, rules=rules),
+        secret_key="cs_p10_secret_key_32bytes_long_min",
+    )
     hitl_service = HITLWorkstationService(waf=waf)
 
-    lookup_customer = protect(tool_name="lookup_customer", client=waf)(raw_lookup_customer)
+    lookup_customer = protect(tool_name="lookup_customer", client=waf)(
+        raw_lookup_customer
+    )
     view_orders = protect(tool_name="view_orders", client=waf)(raw_view_orders)
     issue_refund = protect(tool_name="issue_refund", client=waf)(raw_issue_refund)
     cancel_order = protect(tool_name="cancel_order", client=waf)(raw_cancel_order)
@@ -77,7 +107,9 @@ def main():
 
         exec_during_hitl = execution_counters["issue_refund"]
         assert exec_before_hitl == exec_during_hitl
-        print(f"   🔒 Downstream Execution Count During HITL: {exec_during_hitl} (Delta: 0)")
+        print(
+            f"   🔒 Downstream Execution Count During HITL: {exec_during_hitl} (Delta: 0)"
+        )
 
         # Approve & Resume
         tok = hitl_service.approve_action("default", p_id, "admin")["approval_token"]
@@ -95,11 +127,18 @@ def main():
 
         exec_after_block = execution_counters["cancel_order"]
         assert exec_before_block == exec_after_block
-        print(f"   🔒 Downstream Execution Count After Block: {exec_after_block} (Delta: 0)")
+        print(
+            f"   🔒 Downstream Execution Count After Block: {exec_after_block} (Delta: 0)"
+        )
 
-    print("==========================================================================================")
+    print(
+        "=========================================================================================="
+    )
     print("✅ CUSTOMER SUPPORT REAL-WORLD INTEGRATION COMPLETE!")
-    print("==========================================================================================")
+    print(
+        "=========================================================================================="
+    )
+
 
 if __name__ == "__main__":
     main()

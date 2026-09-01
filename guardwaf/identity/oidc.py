@@ -4,11 +4,14 @@ Extends JWTIdentityProvider for enterprise identity management (Okta, Auth0, Ent
 """
 
 import time
+from typing import Callable, Dict, Optional
+
 import jwt
-from typing import Optional, List, Dict, Any, Callable
+
+from guardwaf.exceptions import GuardWAFInvalidTokenError
 from guardwaf.identity.jwt import JWTIdentityProvider
 from guardwaf.identity.models import IdentityCredentials, VerifiedPrincipal
-from guardwaf.exceptions import GuardWAFAuthenticationError, GuardWAFInvalidTokenError
+
 
 class OIDCIdentityProvider(JWTIdentityProvider):
     def __init__(
@@ -19,14 +22,14 @@ class OIDCIdentityProvider(JWTIdentityProvider):
         jwks_fetcher: Optional[Callable[[str], Dict[str, str]]] = None,
         cache_ttl_seconds: int = 3600,
         principal_id_claim: str = "sub",
-        tenant_id_claim: str = "tenant_id"
+        tenant_id_claim: str = "tenant_id",
     ):
         super().__init__(
             issuer=issuer,
             audience=audience,
             algorithms=["RS256"],
             principal_id_claim=principal_id_claim,
-            tenant_id_claim=tenant_id_claim
+            tenant_id_claim=tenant_id_claim,
         )
         self.jwks_fetcher = jwks_fetcher
         self.cache_ttl = cache_ttl_seconds
@@ -46,7 +49,9 @@ class OIDCIdentityProvider(JWTIdentityProvider):
             self._last_fetch_time = now
 
         if kid not in self._key_cache:
-            raise GuardWAFInvalidTokenError(f"JWKS Key ID '{kid}' not found in OIDC provider public key set.")
+            raise GuardWAFInvalidTokenError(
+                f"JWKS Key ID '{kid}' not found in OIDC provider public key set."
+            )
 
         return self._key_cache[kid]
 
@@ -56,10 +61,12 @@ class OIDCIdentityProvider(JWTIdentityProvider):
             header = jwt.get_unverified_header(raw_token)
             kid = header.get("kid")
         except Exception as e:
-            raise GuardWAFInvalidTokenError(f"Failed to read OIDC JWT header: {str(e)}")
+            raise GuardWAFInvalidTokenError(f"Failed to read OIDC JWT header: {e!s}")
 
         if not kid and not self._key_cache:
-            raise GuardWAFInvalidTokenError("OIDC JWT token missing required 'kid' header field.")
+            raise GuardWAFInvalidTokenError(
+                "OIDC JWT token missing required 'kid' header field."
+            )
 
         key_id = kid or list(self._key_cache.keys())[0]
         public_key = self._resolve_jwks_key(key_id)

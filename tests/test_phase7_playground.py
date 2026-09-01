@@ -3,10 +3,10 @@ Phase 7 Hero Feature Playground Test Suite.
 Verifies examples/playground/main.py end-to-end execution.
 """
 
-import pytest
-import sys
 import os
 import subprocess
+import sys
+
 
 def test_playground_hero_feature_execution():
     env = {**os.environ, "PYTHONPATH": "."}

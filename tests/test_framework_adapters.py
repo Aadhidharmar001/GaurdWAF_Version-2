@@ -4,28 +4,36 @@ Verifies thin adapter translation, zero security logic duplication, and zero exe
 """
 
 import pytest
+
 from guardwaf import GuardWAF
-from guardwaf.core.models import PolicyConfig, PolicyRules, BulkThresholdRule
 from guardwaf.core.keys import KeyManager
+from guardwaf.core.models import BulkThresholdRule, PolicyConfig, PolicyRules
+from guardwaf.exceptions import GuardWAFSecurityError
+from guardwaf.integrations.crewai import protect_tool as protect_crewai_tool
 from guardwaf.integrations.custom import CustomAgentAdapter
 from guardwaf.integrations.langchain import protect_tool as protect_langchain_tool
-from guardwaf.integrations.crewai import protect_tool as protect_crewai_tool
-from guardwaf.exceptions import GuardWAFSecurityError
+
 
 @pytest.fixture
 def setup_framework_waf():
     km = KeyManager(secret_key="dev_secret_key_framework_tests")
     rules = PolicyRules(
-        bulk_thresholds=[BulkThresholdRule(tool="process_payment", param_name="amount", max_value=200)]
+        bulk_thresholds=[
+            BulkThresholdRule(
+                tool="process_payment", param_name="amount", max_value=200
+            )
+        ]
     )
     policy = PolicyConfig(metadata={"policy_name": "framework_policy"}, rules=rules)
     return GuardWAF(policy=policy, secret_key="dev_secret_key_framework_tests")
+
 
 def test_custom_agent_adapter(setup_framework_waf):
     waf = setup_framework_waf
     adapter = CustomAgentAdapter(waf=waf)
 
     call_count = {"count": 0}
+
     def pay_func(amount: float, **kwargs):
         call_count["count"] += 1
         return "PAID"
@@ -42,9 +50,11 @@ def test_custom_agent_adapter(setup_framework_waf):
         protected_pay(amount=300.0)
     assert call_count["count"] == 1  # Zero additional executions!
 
+
 def test_langchain_adapter(setup_framework_waf):
     waf = setup_framework_waf
     call_count = {"count": 0}
+
     def pay_func(amount: float, **kwargs):
         call_count["count"] += 1
         return "PAID"
@@ -60,9 +70,11 @@ def test_langchain_adapter(setup_framework_waf):
         lc_tool.run(amount=500.0)
     assert call_count["count"] == 1
 
+
 def test_crewai_adapter(setup_framework_waf):
     waf = setup_framework_waf
     call_count = {"count": 0}
+
     def pay_func(amount: float, **kwargs):
         call_count["count"] += 1
         return "PAID"

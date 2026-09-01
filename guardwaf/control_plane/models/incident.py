@@ -2,10 +2,12 @@
 Security Incident Management Data Models.
 """
 
-from enum import Enum
 from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any
+from enum import Enum
+from typing import List, Optional
+
 from pydantic import BaseModel, Field
+
 
 class IncidentSeverity(str, Enum):
     LOW = "LOW"
@@ -13,10 +15,12 @@ class IncidentSeverity(str, Enum):
     HIGH = "HIGH"
     CRITICAL = "CRITICAL"
 
+
 class IncidentStatus(str, Enum):
     OPEN = "OPEN"
     INVESTIGATING = "INVESTIGATING"
     RESOLVED = "RESOLVED"
+
 
 class Incident(BaseModel):
     incident_id: str

@@ -3,19 +3,27 @@ Thread-safe In-Memory Control Plane Repository Implementations.
 """
 
 import threading
-from typing import Optional, List, Dict, Any
+from typing import Dict, List, Optional
+
 from guardwaf.control_plane.models.agent import AgentRecord
-from guardwaf.control_plane.models.policy import PolicyRecord, PolicyVersion, PolicyAssignment
-from guardwaf.control_plane.models.authority import CentralAuthorityRecord
 from guardwaf.control_plane.models.audit import AuditEvent
+from guardwaf.control_plane.models.authority import CentralAuthorityRecord
+from guardwaf.control_plane.models.policy import (
+    PolicyAssignment,
+    PolicyRecord,
+    PolicyVersion,
+)
 from guardwaf.control_plane.repositories.base import (
     AgentRepository,
-    PolicyRepository,
+    AuditRepository,
     AuthorityRepository,
-    AuditRepository
+    PolicyRepository,
 )
 
-class MemoryControlPlaneRepository(AgentRepository, PolicyRepository, AuthorityRepository, AuditRepository):
+
+class MemoryControlPlaneRepository(
+    AgentRepository, PolicyRepository, AuthorityRepository, AuditRepository
+):
     def __init__(self):
         self._lock = threading.Lock()
         self._agents: Dict[str, AgentRecord] = {}
@@ -57,7 +65,9 @@ class MemoryControlPlaneRepository(AgentRepository, PolicyRepository, AuthorityR
                 self._policy_versions[version.policy_id] = {}
             self._policy_versions[version.policy_id][version.version_number] = version
 
-    def get_policy_version(self, policy_id: str, version_number: int) -> Optional[PolicyVersion]:
+    def get_policy_version(
+        self, policy_id: str, version_number: int
+    ) -> Optional[PolicyVersion]:
         with self._lock:
             versions = self._policy_versions.get(policy_id, {})
             return versions.get(version_number)
@@ -71,7 +81,12 @@ class MemoryControlPlaneRepository(AgentRepository, PolicyRepository, AuthorityR
         with self._lock:
             self._assignments.append(assignment)
 
-    def list_assignments(self, tenant_id: str, agent_id: Optional[str] = None, environment: str = "production") -> List[PolicyAssignment]:
+    def list_assignments(
+        self,
+        tenant_id: str,
+        agent_id: Optional[str] = None,
+        environment: str = "production",
+    ) -> List[PolicyAssignment]:
         with self._lock:
             matches = []
             for a in self._assignments:
@@ -89,7 +104,9 @@ class MemoryControlPlaneRepository(AgentRepository, PolicyRepository, AuthorityR
         with self._lock:
             return self._authorities.get(authority_id)
 
-    def list_authorities(self, tenant_id: str, agent_id: Optional[str] = None) -> List[CentralAuthorityRecord]:
+    def list_authorities(
+        self, tenant_id: str, agent_id: Optional[str] = None
+    ) -> List[CentralAuthorityRecord]:
         with self._lock:
             matches = []
             for auth in self._authorities.values():

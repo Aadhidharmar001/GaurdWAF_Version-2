@@ -1,7 +1,16 @@
 from typing import Optional
-from app.models import ToolCallRequest, BulkThresholdRule, ParameterBlocklistRule, RuleResult
 
-def evaluate_bulk_threshold(req: ToolCallRequest, rule: BulkThresholdRule, global_shadow: bool = False) -> Optional[RuleResult]:
+from app.models import (
+    BulkThresholdRule,
+    ParameterBlocklistRule,
+    RuleResult,
+    ToolCallRequest,
+)
+
+
+def evaluate_bulk_threshold(
+    req: ToolCallRequest, rule: BulkThresholdRule, global_shadow: bool = False
+) -> Optional[RuleResult]:
     if rule.tool != req.tool:
         return None
 
@@ -12,11 +21,14 @@ def evaluate_bulk_threshold(req: ToolCallRequest, rule: BulkThresholdRule, globa
         return RuleResult(
             status=status,
             outcome=f"Bulk threshold exceeded: Parameter '{rule.param_name}' value ({val}) exceeds maximum allowed ({rule.max_value})",
-            matched_rule=f"bulk_thresholds: max {rule.max_value} {rule.param_name}"
+            matched_rule=f"bulk_thresholds: max {rule.max_value} {rule.param_name}",
         )
     return None
 
-def evaluate_parameter_blocklist(req: ToolCallRequest, rule: ParameterBlocklistRule, global_shadow: bool = False) -> Optional[RuleResult]:
+
+def evaluate_parameter_blocklist(
+    req: ToolCallRequest, rule: ParameterBlocklistRule, global_shadow: bool = False
+) -> Optional[RuleResult]:
     if rule.tool != req.tool:
         return None
 
@@ -28,6 +40,6 @@ def evaluate_parameter_blocklist(req: ToolCallRequest, rule: ParameterBlocklistR
             return RuleResult(
                 status=status,
                 outcome=f"Parameter blocklist match: Found forbidden pattern '{pattern}' in parameter '{rule.param_name}'",
-                matched_rule=f"parameter_blocklist: '{pattern}'"
+                matched_rule=f"parameter_blocklist: '{pattern}'",
             )
     return None

@@ -96,17 +96,23 @@ from guardwaf import GuardWAF, protect, GuardWAFSecurityError
 from guardwaf.core.models import PolicyConfig, PolicyRules, BulkThresholdRule
 
 # 1. Define Action Policy
-rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="issue_refund", param_name="amount", max_value=100.0)])
+rules = PolicyRules(
+    bulk_thresholds=[
+        BulkThresholdRule(tool="issue_refund", param_name="amount", max_value=100.0)
+    ]
+)
 policy = PolicyConfig(metadata={"policy_name": "refund_policy"}, rules=rules)
 
 # 2. Initialize GuardWAF Engine
 waf = GuardWAF(policy=policy, secret_key="production_secret_key_32bytes_long_min")
+
 
 # 3. Protect Agent Tool Body
 @protect(tool_name="issue_refund", client=waf)
 def issue_refund(customer_id: str, amount: float):
     print(f"✅ Executing Refund: ${amount} to {customer_id}")
     return {"status": "SUCCESS", "refund_id": "ref_1002"}
+
 
 # 4. Execute Actions within Session
 with waf.session(session_id="sess_demo_1"):

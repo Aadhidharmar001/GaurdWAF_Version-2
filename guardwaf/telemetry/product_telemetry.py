@@ -5,15 +5,16 @@ Strictly prohibited from collecting raw prompts, tool parameters, customer data,
 """
 
 import os
-import sys
 import platform
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 
 class ProductTelemetry:
     """
     Opt-in telemetry recorder. Collects ONLY anonymous SDK version, python version,
     and aggregate feature usage counters.
     """
+
     def __init__(self, enabled: Optional[bool] = None):
         if enabled is not None:
             self.enabled = enabled
@@ -33,14 +34,16 @@ class ProductTelemetry:
             "sdk_version": "1.0.0",
             "python_version": platform.python_version(),
             "os": platform.system(),
-            "framework": framework
+            "framework": framework,
         }
         self.events_recorded.append(payload)
+
 
 class ProductIntelligenceModel:
     """
     Maintains 4 strictly separated evidence streams for GuardWAF product governance.
     """
+
     def __init__(self):
         self.telemetry = ProductTelemetry()
 
@@ -50,20 +53,24 @@ class ProductIntelligenceModel:
             "total_test_modules": 30,
             "package_build_status": "PASS",
             "clean_installation_status": "PASS",
-            "ci_cd_status": "PASS"
+            "ci_cd_status": "PASS",
         }
 
     def get_internal_validation_evidence(self) -> Dict[str, Any]:
         return {
-            "flagship_demos": ["customer_support_agent", "mcp_gateway", "langgraph_workflow"],
-            "internal_maintainer_validation": "PASSED"
+            "flagship_demos": [
+                "customer_support_agent",
+                "mcp_gateway",
+                "langgraph_workflow",
+            ],
+            "internal_maintainer_validation": "PASSED",
         }
 
     def get_opt_in_telemetry_evidence(self) -> Dict[str, Any]:
         return {
             "enabled": self.telemetry.enabled,
             "recorded_events_count": len(self.telemetry.events_recorded),
-            "privacy_boundary": "STRICT (0 raw prompts, zero secrets, zero customer payloads)"
+            "privacy_boundary": "STRICT (0 raw prompts, zero secrets, zero customer payloads)",
         }
 
     def get_external_developer_evidence(self) -> Dict[str, Any]:
@@ -71,10 +78,9 @@ class ProductIntelligenceModel:
         return {
             "external_developers_count": "UNKNOWN",
             "external_successful_integrations": "NOT YET MEASURED",
-            "external_feedback_reports": "AWAITING EXTERNAL FEEDBACK"
+            "external_feedback_reports": "AWAITING EXTERNAL FEEDBACK",
         }
+
 
 PRODUCT_INTELLIGENCE = ProductIntelligenceModel()
 TELEMETRY = PRODUCT_INTELLIGENCE.telemetry
-
-

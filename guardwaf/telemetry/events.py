@@ -3,8 +3,10 @@ Telemetry Event Schema Definition with Lifecycle Correlation & Identity Attribut
 """
 
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 from pydantic import BaseModel, Field
+
 
 class TelemetryEvent(BaseModel):
     event_type: str = "ACTION_EVALUATED"

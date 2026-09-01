@@ -1,9 +1,12 @@
 import json
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from sqlalchemy.orm import Session
+
 from app.db.orm_models import AuditLog
 from app.security.sanitizer import sanitize_parameters
+
 
 def log_audit_event(
     db: Session,
@@ -14,7 +17,7 @@ def log_audit_event(
     outcome: str,
     matched_rule: Optional[str],
     status: str,
-    latency_ms: float = 0.0
+    latency_ms: float = 0.0,
 ) -> AuditLog:
     sanitized_parameters = sanitize_parameters(parameters)
     entry = AuditLog(
@@ -26,7 +29,7 @@ def log_audit_event(
         evaluation_outcome=outcome,
         matched_rule=matched_rule,
         status=status,
-        latency_ms=latency_ms
+        latency_ms=latency_ms,
     )
     db.add(entry)
     db.commit()

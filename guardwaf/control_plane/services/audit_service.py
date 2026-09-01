@@ -4,9 +4,11 @@ Audit Logging Service for Recording Control Plane Admin Operations.
 
 import uuid
 from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
+
 from guardwaf.control_plane.models.audit import AuditEvent
 from guardwaf.control_plane.repositories.base import AuditRepository
+
 
 class AuditService:
     def __init__(self, repo: AuditRepository):
@@ -19,7 +21,7 @@ class AuditService:
         actor_id: str,
         resource_type: str,
         resource_id: str,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> AuditEvent:
         event = AuditEvent(
             event_id=f"audit_{uuid.uuid4().hex[:12]}",
@@ -29,7 +31,7 @@ class AuditService:
             resource_type=resource_type,
             resource_id=resource_id,
             timestamp=datetime.now(timezone.utc),
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
         self.repo.save_audit_event(event)
         return event

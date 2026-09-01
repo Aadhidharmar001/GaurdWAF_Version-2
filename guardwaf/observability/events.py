@@ -4,10 +4,21 @@ Structured Security Events & Parameter Redaction Module.
 
 import uuid
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, Optional
+
 from pydantic import BaseModel, Field
 
-SENSITIVE_PARAM_NAMES = {"password", "secret", "token", "api_key", "ssn", "credit_card", "cvv", "auth"}
+SENSITIVE_PARAM_NAMES = {
+    "password",
+    "secret",
+    "token",
+    "api_key",
+    "ssn",
+    "credit_card",
+    "cvv",
+    "auth",
+}
+
 
 def redact_sensitive_parameters(parameters: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -15,13 +26,16 @@ def redact_sensitive_parameters(parameters: Dict[str, Any]) -> Dict[str, Any]:
     """
     redacted = {}
     for k, v in parameters.items():
-        if k.lower() in SENSITIVE_PARAM_NAMES or any(s in k.lower() for s in ["secret", "password", "token"]):
+        if k.lower() in SENSITIVE_PARAM_NAMES or any(
+            s in k.lower() for s in ["secret", "password", "token"]
+        ):
             redacted[k] = "[REDACTED]"
         elif isinstance(v, dict):
             redacted[k] = redact_sensitive_parameters(v)
         else:
             redacted[k] = v
     return redacted
+
 
 class StructuredSecurityEvent(BaseModel):
     event_id: str = Field(default_factory=lambda: f"sevt_{uuid.uuid4().hex[:10]}")

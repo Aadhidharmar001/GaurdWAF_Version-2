@@ -4,23 +4,24 @@ Hashed Agent Credentials, HITL Workstation, and Incident Management.
 """
 
 import pytest
-from guardwaf.control_plane.models.org import Role, OrgStatus
+
 from guardwaf.control_plane.auth.rbac import (
-    RBACManager,
-    ACTION_PUBLISH_POLICY,
-    ACTION_TENANT_LOCKDOWN,
     ACTION_APPROVE_HITL,
-    ACTION_REGISTER_AGENT
+    ACTION_PUBLISH_POLICY,
+    ACTION_REGISTER_AGENT,
+    RBACManager,
 )
-from guardwaf.control_plane.services.org_service import OrgService
+from guardwaf.control_plane.models.org import Role
+from guardwaf.control_plane.repositories.memory_repo import MemoryControlPlaneRepository
 from guardwaf.control_plane.services.credential_service import CredentialService
 from guardwaf.control_plane.services.incident_service import IncidentService
-from guardwaf.control_plane.repositories.memory_repo import MemoryControlPlaneRepository
+from guardwaf.control_plane.services.org_service import OrgService
 from guardwaf.exceptions import GuardWAFSecurityError
 
 # ============================================================================
 # 1. MULTI-TENANCY ISOLATION TESTS
 # ============================================================================
+
 
 def test_tenant_isolation_verification():
     org_svc = OrgService()
@@ -35,9 +36,11 @@ def test_tenant_isolation_verification():
         org_svc.verify_tenant_isolation(org_a.organization_id, org_b.organization_id)
     assert "CROSS-TENANT ACCESS BLOCKED" in exc_info.value.message
 
+
 # ============================================================================
 # 2. SERVER-SIDE RBAC PERMISSION TESTS
 # ============================================================================
+
 
 def test_rbac_permission_matrix():
     # Owner & Admin can publish policy
@@ -58,9 +61,11 @@ def test_rbac_permission_matrix():
     # Developer CAN register agent
     RBACManager.check_permission(Role.DEVELOPER, ACTION_REGISTER_AGENT)
 
+
 # ============================================================================
 # 3. SECURE AGENT CREDENTIAL TESTS
 # ============================================================================
+
 
 def test_credential_issuance_hashing_and_verification():
     cs = CredentialService()
@@ -85,9 +90,11 @@ def test_credential_issuance_hashing_and_verification():
         cs.verify_credential(issued.plaintext_api_key)
     assert "REVOKED" in exc_info.value.message
 
+
 # ============================================================================
 # 4. INCIDENT MANAGEMENT TESTS
 # ============================================================================
+
 
 def test_incident_creation_and_resolution():
     repo = MemoryControlPlaneRepository()
