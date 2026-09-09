@@ -26,10 +26,7 @@ def _sanitize_value(key: str, value: Any) -> Any:
         return "[REDACTED]"
 
     if isinstance(value, dict):
-        return {
-            nested_key: _sanitize_value(nested_key, nested_value)
-            for nested_key, nested_value in value.items()
-        }
+        return {nested_key: _sanitize_value(nested_key, nested_value) for nested_key, nested_value in value.items()}
 
     if isinstance(value, list):
         return [_sanitize_value(key, item) for item in value]

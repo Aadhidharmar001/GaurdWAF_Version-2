@@ -47,11 +47,7 @@ class SecurityMetricsRegistry:
 
     def get_metrics_snapshot(self) -> Dict[str, Any]:
         with self._lock:
-            avg_latency = (
-                (self.latency_sum_ms / self.latency_count)
-                if self.latency_count > 0
-                else 0.0
-            )
+            avg_latency = (self.latency_sum_ms / self.latency_count) if self.latency_count > 0 else 0.0
             return {
                 "counters": dict(self.counters),
                 "latency": {
@@ -67,11 +63,7 @@ class SecurityMetricsRegistry:
                 lines.append(f"# TYPE guardwaf_{k} counter")
                 lines.append(f"guardwaf_{k} {v}")
             lines.append("# TYPE guardwaf_latency_avg_ms gauge")
-            avg_latency = (
-                (self.latency_sum_ms / self.latency_count)
-                if self.latency_count > 0
-                else 0.0
-            )
+            avg_latency = (self.latency_sum_ms / self.latency_count) if self.latency_count > 0 else 0.0
             lines.append(f"guardwaf_latency_avg_ms {round(avg_latency, 3)}")
         return "\n".join(lines) + "\n"
 

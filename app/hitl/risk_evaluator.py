@@ -8,9 +8,7 @@ class RiskEvaluationResult(TypedDict):
     risk_reasons: List[str]
 
 
-def evaluate_hitl_risk(
-    tool: str, parameters: Dict[str, Any], matched_rule: Optional[str] = None
-) -> RiskEvaluationResult:
+def evaluate_hitl_risk(tool: str, parameters: Dict[str, Any], matched_rule: Optional[str] = None) -> RiskEvaluationResult:
     """
     Evaluates an HITL-quarantined tool request to determine:
     1. fraud_score: 0.0 - 100.0 (% probability request is fraudulent/unauthorized)
@@ -72,9 +70,7 @@ def evaluate_hitl_risk(
 
     # Fallback reason if none matched specifically
     if not risk_reasons:
-        risk_reasons.append(
-            f"Pattern trigger on policy rule: {matched_rule or 'Data Scope Filter'}"
-        )
+        risk_reasons.append(f"Pattern trigger on policy rule: {matched_rule or 'Data Scope Filter'}")
 
     # Clamp scores
     fraud_score = max(10.0, min(99.0, round(fraud_score, 1)))

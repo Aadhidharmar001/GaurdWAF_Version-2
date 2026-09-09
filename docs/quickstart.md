@@ -32,12 +32,8 @@ from guardwaf.core.models import PolicyConfig, PolicyRules, BulkThresholdRule, H
 
 # 1. Define Declarative Security Policy Rules
 rules = PolicyRules(
-    bulk_thresholds=[
-        BulkThresholdRule(tool="process_refund", param_name="amount", max_value=5000)
-    ],
-    hitl_rules=[
-        HITLRule(tool="process_refund", condition_param="amount", greater_than=100.0)
-    ],
+    bulk_thresholds=[BulkThresholdRule(tool="process_refund", param_name="amount", max_value=5000)],
+    hitl_rules=[HITLRule(tool="process_refund", condition_param="amount", greater_than=100.0)],
 )
 policy = PolicyConfig(metadata={"policy_name": "refund_policy"}, rules=rules)
 
@@ -83,8 +79,6 @@ When a Human Approver approves the pending action via the Control Plane, resume 
 
 ```python
 with waf.session(session_id="sess_101", tenant_id="org_acme"):
-    resumed_result = waf.resume_sync(
-        pending_action_id=pending_action_id, approval_token=approval_token
-    )
+    resumed_result = waf.resume_sync(pending_action_id=pending_action_id, approval_token=approval_token)
     print("Resumed Action Execution Result:", resumed_result)
 ```

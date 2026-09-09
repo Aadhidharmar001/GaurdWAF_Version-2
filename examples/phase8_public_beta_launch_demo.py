@@ -14,9 +14,7 @@ if hasattr(sys.stdout, "reconfigure"):
 def run_cmd(cmd_list, desc):
     print(f"\n▶ {desc}...")
     env = {**os.environ, "PYTHONPATH": "."}
-    res = subprocess.run(
-        cmd_list, env=env, capture_output=True, text=True, encoding="utf-8"
-    )
+    res = subprocess.run(cmd_list, env=env, capture_output=True, text=True, encoding="utf-8")
     if res.returncode != 0:
         print(f"   ❌ FAILED:\n{res.stderr}")
         sys.exit(1)
@@ -25,15 +23,9 @@ def run_cmd(cmd_list, desc):
 
 
 def main():
-    print(
-        "=========================================================================================="
-    )
-    print(
-        "🛡️  GUARdWAF PHASE 8 FLAGSHIP DEMO: PUBLIC BETA LAUNCH & PRODUCT INTELLIGENCE"
-    )
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
+    print("🛡️  GUARdWAF PHASE 8 FLAGSHIP DEMO: PUBLIC BETA LAUNCH & PRODUCT INTELLIGENCE")
+    print("==========================================================================================")
 
     # 1. Launch Checklist Verification
     print("▶ Scenario 1: Verifying 12-Item Public Beta Launch Checklist...")
@@ -101,9 +93,7 @@ def main():
                 authentication_method="static",
                 roles=["user"],
             )
-            a = AgentIdentity(
-                agent_id="revoked_p8_bot", tenant_id="default", name="RevBot"
-            )
+            a = AgentIdentity(agent_id="revoked_p8_bot", tenant_id="default", name="RevBot")
             with waf.verified_session(principal=p, agent=a, session_id="s_p8"):
                 test_tool()
         except GuardWAFSecurityError as err:
@@ -126,9 +116,7 @@ def main():
     eng = PRODUCT_INTELLIGENCE.get_engineering_evidence()
     ext = PRODUCT_INTELLIGENCE.get_external_developer_evidence()
     print(f"   • Engineering Stream: {eng['automated_tests_passing']} tests passing")
-    print(
-        f"   • External Evidence Stream: {ext['external_developers_count']} (Explicitly UNKNOWN)"
-    )
+    print(f"   • External Evidence Stream: {ext['external_developers_count']} (Explicitly UNKNOWN)")
 
     # 19. Issue Triage
     print("\n▶ Scenario 19: Verifying Issue Triage & Priority Formula...")
@@ -141,15 +129,9 @@ def main():
         "Scenario 20: Executing Public Beta Status & Intelligence Dashboard",
     )
 
-    print(
-        "=========================================================================================="
-    )
-    print(
-        "✅ PHASE 8 DEMO COMPLETE: Public Beta Launch & Real Developer Validation Verified!"
-    )
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
+    print("✅ PHASE 8 DEMO COMPLETE: Public Beta Launch & Real Developer Validation Verified!")
+    print("==========================================================================================")
 
 
 if __name__ == "__main__":

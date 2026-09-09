@@ -100,9 +100,7 @@ class AuthorityEvaluator:
                 )
 
             # Check Parameter Constraints
-            valid_params, constraint_reason = authority.validate_constraints(
-                tool_name, parameters
-            )
+            valid_params, constraint_reason = authority.validate_constraints(tool_name, parameters)
             if not valid_params:
                 raise GuardWAFAuthorizationError(
                     f"Action '{tool_name}' blocked by DelegatedAuthority constraint: {constraint_reason}",

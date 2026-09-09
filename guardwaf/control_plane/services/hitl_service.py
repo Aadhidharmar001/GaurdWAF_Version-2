@@ -15,16 +15,9 @@ class HITLWorkstationService:
         self.waf = waf
 
     def list_pending_actions(self, organization_id: str) -> List[PendingAction]:
-        all_pending = self.waf.state_store.list_pending_actions(
-            status=ActionState.PENDING
-        )
+        all_pending = self.waf.state_store.list_pending_actions(status=ActionState.PENDING)
         # Filter strictly by tenant isolation
-        return [
-            a
-            for a in all_pending
-            if getattr(a, "tenant_id", "default") == organization_id
-            or organization_id == "default"
-        ]
+        return [a for a in all_pending if getattr(a, "tenant_id", "default") == organization_id or organization_id == "default"]
 
     def approve_action(
         self,
@@ -34,9 +27,7 @@ class HITLWorkstationService:
     ) -> Dict[str, Any]:
         action = self.waf.state_store.get_pending_action(pending_action_id)
         if not action:
-            raise GuardWAFConfigurationError(
-                f"PendingAction '{pending_action_id}' not found."
-            )
+            raise GuardWAFConfigurationError(f"PendingAction '{pending_action_id}' not found.")
 
         action_tenant = getattr(action, "tenant_id", "default")
         if action_tenant != organization_id and organization_id != "default":
@@ -46,9 +37,7 @@ class HITLWorkstationService:
             )
 
         # Approve and produce cryptographically signed token bound to parameter_digest
-        approved_action = self.waf.approve_pending_action(
-            pending_action_id, approver_id=approver_id
-        )
+        approved_action = self.waf.approve_pending_action(pending_action_id, approver_id=approver_id)
         approval_token = approved_action.approval_token
 
         return {
@@ -68,9 +57,7 @@ class HITLWorkstationService:
     ) -> Dict[str, Any]:
         action = self.waf.state_store.get_pending_action(pending_action_id)
         if not action:
-            raise GuardWAFConfigurationError(
-                f"PendingAction '{pending_action_id}' not found."
-            )
+            raise GuardWAFConfigurationError(f"PendingAction '{pending_action_id}' not found.")
 
         action_tenant = getattr(action, "tenant_id", "default")
         if action_tenant != organization_id and organization_id != "default":
@@ -79,9 +66,7 @@ class HITLWorkstationService:
                 tool_name="hitl_workstation",
             )
 
-        denied_action = self.waf.deny_pending_action(
-            pending_action_id, approver_id=approver_id, reason=reason
-        )
+        denied_action = self.waf.deny_pending_action(pending_action_id, approver_id=approver_id, reason=reason)
         return {
             "status": "DENIED",
             "pending_action_id": pending_action_id,

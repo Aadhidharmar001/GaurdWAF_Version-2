@@ -66,13 +66,7 @@ def test_attack_cross_tenant_credential_reuse():
 
 
 def test_attack_hitl_approval_replay_and_parameter_mutation():
-    rules = PolicyRules(
-        hitl_rules=[
-            HITLRule(
-                tool="attack_target_tool", condition_param="amount", greater_than=50.0
-            )
-        ]
-    )
+    rules = PolicyRules(hitl_rules=[HITLRule(tool="attack_target_tool", condition_param="amount", greater_than=50.0)])
     policy = PolicyConfig(metadata={"policy_name": "attack_policy"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="secret_attack_key")
     waf.register_tool("attack_target_tool", attack_target_tool)
@@ -85,9 +79,7 @@ def test_attack_hitl_approval_replay_and_parameter_mutation():
         except (GuardWAFHITLRequiredError, GuardWAFSecurityError) as e:
             pending_id = getattr(e, "pending_action_id", None)
             if not pending_id:
-                pending_id = waf.state_store.list_pending_actions()[
-                    -1
-                ].pending_action_id
+                pending_id = waf.state_store.list_pending_actions()[-1].pending_action_id
 
     # 2. Approve
     approved = waf.approve_pending_action(pending_id, approver_id="admin_user")
@@ -102,10 +94,7 @@ def test_attack_hitl_approval_replay_and_parameter_mutation():
     with waf.session(session_id="sess_atk_1", tenant_id="org_victim"):
         with pytest.raises(Exception) as exc_info:
             waf.resume_sync(pending_action_id=pending_id, approval_token=token)
-        assert (
-            "already been executed" in str(exc_info.value).lower()
-            or "replay" in str(exc_info.value).lower()
-        )
+        assert "already been executed" in str(exc_info.value).lower() or "replay" in str(exc_info.value).lower()
 
 
 # ============================================================================
@@ -116,13 +105,7 @@ def test_attack_hitl_approval_replay_and_parameter_mutation():
 def test_attack_mcp_parameter_digest_tampering():
     from guardwaf.mcp.models import MCPToolRequest
 
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(
-                tool="attack_target_tool", param_name="amount", max_value=100
-            )
-        ]
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="attack_target_tool", param_name="amount", max_value=100)])
     policy = PolicyConfig(metadata={"policy_name": "attack_policy"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="secret_attack_key")
 

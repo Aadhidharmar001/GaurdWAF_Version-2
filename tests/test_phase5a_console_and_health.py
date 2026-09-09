@@ -34,9 +34,7 @@ def test_jwt_token_generation_and_verification():
 
 
 def test_jwt_invalid_signature_rejection():
-    token = create_jwt_token(
-        "usr_123", "test@acme.com", "org_acme", "ADMIN", secret_key="key_1"
-    )
+    token = create_jwt_token("usr_123", "test@acme.com", "org_acme", "ADMIN", secret_key="key_1")
     with pytest.raises(GuardWAFSecurityError) as exc:
         verify_jwt_token(token, secret_key="key_2")
     assert "Invalid JWT signature" in exc.value.message

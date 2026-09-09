@@ -42,9 +42,7 @@ def lookup_customer(customer_id: str):
 
 @protect(tool_name="process_refund")
 def process_refund(customer_id: str, amount: float, tenant_id: str = "acme_corp"):
-    print(
-        f"   [TOOL EXECUTION] 💸 Refunding ${amount:.2f} to {customer_id} (Tenant: {tenant_id})"
-    )
+    print(f"   [TOOL EXECUTION] 💸 Refunding ${amount:.2f} to {customer_id} (Tenant: {tenant_id})")
     return {"status": "SUCCESS", "refunded": amount}
 
 
@@ -81,9 +79,7 @@ def run_phase3a_identity_demo():
     )
 
     # --- Scenario 1: Valid Identity + Valid Delegated Authority ---
-    print(
-        "\n▶ SCENARIO 1: Valid Identity + Valid Delegated Authority ($100 max refund)..."
-    )
+    print("\n▶ SCENARIO 1: Valid Identity + Valid Delegated Authority ($100 max refund)...")
     valid_authority = DelegatedAuthority(
         authority_id="auth_valid_100",
         principal_id="usr_alice_999",
@@ -94,20 +90,14 @@ def run_phase3a_identity_demo():
         expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
     )
 
-    with waf.verified_session(
-        principal=alice_principal, agent=support_agent, authority=valid_authority
-    ):
+    with waf.verified_session(principal=alice_principal, agent=support_agent, authority=valid_authority):
         lookup_customer("cust_alice")
         res = process_refund("cust_alice", 50.00)
         print(f"   ✅ SUCCESS: Processed allowed refund of $50.00: {res}")
 
     # --- Scenario 2: Agent Generates Fake Tenant ID in Tool Arguments ---
-    print(
-        "\n▶ SCENARIO 2: Agent attempts tenant spoofing (Passing tenant_id='victim_corp')..."
-    )
-    with waf.verified_session(
-        principal=alice_principal, agent=support_agent, authority=valid_authority
-    ):
+    print("\n▶ SCENARIO 2: Agent attempts tenant spoofing (Passing tenant_id='victim_corp')...")
+    with waf.verified_session(principal=alice_principal, agent=support_agent, authority=valid_authority):
         lookup_customer("cust_alice")
         try:
             process_refund("cust_alice", 50.00, tenant_id="victim_corp")
@@ -126,9 +116,7 @@ def run_phase3a_identity_demo():
         expires_at=datetime.now(timezone.utc) - timedelta(minutes=5),
     )
 
-    with waf.verified_session(
-        principal=alice_principal, agent=support_agent, authority=expired_authority
-    ):
+    with waf.verified_session(principal=alice_principal, agent=support_agent, authority=expired_authority):
         try:
             process_refund("cust_alice", 50.00)
             print("   ❌ FAIL: Expired authority was allowed!")
@@ -137,25 +125,17 @@ def run_phase3a_identity_demo():
 
     # --- Scenario 4: Unauthorized Tool Attempt ---
     print("\n▶ SCENARIO 4: Agent attempts unauthorized tool ('delete_customer')...")
-    with waf.verified_session(
-        principal=alice_principal, agent=support_agent, authority=valid_authority
-    ):
+    with waf.verified_session(principal=alice_principal, agent=support_agent, authority=valid_authority):
         try:
             delete_customer("cust_alice")
             print("   ❌ FAIL: Unauthorized tool executed!")
         except GuardWAFAuthorizationError as e:
             print(f"   ✅ GUARDWAF BLOCKED UNAUTHORIZED TOOL: {e.message}")
-            print(
-                f"      - Execution Count: {DELETE_EXECUTION_COUNT} (Verified 0 Executions!)"
-            )
+            print(f"      - Execution Count: {DELETE_EXECUTION_COUNT} (Verified 0 Executions!)")
 
     # --- Scenario 5: Delegated Authority Constraint ($250 > $100 limit) ---
-    print(
-        "\n▶ SCENARIO 5: Agent attempts refund ($250.00) exceeding delegated limit ($100.00)..."
-    )
-    with waf.verified_session(
-        principal=alice_principal, agent=support_agent, authority=valid_authority
-    ):
+    print("\n▶ SCENARIO 5: Agent attempts refund ($250.00) exceeding delegated limit ($100.00)...")
+    with waf.verified_session(principal=alice_principal, agent=support_agent, authority=valid_authority):
         lookup_customer("cust_alice")
         try:
             process_refund("cust_alice", 250.00)
@@ -166,9 +146,7 @@ def run_phase3a_identity_demo():
     # --- Scenario 6: Cryptographic JWT Identity Verification ---
     print("\n▶ SCENARIO 6: Cryptographic JWT Identity Provider Verification...")
     jwt_secret = "super_secret_jwt_key_999"
-    jwt_provider = JWTIdentityProvider(
-        secret_key=jwt_secret, issuer="https://auth.acme.com/", audience="guardwaf-api"
-    )
+    jwt_provider = JWTIdentityProvider(secret_key=jwt_secret, issuer="https://auth.acme.com/", audience="guardwaf-api")
 
     # 6a. Generate Valid JWT
     valid_payload = {
@@ -182,9 +160,7 @@ def run_phase3a_identity_demo():
     }
     valid_jwt = jwt.encode(valid_payload, jwt_secret, algorithm="HS256")
     bob_principal = jwt_provider.authenticate(IdentityCredentials(raw_token=valid_jwt))
-    print(
-        f"   ✅ AUTHENTICATED JWT: Principal ID='{bob_principal.principal_id}', Tenant='{bob_principal.tenant_id}'"
-    )
+    print(f"   ✅ AUTHENTICATED JWT: Principal ID='{bob_principal.principal_id}', Tenant='{bob_principal.tenant_id}'")
 
     # 6b. Forged Signature Token
     print("   Testing Forged Signature JWT...")
@@ -198,9 +174,7 @@ def run_phase3a_identity_demo():
     # 6c. Expired JWT
     print("   Testing Expired JWT Token...")
     expired_payload = dict(valid_payload)
-    expired_payload["exp"] = int(
-        (datetime.now(timezone.utc) - timedelta(seconds=10)).timestamp()
-    )
+    expired_payload["exp"] = int((datetime.now(timezone.utc) - timedelta(seconds=10)).timestamp())
     expired_jwt = jwt.encode(expired_payload, jwt_secret, algorithm="HS256")
     try:
         jwt_provider.authenticate(IdentityCredentials(raw_token=expired_jwt))
@@ -209,9 +183,7 @@ def run_phase3a_identity_demo():
         print(f"   ✅ GUARDWAF REJECTED EXPIRED JWT: {e.message}")
 
     print("\n" + "=" * 80)
-    print(
-        "✅ PHASE 3A DEMO COMPLETE: All Trusted Identity & Delegated Authority Boundaries Verified!"
-    )
+    print("✅ PHASE 3A DEMO COMPLETE: All Trusted Identity & Delegated Authority Boundaries Verified!")
     print("=" * 80)
 
 

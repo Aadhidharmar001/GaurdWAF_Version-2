@@ -12,9 +12,7 @@ from app.proxy.sequence_guard import evaluate_sequence
 from app.proxy.shadow_mode import apply_shadow_mode_transformation
 
 
-def evaluate_tool_call_request(
-    req: ToolCallRequest, policy: PolicyConfig, db: Session
-) -> RuleResult:
+def evaluate_tool_call_request(req: ToolCallRequest, policy: PolicyConfig, db: Session) -> RuleResult:
     global_shadow = policy.shadow_mode
     rules = policy.rules
 

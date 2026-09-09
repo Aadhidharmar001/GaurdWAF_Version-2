@@ -29,9 +29,7 @@ def readiness_check(db: Session = Depends(get_db)):
         db.execute(text("SELECT 1"))
     except Exception as e:
         db_status = f"unhealthy: {e!s}"
-        raise HTTPException(
-            status_code=503, detail=f"Database connection error: {db_status}"
-        )
+        raise HTTPException(status_code=503, detail=f"Database connection error: {db_status}")
 
     return {
         "status": "ready" if db_status == "ok" else "unhealthy",
@@ -49,9 +47,7 @@ def health_check(db: Session = Depends(get_db)):
         db.execute(text("SELECT 1"))
     except Exception as e:
         db_status = f"unhealthy: {e!s}"
-        raise HTTPException(
-            status_code=503, detail=f"Database connection error: {db_status}"
-        )
+        raise HTTPException(status_code=503, detail=f"Database connection error: {db_status}")
 
     # 2. Compute Uptime
     uptime_seconds = int(time.time() - START_TIME)

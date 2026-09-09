@@ -17,11 +17,7 @@ from guardwaf import GuardWAF, protect
 from guardwaf.core.models import PolicyConfig, PolicyRules, BulkThresholdRule
 
 # 1. Initialize GuardWAF Engine
-rules = PolicyRules(
-    bulk_thresholds=[
-        BulkThresholdRule(tool="process_payment", param_name="amount", max_value=500.0)
-    ]
-)
+rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="process_payment", param_name="amount", max_value=500.0)])
 policy = PolicyConfig(metadata={"policy_name": "my_policy"}, rules=rules)
 waf = GuardWAF(policy=policy, secret_key="your_32_byte_secret_key_here")
 

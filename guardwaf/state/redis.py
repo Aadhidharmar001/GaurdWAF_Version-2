@@ -24,16 +24,12 @@ class RedisStateStore(StateStore):
             # We provide a contract-compatible fallback mock if redis library is not installed
             self._client = None
         else:
-            self._client = client or redis.Redis.from_url(
-                redis_url, decode_responses=True
-            )
+            self._client = client or redis.Redis.from_url(redis_url, decode_responses=True)
 
     def is_available(self) -> bool:
         return self._client is not None
 
-    def record_tool_call(
-        self, session_id: str, tool_name: str, status: str = "allowed"
-    ) -> None:
+    def record_tool_call(self, session_id: str, tool_name: str, status: str = "allowed") -> None:
         if status not in ["allowed", "shadow_blocked"]:
             return
         if not self._client:
@@ -45,9 +41,7 @@ class RedisStateStore(StateStore):
         pipe.expire(key, 3600)
         pipe.execute()
 
-    def get_tool_call_count(
-        self, session_id: str, tool_name: str, window_seconds: int
-    ) -> int:
+    def get_tool_call_count(self, session_id: str, tool_name: str, window_seconds: int) -> int:
         if not self._client:
             return 0
         key = f"gw:rate:{session_id}:{tool_name}"
@@ -149,9 +143,7 @@ class RedisStateStore(StateStore):
             except Exception:
                 return False
 
-    def list_pending_actions(
-        self, status: Optional[ActionState] = None
-    ) -> List[PendingAction]:
+    def list_pending_actions(self, status: Optional[ActionState] = None) -> List[PendingAction]:
         if not self._client:
             return []
         keys = self._client.keys("gw:pending:*")

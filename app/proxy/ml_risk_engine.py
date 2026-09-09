@@ -95,9 +95,7 @@ def scan_payload_for_threat_vectors(parameters: Dict[str, Any]) -> List[Dict[str
     return findings
 
 
-def evaluate_ml_risk_score(
-    req: ToolCallRequest, matched_rule: str = None
-) -> Dict[str, Any]:
+def evaluate_ml_risk_score(req: ToolCallRequest, matched_rule: str = None) -> Dict[str, Any]:
     """
     Computes an ML Anomaly & Security Risk Score (0-100%) for an incoming Agent Tool Call.
     Returns composite score, risk level, threat factors, and OWASP categorization.
@@ -111,9 +109,7 @@ def evaluate_ml_risk_score(
     if entropy > 4.5:
         entropy_risk = min((entropy - 4.0) * 15, 30.0)
         base_score += entropy_risk
-        risk_factors.append(
-            f"High Payload Entropy ({entropy:.2f}): Obfuscation or complex payload detected."
-        )
+        risk_factors.append(f"High Payload Entropy ({entropy:.2f}): Obfuscation or complex payload detected.")
 
     # 2. Threat Vector Deep Scan
     threats = scan_payload_for_threat_vectors(req.parameters)
@@ -122,9 +118,7 @@ def evaluate_ml_risk_score(
             base_score += 45.0
         elif threat["severity"] == "HIGH":
             base_score += 30.0
-        risk_factors.append(
-            f"[{threat['owasp'][0]}] {threat['category']}: {threat['detail']}"
-        )
+        risk_factors.append(f"[{threat['owasp'][0]}] {threat['category']}: {threat['detail']}")
 
     # 3. High-Risk Tool Operations
     destructive_tools = [
@@ -136,17 +130,13 @@ def evaluate_ml_risk_score(
     ]
     if req.tool in destructive_tools:
         base_score += 15.0
-        risk_factors.append(
-            f"High-Impact Action: Tool '{req.tool}' modifies system or external state."
-        )
+        risk_factors.append(f"High-Impact Action: Tool '{req.tool}' modifies system or external state.")
 
     # 4. Scope / Context Check
     if req.session_context:
         if not req.session_context.customer_id:
             base_score += 10.0
-            risk_factors.append(
-                "Unauthenticated / Missing Customer ID in Session Context."
-            )
+            risk_factors.append("Unauthenticated / Missing Customer ID in Session Context.")
 
     # Final Risk Score Clamp
     final_score = min(max(round(base_score, 1), 0.0), 99.9)

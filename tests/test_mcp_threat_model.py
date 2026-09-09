@@ -27,11 +27,7 @@ from guardwaf.sdk.revocation_client import RevocationClient
 @pytest.fixture
 def setup_mcp_environment():
     km = KeyManager(secret_key="dev_secret_key_mcp_tests")
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(tool="process_refund", param_name="amount", max_value=100)
-        ]
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="process_refund", param_name="amount", max_value=100)])
     policy = PolicyConfig(metadata={"policy_name": "mcp_threat_policy"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="dev_secret_key_mcp_tests")
 
@@ -107,9 +103,7 @@ def test_revoked_agent_mcp_call(setup_mcp_environment):
     verifier = EventSignatureVerifier(key_manager=km)
 
     # Issue signed revocation for agent_revoked
-    sig_event = verifier.sign_event(
-        "AGENT_REVOKED", "t1", sequence_number=1, agent_id="agent_revoked"
-    )
+    sig_event = verifier.sign_event("AGENT_REVOKED", "t1", sequence_number=1, agent_id="agent_revoked")
     rev_client.process_signed_event(sig_event)
 
     # Attach revocation client to runtime adapter

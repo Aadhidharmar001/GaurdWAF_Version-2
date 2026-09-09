@@ -11,15 +11,11 @@ from guardwaf.core.models import ActionState, PendingAction
 
 class StateStore(ABC):
     @abstractmethod
-    def record_tool_call(
-        self, session_id: str, tool_name: str, status: str = "allowed"
-    ) -> None:
+    def record_tool_call(self, session_id: str, tool_name: str, status: str = "allowed") -> None:
         """Records an executed tool invocation for rate limiting and sequence tracking."""
 
     @abstractmethod
-    def get_tool_call_count(
-        self, session_id: str, tool_name: str, window_seconds: int
-    ) -> int:
+    def get_tool_call_count(self, session_id: str, tool_name: str, window_seconds: int) -> int:
         """Returns the number of times a tool was called in a session within window_seconds."""
 
     @abstractmethod
@@ -60,7 +56,5 @@ class StateStore(ABC):
         """
 
     @abstractmethod
-    def list_pending_actions(
-        self, status: Optional[ActionState] = None
-    ) -> List[PendingAction]:
+    def list_pending_actions(self, status: Optional[ActionState] = None) -> List[PendingAction]:
         """Lists PendingAction records, optionally filtered by status."""

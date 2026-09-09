@@ -42,9 +42,7 @@ class SSEBroadcaster:
 
         # Redact sensitive parameters
         if "parameters" in event_data and isinstance(event_data["parameters"], dict):
-            event_data["parameters"] = redact_sensitive_parameters(
-                event_data["parameters"]
-            )
+            event_data["parameters"] = redact_sensitive_parameters(event_data["parameters"])
 
         dead_queues = set()
         for q in list(self._subscribers[tenant_id]):

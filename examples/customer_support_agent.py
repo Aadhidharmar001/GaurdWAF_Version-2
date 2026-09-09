@@ -33,9 +33,7 @@ def lookup_customer(customer_id: str):
 @protect(tool_name="process_refund")
 def process_refund(customer_id: str, amount: float):
     global DB_MUTATIONS_COUNT
-    print(
-        f"   [TOOL EXECUTION] 💸 EXECUTING DB MUTATION: Refund ${amount:.2f} to {customer_id}"
-    )
+    print(f"   [TOOL EXECUTION] 💸 EXECUTING DB MUTATION: Refund ${amount:.2f} to {customer_id}")
     DB_MUTATIONS_COUNT += 1
     return {"status": "SUCCESS", "customer_id": customer_id, "refunded_amount": amount}
 
@@ -66,40 +64,28 @@ def run_demo():
     print("\n▶ SCENARIO 2: Sequence Attack (Skipping lookup_customer step)")
     initial_db_count = DB_MUTATIONS_COUNT
     with waf.session(session_id="sess_attack_200", customer_id="cust_bob"):
-        print(
-            "1. Agent attempts process_refund('cust_bob', 30.00) directly without lookup..."
-        )
+        print("1. Agent attempts process_refund('cust_bob', 30.00) directly without lookup...")
         try:
             process_refund("cust_bob", 30.00)
-            print(
-                "   ❌ SECURITY FAILURE: Action executed when it should have been blocked!"
-            )
+            print("   ❌ SECURITY FAILURE: Action executed when it should have been blocked!")
         except GuardWAFSecurityError as e:
             print(f"   ✅ GUARDWAF BLOCKED ACTION: {e}")
-            print(
-                f"   --> Total DB Mutations Executed: {DB_MUTATIONS_COUNT} (Unchanged: {DB_MUTATIONS_COUNT == initial_db_count})"
-            )
+            print(f"   --> Total DB Mutations Executed: {DB_MUTATIONS_COUNT} (Unchanged: {DB_MUTATIONS_COUNT == initial_db_count})")
 
     # -------------------------------------------------------------------------
     # Scenario 3: Cross-Tenant Data Scope Attack
     # -------------------------------------------------------------------------
-    print(
-        "\n▶ SCENARIO 3: Cross-Tenant Data Scope Attack (Session=cust_charlie, Target=cust_victim)"
-    )
+    print("\n▶ SCENARIO 3: Cross-Tenant Data Scope Attack (Session=cust_charlie, Target=cust_victim)")
     initial_db_count = DB_MUTATIONS_COUNT
     with waf.session(session_id="sess_attack_300", customer_id="cust_charlie"):
         lookup_customer("cust_charlie")
         print("1. Agent attempts process_refund('cust_victim', 50.00)...")
         try:
             process_refund("cust_victim", 50.00)
-            print(
-                "   ❌ SECURITY FAILURE: Action executed when it should have been blocked!"
-            )
+            print("   ❌ SECURITY FAILURE: Action executed when it should have been blocked!")
         except GuardWAFSecurityError as e:
             print(f"   ✅ GUARDWAF BLOCKED ACTION: {e}")
-            print(
-                f"   --> Total DB Mutations Executed: {DB_MUTATIONS_COUNT} (Unchanged: {DB_MUTATIONS_COUNT == initial_db_count})"
-            )
+            print(f"   --> Total DB Mutations Executed: {DB_MUTATIONS_COUNT} (Unchanged: {DB_MUTATIONS_COUNT == initial_db_count})")
 
     # -------------------------------------------------------------------------
     # Scenario 4: Rate Limit Spanning Attack
@@ -135,9 +121,7 @@ def run_demo():
             print(f"      Approval Token Generated: {e.approval_token[:30]}...")
 
     print("\n" + "=" * 70)
-    print(
-        "✅ DEMO COMPLETE: All security properties verified with 0 unintended side effects!"
-    )
+    print("✅ DEMO COMPLETE: All security properties verified with 0 unintended side effects!")
     print("=" * 70)
 
 

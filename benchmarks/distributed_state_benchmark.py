@@ -35,11 +35,7 @@ def run_distributed_state_benchmark(num_concurrent_threads: int = 50):
     global RESUME_EXEC_COUNT
     RESUME_EXEC_COUNT = 0
 
-    rules = PolicyRules(
-        hitl_rules=[
-            HITLRule(tool="race_tool", condition_param="amount", greater_than=10.0)
-        ]
-    )
+    rules = PolicyRules(hitl_rules=[HITLRule(tool="race_tool", condition_param="amount", greater_than=10.0)])
     policy = PolicyConfig(metadata={"policy_name": "race_policy"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="secret_race_key")
     waf.register_tool("race_tool", race_tool)
@@ -52,9 +48,7 @@ def run_distributed_state_benchmark(num_concurrent_threads: int = 50):
         except (GuardWAFHITLRequiredError, GuardWAFSecurityError) as e:
             pending_id = getattr(e, "pending_action_id", None)
             if not pending_id:
-                pending_id = waf.state_store.list_pending_actions()[
-                    -1
-                ].pending_action_id
+                pending_id = waf.state_store.list_pending_actions()[-1].pending_action_id
 
     # 2. Approve PendingAction
     approved = waf.approve_pending_action(pending_id, approver_id="admin_approver")
@@ -62,13 +56,8 @@ def run_distributed_state_benchmark(num_concurrent_threads: int = 50):
 
     # 3. Fire concurrent resume attempts across 50 threads simultaneously
     start_t = time.perf_counter()
-    with concurrent.futures.ThreadPoolExecutor(
-        max_workers=num_concurrent_threads
-    ) as executor:
-        futures = [
-            executor.submit(attempt_resume_worker, waf, pending_id, token)
-            for _ in range(num_concurrent_threads)
-        ]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=num_concurrent_threads) as executor:
+        futures = [executor.submit(attempt_resume_worker, waf, pending_id, token) for _ in range(num_concurrent_threads)]
         results = [f.result() for f in concurrent.futures.as_completed(futures)]
 
     total_time_sec = time.perf_counter() - start_t

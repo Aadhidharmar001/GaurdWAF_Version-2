@@ -47,18 +47,12 @@ class RevocationClient:
         with self._lock:
             # 1. Cryptographic Signature Verification
             if not self.verifier.verify_event_signature(event):
-                print(
-                    f"⚠️ [GuardWAF RevocationClient] REJECTED EVENT {event.event_id}: Invalid cryptographic signature."
-                )
+                print(f"⚠️ [GuardWAF RevocationClient] REJECTED EVENT {event.event_id}: Invalid cryptographic signature.")
                 return False
 
             # 2. Sequence Validation (Anti-Replay / Monotonic Order)
-            if not self.sequence_validator.is_valid_sequence(
-                event.tenant_id, event.sequence_number, event.agent_id
-            ):
-                print(
-                    f"⚠️ [GuardWAF RevocationClient] REJECTED EVENT {event.event_id}: Stale sequence number ({event.sequence_number})."
-                )
+            if not self.sequence_validator.is_valid_sequence(event.tenant_id, event.sequence_number, event.agent_id):
+                print(f"⚠️ [GuardWAF RevocationClient] REJECTED EVENT {event.event_id}: Stale sequence number ({event.sequence_number}).")
                 return False
 
             # 3. Apply Revocation State

@@ -21,9 +21,7 @@ from guardwaf.control_plane.repositories.base import (
 )
 
 
-class MemoryControlPlaneRepository(
-    AgentRepository, PolicyRepository, AuthorityRepository, AuditRepository
-):
+class MemoryControlPlaneRepository(AgentRepository, PolicyRepository, AuthorityRepository, AuditRepository):
     def __init__(self):
         self._lock = threading.Lock()
         self._agents: Dict[str, AgentRecord] = {}
@@ -65,9 +63,7 @@ class MemoryControlPlaneRepository(
                 self._policy_versions[version.policy_id] = {}
             self._policy_versions[version.policy_id][version.version_number] = version
 
-    def get_policy_version(
-        self, policy_id: str, version_number: int
-    ) -> Optional[PolicyVersion]:
+    def get_policy_version(self, policy_id: str, version_number: int) -> Optional[PolicyVersion]:
         with self._lock:
             versions = self._policy_versions.get(policy_id, {})
             return versions.get(version_number)
@@ -104,9 +100,7 @@ class MemoryControlPlaneRepository(
         with self._lock:
             return self._authorities.get(authority_id)
 
-    def list_authorities(
-        self, tenant_id: str, agent_id: Optional[str] = None
-    ) -> List[CentralAuthorityRecord]:
+    def list_authorities(self, tenant_id: str, agent_id: Optional[str] = None) -> List[CentralAuthorityRecord]:
         with self._lock:
             matches = []
             for auth in self._authorities.values():

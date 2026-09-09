@@ -56,9 +56,7 @@ def main():
     with open(args.output, "w", encoding="utf-8") as f:
         json.dump(sbom_data, f, indent=2)
 
-    print(
-        f"✅ SBOM successfully generated: '{args.output}' ({len(sbom_data['packages'])} packages documented)."
-    )
+    print(f"✅ SBOM successfully generated: '{args.output}' ({len(sbom_data['packages'])} packages documented).")
 
 
 if __name__ == "__main__":

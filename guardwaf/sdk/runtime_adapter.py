@@ -21,17 +21,11 @@ class AgentRuntimeAdapter:
     All framework wrappers translate tool calls into an ActionEnvelope and call authorize_action().
     """
 
-    def __init__(
-        self, waf: GuardWAF, revocation_client: Optional[RevocationClient] = None
-    ):
+    def __init__(self, waf: GuardWAF, revocation_client: Optional[RevocationClient] = None):
         self.waf = waf
-        self.revocation_client = revocation_client or RevocationClient(
-            key_manager=waf.key_manager
-        )
+        self.revocation_client = revocation_client or RevocationClient(key_manager=waf.key_manager)
 
-    def authorize_action(
-        self, envelope: ActionEnvelope
-    ) -> Tuple[bool, Optional[str], Optional[ActionGrant], Optional[PendingAction]]:
+    def authorize_action(self, envelope: ActionEnvelope) -> Tuple[bool, Optional[str], Optional[ActionGrant], Optional[PendingAction]]:
         """
         Single Core Authorization Entry Point.
         1. Check Local O(1) Kill Switches (Agent Revocation & Tenant Lockdown).
@@ -40,9 +34,7 @@ class AgentRuntimeAdapter:
         4. Produce ALLOW (ActionGrant), BLOCK (raise/return false), or HITL (PendingAction).
         """
         # 1. Local O(1) Hot-Path Kill Switch Check
-        self.revocation_client.check_kill_switch_local(
-            envelope.tenant_id, envelope.agent_id
-        )
+        self.revocation_client.check_kill_switch_local(envelope.tenant_id, envelope.agent_id)
 
         # 2. Check Execution Context Authority
         exec_ctx = get_current_execution_context()
@@ -95,10 +87,6 @@ class AgentRuntimeAdapter:
         """Convenience method returning a decision tuple with .allowed and .reason properties."""
         from collections import namedtuple
 
-        RuntimeDecision = namedtuple(
-            "RuntimeDecision", ["allowed", "reason", "grant", "pending"]
-        )
+        RuntimeDecision = namedtuple("RuntimeDecision", ["allowed", "reason", "grant", "pending"])
         allowed, reason, grant, pending = self.authorize_action(envelope)
-        return RuntimeDecision(
-            allowed=allowed, reason=reason, grant=grant, pending=pending
-        )
+        return RuntimeDecision(allowed=allowed, reason=reason, grant=grant, pending=pending)

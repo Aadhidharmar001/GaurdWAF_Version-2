@@ -12,23 +12,13 @@ def generate_compliance_report(db: Session) -> Dict[str, Any]:
     allowed_count = db.query(AuditLog).filter(AuditLog.status == "allowed").count()
     blocked_count = db.query(AuditLog).filter(AuditLog.status == "blocked").count()
     hitl_count = db.query(AuditLog).filter(AuditLog.status == "pending_hitl").count()
-    shadow_count = (
-        db.query(AuditLog).filter(AuditLog.status == "shadow_blocked").count()
-    )
+    shadow_count = db.query(AuditLog).filter(AuditLog.status == "shadow_blocked").count()
 
-    pending_hitl_queue = (
-        db.query(HitlQueue).filter(HitlQueue.status == "pending").count()
-    )
-    approved_hitl_queue = (
-        db.query(HitlQueue).filter(HitlQueue.status == "approved").count()
-    )
-    rejected_hitl_queue = (
-        db.query(HitlQueue).filter(HitlQueue.status == "rejected").count()
-    )
+    pending_hitl_queue = db.query(HitlQueue).filter(HitlQueue.status == "pending").count()
+    approved_hitl_queue = db.query(HitlQueue).filter(HitlQueue.status == "approved").count()
+    rejected_hitl_queue = db.query(HitlQueue).filter(HitlQueue.status == "rejected").count()
 
-    block_rate = (
-        round((blocked_count / total_audits * 100), 1) if total_audits > 0 else 0.0
-    )
+    block_rate = round((blocked_count / total_audits * 100), 1) if total_audits > 0 else 0.0
 
     timestamp_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
 

@@ -45,9 +45,7 @@ def test_rate_limiting_counter_contract(request, store_fixture):
 
     store.record_tool_call(session_id, tool_name, "allowed")
     store.record_tool_call(session_id, tool_name, "allowed")
-    store.record_tool_call(
-        session_id, tool_name, "blocked"
-    )  # Blocked calls do not increment allowed counter
+    store.record_tool_call(session_id, tool_name, "blocked")  # Blocked calls do not increment allowed counter
 
     assert store.get_tool_call_count(session_id, tool_name, window_seconds=60) == 2
 

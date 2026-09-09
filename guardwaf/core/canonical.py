@@ -22,9 +22,7 @@ def canonicalize_parameters(params: Dict[str, Any]) -> str:
         return val
 
     normalized = _normalize(params or {})
-    return json.dumps(
-        normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False
-    )
+    return json.dumps(normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
 def compute_parameter_digest(params: Dict[str, Any]) -> str:

@@ -17,13 +17,7 @@ from guardwaf.integrations.langchain import protect_tool as protect_langchain_to
 @pytest.fixture
 def setup_framework_waf():
     km = KeyManager(secret_key="dev_secret_key_framework_tests")
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(
-                tool="process_payment", param_name="amount", max_value=200
-            )
-        ]
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="process_payment", param_name="amount", max_value=200)])
     policy = PolicyConfig(metadata={"policy_name": "framework_policy"}, rules=rules)
     return GuardWAF(policy=policy, secret_key="dev_secret_key_framework_tests")
 

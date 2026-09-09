@@ -1,0 +1,98 @@
+name: "🧪 Public Beta Feedback"
+description: "Share your developer experience, onboarding feedback, or integration evaluation"
+title: "[BETA FEEDBACK]: "
+labels: ["beta-feedback", "evaluation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 🧪 GuardWAF Public Developer Beta Feedback
+        Thank you for testing GuardWAF! Your feedback directly informs our production readiness roadmap.
+  - type: markdown
+    attributes:
+      value: |
+        > [!CAUTION]
+        > **ZERO SENSITIVE DATA WARNING**
+        > Never include production credentials, secrets, API keys, private customer data, or real LLM prompts in this feedback form.
+  - type: dropdown
+    id: framework
+    attributes:
+      label: "1. Which integration did you test?"
+      options:
+        - "Core Python (@protect)"
+        - "LangChain (LangChainAdapter)"
+        - "LangGraph"
+        - "CrewAI (CrewAIAdapter)"
+        - "FastMCP / Model Context Protocol"
+        - "Custom Python Agent Loop"
+        - "Multiple / All"
+    validations:
+      required: true
+  - type: dropdown
+    id: install_success
+    attributes:
+      label: "2. Was installation successful?"
+      options:
+        - "Yes — smooth installation on first attempt"
+        - "Yes — but required minor troubleshooting"
+        - "No — encountered errors during install"
+    validations:
+      required: true
+  - type: dropdown
+    id: enforcement_success
+    attributes:
+      label: "3. Was your first policy enforcement successful?"
+      options:
+        - "Yes — successfully intercepted tool call within 5 minutes"
+        - "Yes — verified zero downstream execution on blocked action"
+        - "No — struggled with policy syntax or execution"
+    validations:
+      required: true
+  - type: textarea
+    id: confusion
+    attributes:
+      label: "4. What was confusing or difficult?"
+      description: "Any friction points in documentation, YAML schema, error messages, or SDK API?"
+      placeholder: "The HITL token resume syntax was slightly non-obvious..."
+    validations:
+      required: false
+  - type: textarea
+    id: failure
+    attributes:
+      label: "5. What failed or didn't work as expected?"
+      description: "Any bugs, missing features, or unexpected behaviors?"
+      placeholder: "None, or describe what broke..."
+    validations:
+      required: false
+  - type: dropdown
+    id: would_deploy
+    attributes:
+      label: "6. Would you consider deploying GuardWAF in your stack?"
+      options:
+        - "Yes, planning to deploy"
+        - "Maybe, pending specific features or adapters"
+        - "Not yet, evaluating alternatives"
+        - "No, not a fit for our use case"
+    validations:
+      required: true
+  - type: dropdown
+    id: adoption_barrier
+    attributes:
+      label: "7. What is your primary adoption barrier?"
+      options:
+        - "None / Ready to adopt"
+        - "Missing specific framework adapter"
+        - "Configuration / Policy YAML complexity"
+        - "Need a hosted / managed control plane"
+        - "Performance or latency concerns"
+        - "Existing in-house solution"
+        - "Other"
+    validations:
+      required: true
+  - type: textarea
+    id: comments
+    attributes:
+      label: "Additional Comments & Observations"
+      description: "Any other suggestions or thoughts on GuardWAF?"
+    validations:
+      required: false

@@ -24,9 +24,7 @@ class OrgService:
 
     def create_organization(self, name: str, slug: str) -> Organization:
         org_id = f"org_{uuid.uuid4().hex[:10]}"
-        org = Organization(
-            organization_id=org_id, name=name, slug=slug, status=OrgStatus.ACTIVE
-        )
+        org = Organization(organization_id=org_id, name=name, slug=slug, status=OrgStatus.ACTIVE)
         self._orgs[org_id] = org
         return org
 
@@ -41,13 +39,9 @@ class OrgService:
         self._users[user_id] = user
         return user
 
-    def add_member(
-        self, organization_id: str, user_id: str, role: Role
-    ) -> OrganizationMembership:
+    def add_member(self, organization_id: str, user_id: str, role: Role) -> OrganizationMembership:
         if organization_id not in self._orgs:
-            raise GuardWAFConfigurationError(
-                f"Organization '{organization_id}' not found."
-            )
+            raise GuardWAFConfigurationError(f"Organization '{organization_id}' not found.")
         if user_id not in self._users:
             raise GuardWAFConfigurationError(f"User '{user_id}' not found.")
 
@@ -60,17 +54,13 @@ class OrgService:
         self._memberships.append(mem)
         return mem
 
-    def get_membership(
-        self, organization_id: str, user_id: str
-    ) -> Optional[OrganizationMembership]:
+    def get_membership(self, organization_id: str, user_id: str) -> Optional[OrganizationMembership]:
         for m in self._memberships:
             if m.organization_id == organization_id and m.user_id == user_id:
                 return m
         return None
 
-    def verify_tenant_isolation(
-        self, requesting_org_id: str, target_resource_org_id: str
-    ) -> None:
+    def verify_tenant_isolation(self, requesting_org_id: str, target_resource_org_id: str) -> None:
         """
         Server-side tenant isolation check.
         Rejects cross-tenant access attempts.

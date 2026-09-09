@@ -13,9 +13,7 @@ from typing import Any, Dict
 from guardwaf.exceptions import GuardWAFSecurityError
 
 # Default secret key or fail-fast check
-DEFAULT_SECRET = os.getenv(
-    "GUARDWAF_SECRET_KEY", "prod_master_secret_key_phase5a_secure_998877"
-)
+DEFAULT_SECRET = os.getenv("GUARDWAF_SECRET_KEY", "prod_master_secret_key_phase5a_secure_998877")
 
 
 def hash_password(password: str) -> str:
@@ -64,14 +62,10 @@ def verify_jwt_token(token: str, secret_key: str = DEFAULT_SECRET) -> Dict[str, 
     try:
         parts = token.split(".")
         if len(parts) != 3:
-            raise GuardWAFSecurityError(
-                "Malformed JWT token format.", tool_name="jwt_auth"
-            )
+            raise GuardWAFSecurityError("Malformed JWT token format.", tool_name="jwt_auth")
 
         signing_input = (parts[0] + "." + parts[1]).encode("utf-8")
-        expected_sig = hmac.new(
-            secret_key.encode("utf-8"), signing_input, hashlib.sha256
-        ).digest()
+        expected_sig = hmac.new(secret_key.encode("utf-8"), signing_input, hashlib.sha256).digest()
 
         # Pad signature back
         sig_str = parts[2]
@@ -88,19 +82,13 @@ def verify_jwt_token(token: str, secret_key: str = DEFAULT_SECRET) -> Dict[str, 
         rem_p = len(payload_str) % 4
         if rem_p > 0:
             payload_str += "=" * (4 - rem_p)
-        payload = json.loads(
-            base64.urlsafe_b64decode(payload_str.encode("utf-8")).decode("utf-8")
-        )
+        payload = json.loads(base64.urlsafe_b64decode(payload_str.encode("utf-8")).decode("utf-8"))
 
         if payload.get("exp", 0) < time.time():
-            raise GuardWAFSecurityError(
-                "Expired JWT session token.", tool_name="jwt_auth"
-            )
+            raise GuardWAFSecurityError("Expired JWT session token.", tool_name="jwt_auth")
 
         return payload
     except Exception as e:
         if isinstance(e, GuardWAFSecurityError):
             raise e
-        raise GuardWAFSecurityError(
-            f"JWT Verification Failed: {e}", tool_name="jwt_auth"
-        )
+        raise GuardWAFSecurityError(f"JWT Verification Failed: {e}", tool_name="jwt_auth")

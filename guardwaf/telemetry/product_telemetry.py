@@ -49,8 +49,8 @@ class ProductIntelligenceModel:
 
     def get_engineering_evidence(self) -> Dict[str, Any]:
         return {
-            "automated_tests_passing": 120,
-            "total_test_modules": 30,
+            "automated_tests_passing": 142,
+            "total_test_modules": 33,
             "package_build_status": "PASS",
             "clean_installation_status": "PASS",
             "ci_cd_status": "PASS",

@@ -19,22 +19,9 @@ class DashboardService:
         active_count = sum(1 for a in agents if a.status.value == "ACTIVE")
         revoked_count = sum(1 for a in agents if a.status.value == "REVOKED")
 
-        allowed_count = sum(
-            1
-            for e in events
-            if e.metadata.get("decision") == "ALLOW" or e.event_type == "ACTION_ALLOWED"
-        )
-        blocked_count = sum(
-            1
-            for e in events
-            if e.metadata.get("decision") == "BLOCK" or e.event_type == "ACTION_BLOCKED"
-        )
-        hitl_count = sum(
-            1
-            for e in events
-            if e.metadata.get("decision") == "REQUIRE_HITL"
-            or e.event_type == "HITL_REQUIRED"
-        )
+        allowed_count = sum(1 for e in events if e.metadata.get("decision") == "ALLOW" or e.event_type == "ACTION_ALLOWED")
+        blocked_count = sum(1 for e in events if e.metadata.get("decision") == "BLOCK" or e.event_type == "ACTION_BLOCKED")
+        hitl_count = sum(1 for e in events if e.metadata.get("decision") == "REQUIRE_HITL" or e.event_type == "HITL_REQUIRED")
 
         return {
             "tenant_id": tenant_id,
@@ -47,9 +34,7 @@ class DashboardService:
             "pending_hitl_actions": hitl_count,
         }
 
-    def get_live_activity_stream(
-        self, tenant_id: str, limit: int = 20
-    ) -> List[Dict[str, Any]]:
+    def get_live_activity_stream(self, tenant_id: str, limit: int = 20) -> List[Dict[str, Any]]:
         events = self.audit_repo.list_audit_events(tenant_id)
         # Sort descending by timestamp
         sorted_events = sorted(events, key=lambda e: e.timestamp, reverse=True)[:limit]

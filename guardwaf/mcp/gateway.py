@@ -20,18 +20,14 @@ class MCPGatewayProxy:
     def __init__(
         self,
         waf: GuardWAF,
-        downstream_handler: Optional[
-            Callable[[MCPToolRequest], MCPToolResponse]
-        ] = None,
+        downstream_handler: Optional[Callable[[MCPToolRequest], MCPToolResponse]] = None,
         backend_server: Optional[Any] = None,
     ):
         self.waf = waf
         self.adapter = AgentRuntimeAdapter(waf=waf)
         self.downstream_handler = downstream_handler
         self.backend_server = backend_server
-        self.downstream_execution_count = (
-            0  # Counter verifying zero downstream execution on block
-        )
+        self.downstream_execution_count = 0  # Counter verifying zero downstream execution on block
 
     def filter_allowed_tools(
         self,
@@ -89,8 +85,7 @@ class MCPGatewayProxy:
                 id=request.id,
                 error={
                     "code": -32002,
-                    "message": reason
-                    or f"MCP tool '{request.tool_name}' blocked by GuardWAF policy.",
+                    "message": reason or f"MCP tool '{request.tool_name}' blocked by GuardWAF policy.",
                 },
             )
 
@@ -136,19 +131,11 @@ class MCPGatewayProxy:
         res = self.handle_tool_request(req)
         if isinstance(res, dict):
             if res.get("error"):
-                err_msg = (
-                    res["error"].get("message")
-                    if isinstance(res["error"], dict)
-                    else str(res["error"])
-                )
+                err_msg = res["error"].get("message") if isinstance(res["error"], dict) else str(res["error"])
                 raise GuardWAFSecurityError(err_msg, tool_name=tool_name)
             return res.get("result", res)
 
         if getattr(res, "error", None):
-            err_msg = (
-                res.error.get("message")
-                if isinstance(res.error, dict)
-                else str(res.error)
-            )
+            err_msg = res.error.get("message") if isinstance(res.error, dict) else str(res.error)
             raise GuardWAFSecurityError(err_msg, tool_name=tool_name)
         return getattr(res, "result", {}) or {}

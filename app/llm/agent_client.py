@@ -36,21 +36,12 @@ def parse_prompt_intent(prompt: str) -> Dict[str, Any]:
         ]
     ):
         query_str = "DROP TABLE Users;" if "drop table" in prompt_lower else prompt
-        if not (
-            "select" in prompt_lower
-            or "drop" in prompt_lower
-            or "delete" in prompt_lower
-        ):
+        if not ("select" in prompt_lower or "drop" in prompt_lower or "delete" in prompt_lower):
             query_str = f"SELECT * FROM logs WHERE details LIKE '%{prompt}%'"
         return {"tool": "execute_query", "parameters": {"query": query_str}}
 
     # 2. Bulk Delete Records
-    if (
-        "delete" in prompt_lower
-        or "remove" in prompt_lower
-        or "wipe" in prompt_lower
-        or "bulk" in prompt_lower
-    ):
+    if "delete" in prompt_lower or "remove" in prompt_lower or "wipe" in prompt_lower or "bulk" in prompt_lower:
         numbers = re.findall(r"\d+", prompt)
         count = int(numbers[0]) if numbers else 500
         return {
@@ -84,14 +75,10 @@ def run_agent_prompt(
     db: Session = None,
 ) -> Dict[str, Any]:
     api_key = settings.OPENAI_API_KEY or os.environ.get("OPENAI_API_KEY")
-    base_url = settings.OPENAI_BASE_URL or os.environ.get(
-        "OPENAI_BASE_URL", "https://api.x.ai/v1"
-    )
+    base_url = settings.OPENAI_BASE_URL or os.environ.get("OPENAI_BASE_URL", "https://api.x.ai/v1")
 
     provider_label = "xAI Grok" if "x.ai" in base_url else "OpenAI"
-    model_name = settings.OPENAI_MODEL or (
-        "grok-2" if "x.ai" in base_url else "gpt-4o-mini"
-    )
+    model_name = settings.OPENAI_MODEL or ("grok-2" if "x.ai" in base_url else "gpt-4o-mini")
 
     tool_intent = parse_prompt_intent(user_prompt)
 
@@ -192,15 +179,9 @@ def run_agent_prompt(
             "disposition": waf_status,
             "outcome": outcome,
             "matched_rule": matched_rule,
-            "fraud_score": getattr(hitl_entry, "fraud_score", None)
-            if status == "pending_hitl"
-            else None,
-            "confidence_score": getattr(hitl_entry, "confidence_score", None)
-            if status == "pending_hitl"
-            else None,
-            "risk_level": getattr(hitl_entry, "risk_level", None)
-            if status == "pending_hitl"
-            else None,
+            "fraud_score": getattr(hitl_entry, "fraud_score", None) if status == "pending_hitl" else None,
+            "confidence_score": getattr(hitl_entry, "confidence_score", None) if status == "pending_hitl" else None,
+            "risk_level": getattr(hitl_entry, "risk_level", None) if status == "pending_hitl" else None,
         }
 
     disposition_str = waf_response["disposition"] if waf_response else "EVALUATED"

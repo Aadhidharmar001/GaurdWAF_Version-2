@@ -40,9 +40,7 @@ def lookup_customer(customer_id: str):
 @protect(tool_name="process_refund")
 def process_refund(customer_id: str, amount: float):
     global REFUND_EXECUTIONS_COUNT
-    print(
-        f"   [TOOL EXECUTION] 💸 EXECUTING DB MUTATION: Refund ${amount:.2f} to {customer_id}"
-    )
+    print(f"   [TOOL EXECUTION] 💸 EXECUTING DB MUTATION: Refund ${amount:.2f} to {customer_id}")
     REFUND_EXECUTIONS_COUNT += 1
     return {"status": "SUCCESS", "customer_id": customer_id, "refunded_amount": amount}
 
@@ -73,9 +71,7 @@ async def run_resumable_hitl_demo():
             print("   ⏸️  GUARDWAF SUSPENDED EXECUTION:")
             print(f"      - Pending Action ID : {pending_action_id}")
             print(f"      - Approval Token    : {e.approval_token[:35]}...")
-            print(
-                f"      - DB Side Effects   : {REFUND_EXECUTIONS_COUNT} (Verified 0 Side Effects!)"
-            )
+            print(f"      - DB Side Effects   : {REFUND_EXECUTIONS_COUNT} (Verified 0 Side Effects!)")
 
         # Step 3: Inspect Immutable PendingAction in SQLite
         print("\n▶ STEP 3: Inspector checks PendingAction state in SQLite DB...")
@@ -86,12 +82,8 @@ async def run_resumable_hitl_demo():
         print(f"   - Current Status   : {pending_act.status.value}")
 
         # Step 4: Human Approval Workstation Action
-        print(
-            "\n▶ STEP 4: Compliance Admin approves PendingAction in GuardWAF Workstation..."
-        )
-        approved_act = waf.approve_pending_action(
-            pending_action_id, approver_id="compliance_officer_sarah"
-        )
+        print("\n▶ STEP 4: Compliance Admin approves PendingAction in GuardWAF Workstation...")
+        approved_act = waf.approve_pending_action(pending_action_id, approver_id="compliance_officer_sarah")
         print(f"   - Updated Status   : {approved_act.status.value}")
         print(f"   - Approver ID      : {approved_act.approver_id}")
 
@@ -99,22 +91,16 @@ async def run_resumable_hitl_demo():
         print("\n▶ STEP 5: Agent resumes execution via waf.resume()...")
         res = await waf.resume(pending_action_id, approved_act.approval_token)
         print(f"   - Resume Result    : {res}")
-        print(
-            f"   - DB Side Effects   : {REFUND_EXECUTIONS_COUNT} (Executed Exactly Once!)"
-        )
+        print(f"   - DB Side Effects   : {REFUND_EXECUTIONS_COUNT} (Executed Exactly Once!)")
 
         # Step 6: Anti-Replay Attack Verification
-        print(
-            "\n▶ STEP 6: Attacker attempts to REPLAY the approval token for a 2nd execution..."
-        )
+        print("\n▶ STEP 6: Attacker attempts to REPLAY the approval token for a 2nd execution...")
         try:
             await waf.resume(pending_action_id, approved_act.approval_token)
             print("   ❌ SECURITY FAILURE: Replay attack succeeded!")
         except GuardWAFAlreadyExecutedError as e:
             print(f"   ✅ GUARDWAF REJECTED REPLAY ATTACK: {e}")
-            print(
-                f"   - Final DB Side Effects: {REFUND_EXECUTIONS_COUNT} (Guaranteed Exactly-Once!)"
-            )
+            print(f"   - Final DB Side Effects: {REFUND_EXECUTIONS_COUNT} (Guaranteed Exactly-Once!)")
 
     print("\n" + "=" * 75)
     print("✅ PHASE 2 DEMO COMPLETE: Durable Resumable HITL Workflow Fully Verified!")

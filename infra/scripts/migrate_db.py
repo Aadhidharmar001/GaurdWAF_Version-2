@@ -40,9 +40,7 @@ def run_migrations(dry_run: bool = False) -> bool:
         return False
 
     if dry_run:
-        print(
-            "   ✅ DRY-RUN COMPLETE: Schema is 100% compliant and ready for migration."
-        )
+        print("   ✅ DRY-RUN COMPLETE: Schema is 100% compliant and ready for migration.")
         return True
 
     if not acquire_migration_lock():
@@ -52,15 +50,11 @@ def run_migrations(dry_run: bool = False) -> bool:
     try:
         print("▶ 3. Verifying Pre-Migration Point-in-Time Database Backup Snapshot...")
         time.sleep(0.1)
-        print(
-            "   ✅ Backup Verification OK: Snapshot 'guardwaf_pre_migration_latest' confirmed."
-        )
+        print("   ✅ Backup Verification OK: Snapshot 'guardwaf_pre_migration_latest' confirmed.")
 
         print("▶ 4. Applying Schema Migrations...")
         time.sleep(0.2)
-        print(
-            "   ✅ Migrations Applied Successfully: Target schema revision 'v1.6_phase6'."
-        )
+        print("   ✅ Migrations Applied Successfully: Target schema revision 'v1.6_phase6'.")
         return True
     except Exception as err:
         print(f"❌ MIGRATION ERROR: {err}")
@@ -74,9 +68,7 @@ def run_migrations(dry_run: bool = False) -> bool:
 
 def main():
     parser = argparse.ArgumentParser(description="GuardWAF Database Migration Engine")
-    parser.add_argument(
-        "--check", action="store_true", help="Perform dry-run compatibility check only"
-    )
+    parser.add_argument("--check", action="store_true", help="Perform dry-run compatibility check only")
     args = parser.parse_args()
 
     success = run_migrations(dry_run=args.check)

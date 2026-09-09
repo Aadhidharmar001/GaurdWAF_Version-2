@@ -31,23 +31,15 @@ class HITLWorkflowManager:
         self.telemetry = telemetry or TelemetryEmitter()
         self.token_mgr = token_mgr or HITLTokenManager(secret_key=secret_key)
 
-    def approve_action(
-        self, pending_action_id: str, approver_id: str = "admin", ttl_seconds: int = 600
-    ) -> PendingAction:
+    def approve_action(self, pending_action_id: str, approver_id: str = "admin", ttl_seconds: int = 600) -> PendingAction:
         action = self.state_store.get_pending_action(pending_action_id)
         if not action:
-            raise GuardWAFSecurityError(
-                f"PendingAction '{pending_action_id}' not found.", tool_name="unknown"
-            )
+            raise GuardWAFSecurityError(f"PendingAction '{pending_action_id}' not found.", tool_name="unknown")
 
         now = datetime.now(timezone.utc)
         if action.status == ActionState.EXPIRED or now > action.expires_at:
-            self.state_store.update_pending_action_status(
-                pending_action_id, ActionState.EXPIRED, action.status
-            )
-            raise GuardWAFActionExpiredError(
-                f"PendingAction '{pending_action_id}' has expired."
-            )
+            self.state_store.update_pending_action_status(pending_action_id, ActionState.EXPIRED, action.status)
+            raise GuardWAFActionExpiredError(f"PendingAction '{pending_action_id}' has expired.")
 
         if action.status != ActionState.PENDING:
             raise GuardWAFInvalidStateTransitionError(
@@ -74,9 +66,7 @@ class HITLWorkflowManager:
         )
 
         if not success:
-            raise GuardWAFInvalidStateTransitionError(
-                f"State transition PENDING -> APPROVED failed for '{pending_action_id}'."
-            )
+            raise GuardWAFInvalidStateTransitionError(f"State transition PENDING -> APPROVED failed for '{pending_action_id}'.")
 
         updated_action = self.state_store.get_pending_action(pending_action_id)
 
@@ -106,18 +96,12 @@ class HITLWorkflowManager:
     ) -> PendingAction:
         action = self.state_store.get_pending_action(pending_action_id)
         if not action:
-            raise GuardWAFSecurityError(
-                f"PendingAction '{pending_action_id}' not found.", tool_name="unknown"
-            )
+            raise GuardWAFSecurityError(f"PendingAction '{pending_action_id}' not found.", tool_name="unknown")
 
         now = datetime.now(timezone.utc)
         if action.status == ActionState.EXPIRED or now > action.expires_at:
-            self.state_store.update_pending_action_status(
-                pending_action_id, ActionState.EXPIRED, action.status
-            )
-            raise GuardWAFActionExpiredError(
-                f"PendingAction '{pending_action_id}' has expired."
-            )
+            self.state_store.update_pending_action_status(pending_action_id, ActionState.EXPIRED, action.status)
+            raise GuardWAFActionExpiredError(f"PendingAction '{pending_action_id}' has expired.")
 
         if action.status != ActionState.PENDING:
             raise GuardWAFInvalidStateTransitionError(
@@ -133,9 +117,7 @@ class HITLWorkflowManager:
         )
 
         if not success:
-            raise GuardWAFInvalidStateTransitionError(
-                f"State transition PENDING -> DENIED failed for '{pending_action_id}'."
-            )
+            raise GuardWAFInvalidStateTransitionError(f"State transition PENDING -> DENIED failed for '{pending_action_id}'.")
 
         updated_action = self.state_store.get_pending_action(pending_action_id)
 

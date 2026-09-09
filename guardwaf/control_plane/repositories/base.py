@@ -49,9 +49,7 @@ class PolicyRepository(ABC):
         pass
 
     @abstractmethod
-    def get_policy_version(
-        self, policy_id: str, version_number: int
-    ) -> Optional[PolicyVersion]:
+    def get_policy_version(self, policy_id: str, version_number: int) -> Optional[PolicyVersion]:
         pass
 
     @abstractmethod
@@ -82,9 +80,7 @@ class AuthorityRepository(ABC):
         pass
 
     @abstractmethod
-    def list_authorities(
-        self, tenant_id: str, agent_id: Optional[str] = None
-    ) -> List[CentralAuthorityRecord]:
+    def list_authorities(self, tenant_id: str, agent_id: Optional[str] = None) -> List[CentralAuthorityRecord]:
         pass
 
 

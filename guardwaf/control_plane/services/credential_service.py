@@ -18,9 +18,7 @@ class CredentialService:
     def __init__(self):
         self._credentials: Dict[str, AgentCredential] = {}
 
-    def issue_credential(
-        self, organization_id: str, agent_id: str, ttl_days: Optional[int] = None
-    ) -> IssuedCredentialResponse:
+    def issue_credential(self, organization_id: str, agent_id: str, ttl_days: Optional[int] = None) -> IssuedCredentialResponse:
         cred_id = f"cred_{uuid.uuid4().hex[:10]}"
         raw_key_secret = uuid.uuid4().hex + uuid.uuid4().hex
         plaintext_api_key = f"gw_live_{raw_key_secret}"
@@ -56,20 +54,14 @@ class CredentialService:
         for cred in self._credentials.values():
             if cred.credential_hash == provided_hash:
                 if cred.revoked_at:
-                    raise GuardWAFSecurityError(
-                        "API Credential has been REVOKED.", tool_name="credentials"
-                    )
+                    raise GuardWAFSecurityError("API Credential has been REVOKED.", tool_name="credentials")
                 if cred.expires_at and cred.expires_at < datetime.now(timezone.utc):
-                    raise GuardWAFSecurityError(
-                        "API Credential has EXPIRED.", tool_name="credentials"
-                    )
+                    raise GuardWAFSecurityError("API Credential has EXPIRED.", tool_name="credentials")
 
                 cred.last_used_at = datetime.now(timezone.utc)
                 return cred
 
-        raise GuardWAFSecurityError(
-            "Invalid or unknown API Credential.", tool_name="credentials"
-        )
+        raise GuardWAFSecurityError("Invalid or unknown API Credential.", tool_name="credentials")
 
     def revoke_credential(self, credential_id: str) -> AgentCredential:
         cred = self._credentials.get(credential_id)
@@ -79,9 +71,7 @@ class CredentialService:
         cred.revoked_at = datetime.now(timezone.utc)
         return cred
 
-    def list_credentials(
-        self, organization_id: str, agent_id: Optional[str] = None
-    ) -> List[AgentCredential]:
+    def list_credentials(self, organization_id: str, agent_id: Optional[str] = None) -> List[AgentCredential]:
         results = []
         for cred in self._credentials.values():
             if cred.organization_id == organization_id:

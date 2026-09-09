@@ -56,9 +56,7 @@ async def test_approved_action_resumes_correctly(waf_client):
         assert side_effect is False  # Function body not executed yet!
 
         # 2. Human Approves Action
-        pending_act = waf_client.approve_pending_action(
-            pending_id, approver_id="security_admin"
-        )
+        pending_act = waf_client.approve_pending_action(pending_id, approver_id="security_admin")
         assert pending_act.status == ActionState.APPROVED
         assert pending_act.approval_token is not None
 
@@ -97,9 +95,7 @@ async def test_denied_action_never_executes(waf_client):
             pending_id = e.pending_action_id
 
         # Human Denies Action
-        waf_client.deny_pending_action(
-            pending_id, approver_id="security_admin", reason="Over spending limit"
-        )
+        waf_client.deny_pending_action(pending_id, approver_id="security_admin", reason="Over spending limit")
 
         # Resume attempt MUST fail
         with pytest.raises(GuardWAFSecurityError) as exc:

@@ -24,23 +24,12 @@ def create_hitl_request(
 ) -> HitlQueue:
     sanitized_parameters = sanitize_parameters(parameters)
 
-    if (
-        fraud_score is None
-        or confidence_score is None
-        or risk_level is None
-        or risk_reasons is None
-    ):
+    if fraud_score is None or confidence_score is None or risk_level is None or risk_reasons is None:
         eval_res = evaluate_hitl_risk(tool, sanitized_parameters, matched_rule)
         fraud_score = eval_res["fraud_score"] if fraud_score is None else fraud_score
-        confidence_score = (
-            eval_res["confidence_score"]
-            if confidence_score is None
-            else confidence_score
-        )
+        confidence_score = eval_res["confidence_score"] if confidence_score is None else confidence_score
         risk_level = eval_res["risk_level"] if risk_level is None else risk_level
-        risk_reasons = (
-            eval_res["risk_reasons"] if risk_reasons is None else risk_reasons
-        )
+        risk_reasons = eval_res["risk_reasons"] if risk_reasons is None else risk_reasons
 
     entry = HitlQueue(
         timestamp=datetime.now(timezone.utc),
@@ -61,12 +50,7 @@ def create_hitl_request(
 
 
 def get_pending_hitl_requests(db: Session) -> List[Dict[str, Any]]:
-    rows = (
-        db.query(HitlQueue)
-        .filter(HitlQueue.status == "pending")
-        .order_by(HitlQueue.id.desc())
-        .all()
-    )
+    rows = db.query(HitlQueue).filter(HitlQueue.status == "pending").order_by(HitlQueue.id.desc()).all()
     results = []
     for r in rows:
         reasons = []
@@ -95,9 +79,7 @@ def get_pending_hitl_requests(db: Session) -> List[Dict[str, Any]]:
     return results
 
 
-def process_hitl_decision(
-    db: Session, request_id: int, decision: str, reason: Optional[str] = None
-) -> Optional[HitlQueue]:
+def process_hitl_decision(db: Session, request_id: int, decision: str, reason: Optional[str] = None) -> Optional[HitlQueue]:
     entry = db.query(HitlQueue).filter(HitlQueue.id == request_id).first()
     if not entry:
         return None

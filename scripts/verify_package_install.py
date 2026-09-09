@@ -22,9 +22,7 @@ def main():
     dist_dir = os.path.join(root_dir, "dist")
 
     if not os.path.exists(dist_dir):
-        print(
-            "❌ FAILED: 'dist/' directory does not exist. Run scripts/build_release.py first."
-        )
+        print("❌ FAILED: 'dist/' directory does not exist. Run scripts/build_release.py first.")
         sys.exit(1)
 
     wheels = [f for f in os.listdir(dist_dir) if f.endswith(".whl")]
@@ -41,11 +39,7 @@ def main():
     print(f"▶ 1. Creating Isolated Virtual Environment in '{temp_env_dir}'...")
     venv.create(temp_env_dir, with_pip=True)
 
-    venv_python = (
-        os.path.join(temp_env_dir, "Scripts", "python.exe")
-        if os.name == "nt"
-        else os.path.join(temp_env_dir, "bin", "python")
-    )
+    venv_python = os.path.join(temp_env_dir, "Scripts", "python.exe") if os.name == "nt" else os.path.join(temp_env_dir, "bin", "python")
 
     print(f"▶ 2. Installing Wheel '{wheels[0]}' in Clean Environment...")
     res_inst = subprocess.run(
@@ -83,9 +77,7 @@ with waf.session(session_id="clean_sess"):
 
 print("CLEAN_VERIFICATION_SUCCESS")
 """
-    res_run = subprocess.run(
-        [venv_python, "-c", test_code], capture_output=True, text=True, encoding="utf-8"
-    )
+    res_run = subprocess.run([venv_python, "-c", test_code], capture_output=True, text=True, encoding="utf-8")
 
     # Clean up temporary virtual environment
     shutil.rmtree(temp_env_dir, ignore_errors=True)

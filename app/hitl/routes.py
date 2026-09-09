@@ -15,13 +15,9 @@ def list_pending(db: Session = Depends(get_db)):
 
 
 @router.post("/decide/{request_id}")
-def decide_request(
-    request_id: int, decision: HITLDecision, db: Session = Depends(get_db)
-):
+def decide_request(request_id: int, decision: HITLDecision, db: Session = Depends(get_db)):
     if decision.decision not in ["approve", "reject"]:
-        raise HTTPException(
-            status_code=400, detail="Decision must be 'approve' or 'reject'"
-        )
+        raise HTTPException(status_code=400, detail="Decision must be 'approve' or 'reject'")
     res = process_hitl_decision(db, request_id, decision.decision, decision.reason)
     if not res:
         raise HTTPException(status_code=404, detail="HITL request not found")

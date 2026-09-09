@@ -34,9 +34,7 @@ class DelegatedAuthority(BaseModel):
             return True
         return tool_name in self.allowed_actions
 
-    def validate_constraints(
-        self, tool_name: str, parameters: Dict[str, Any]
-    ) -> Tuple[bool, Optional[str]]:
+    def validate_constraints(self, tool_name: str, parameters: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
         """
         Validates tool parameters against delegated constraints (e.g. max_amount, allowed_domains).
         Returns (is_valid, failure_reason).
@@ -67,11 +65,7 @@ class DelegatedAuthority(BaseModel):
         # 2. Blocklisted / Allowed Target Constraints
         if "allowed_targets" in tool_constraints:
             allowed_targets = tool_constraints["allowed_targets"]
-            target = (
-                parameters.get("target")
-                or parameters.get("recipient")
-                or parameters.get("customer_id")
-            )
+            target = parameters.get("target") or parameters.get("recipient") or parameters.get("customer_id")
             if target and target not in allowed_targets:
                 return (
                     False,

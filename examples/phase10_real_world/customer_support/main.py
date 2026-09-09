@@ -54,21 +54,13 @@ def raw_update_address(customer_id: str, new_address: str):
 
 
 def main():
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
     print("🛡️  PHASE 10 REAL-WORLD CUSTOMER SUPPORT AGENT INTEGRATION")
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
 
     rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(tool="issue_refund", param_name="amount", max_value=500.0)
-        ],
-        hitl_rules=[
-            HITLRule(tool="issue_refund", condition_param="amount", greater_than=100.0)
-        ],
+        bulk_thresholds=[BulkThresholdRule(tool="issue_refund", param_name="amount", max_value=500.0)],
+        hitl_rules=[HITLRule(tool="issue_refund", condition_param="amount", greater_than=100.0)],
         parameter_blocklist=[
             ParameterBlocklistRule(
                 tool="cancel_order",
@@ -83,9 +75,7 @@ def main():
     )
     hitl_service = HITLWorkstationService(waf=waf)
 
-    lookup_customer = protect(tool_name="lookup_customer", client=waf)(
-        raw_lookup_customer
-    )
+    lookup_customer = protect(tool_name="lookup_customer", client=waf)(raw_lookup_customer)
     view_orders = protect(tool_name="view_orders", client=waf)(raw_view_orders)
     issue_refund = protect(tool_name="issue_refund", client=waf)(raw_issue_refund)
     cancel_order = protect(tool_name="cancel_order", client=waf)(raw_cancel_order)
@@ -107,9 +97,7 @@ def main():
 
         exec_during_hitl = execution_counters["issue_refund"]
         assert exec_before_hitl == exec_during_hitl
-        print(
-            f"   🔒 Downstream Execution Count During HITL: {exec_during_hitl} (Delta: 0)"
-        )
+        print(f"   🔒 Downstream Execution Count During HITL: {exec_during_hitl} (Delta: 0)")
 
         # Approve & Resume
         tok = hitl_service.approve_action("default", p_id, "admin")["approval_token"]
@@ -127,17 +115,11 @@ def main():
 
         exec_after_block = execution_counters["cancel_order"]
         assert exec_before_block == exec_after_block
-        print(
-            f"   🔒 Downstream Execution Count After Block: {exec_after_block} (Delta: 0)"
-        )
+        print(f"   🔒 Downstream Execution Count After Block: {exec_after_block} (Delta: 0)")
 
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
     print("✅ CUSTOMER SUPPORT REAL-WORLD INTEGRATION COMPLETE!")
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
 
 
 if __name__ == "__main__":

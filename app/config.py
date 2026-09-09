@@ -18,9 +18,7 @@ class Settings(BaseSettings):
 
     # Rules & Security Configuration
     RULES_PATH: str = os.getenv("RULES_PATH", "rules.yaml")
-    SHADOW_MODE_GLOBAL: bool = (
-        os.getenv("SHADOW_MODE_GLOBAL", "false").lower() == "true"
-    )
+    SHADOW_MODE_GLOBAL: bool = os.getenv("SHADOW_MODE_GLOBAL", "false").lower() == "true"
 
     # LLM Provider Keys & Endpoints (OpenAI-compatible xAI Grok default)
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
@@ -33,6 +31,4 @@ class Settings(BaseSettings):
 
 settings = Settings()
 if settings.DATABASE_URL.startswith("postgres://"):
-    settings.DATABASE_URL = settings.DATABASE_URL.replace(
-        "postgres://", "postgresql://", 1
-    )
+    settings.DATABASE_URL = settings.DATABASE_URL.replace("postgres://", "postgresql://", 1)

@@ -47,9 +47,7 @@ def protect(
             async def async_wrapper(*args, **kwargs) -> Any:
                 active_client = client or GuardWAF.get_default_instance()
                 if not active_client:
-                    raise RuntimeError(
-                        "GuardWAF client is not initialized. Initialize GuardWAF() first."
-                    )
+                    raise RuntimeError("GuardWAF client is not initialized. Initialize GuardWAF() first.")
 
                 # Ensure tool registration
                 active_client.register_tool(target_name, func)
@@ -67,19 +65,11 @@ def protect(
                 # 3. Retrieve context
                 exec_ctx = get_current_execution_context()
                 session_ctx = get_current_session()
-                session_id = (
-                    session_ctx.session_id if session_ctx else "untracked_session"
-                )
-                effective_agent_id = (
-                    exec_ctx.agent.agent_id
-                    if (exec_ctx and exec_ctx.agent)
-                    else agent_id
-                )
+                session_id = session_ctx.session_id if session_ctx else "untracked_session"
+                effective_agent_id = exec_ctx.agent.agent_id if (exec_ctx and exec_ctx.agent) else agent_id
 
                 # 4. Evaluate Trusted Identity & Delegated Authority Boundary FIRST
-                active_client.authority_evaluator.evaluate_authority(
-                    exec_ctx, target_name, params
-                )
+                active_client.authority_evaluator.evaluate_authority(exec_ctx, target_name, params)
 
                 intent = ActionIntent(
                     intent_id=f"intent_{uuid.uuid4().hex[:10]}",
@@ -97,23 +87,13 @@ def protect(
                 event = TelemetryEvent(
                     event_type="ACTION_PENDING"
                     if eval_res.status == "pending_hitl"
-                    else (
-                        "ACTION_BLOCKED"
-                        if eval_res.status == "blocked"
-                        else "ACTION_ALLOWED"
-                    ),
+                    else ("ACTION_BLOCKED" if eval_res.status == "blocked" else "ACTION_ALLOWED"),
                     event_id=f"evt_{uuid.uuid4().hex[:10]}",
-                    principal_id=exec_ctx.principal.principal_id
-                    if (exec_ctx and exec_ctx.principal)
-                    else None,
+                    principal_id=exec_ctx.principal.principal_id if (exec_ctx and exec_ctx.principal) else None,
                     agent_id=effective_agent_id,
                     tenant_id=exec_ctx.tenant_id if exec_ctx else "default",
-                    authority_id=exec_ctx.authority.authority_id
-                    if (exec_ctx and exec_ctx.authority)
-                    else None,
-                    authentication_method=exec_ctx.principal.authentication_method
-                    if (exec_ctx and exec_ctx.principal)
-                    else "unverified",
+                    authority_id=exec_ctx.authority.authority_id if (exec_ctx and exec_ctx.authority) else None,
+                    authentication_method=exec_ctx.principal.authentication_method if (exec_ctx and exec_ctx.principal) else "unverified",
                     session_id=session_id,
                     tool_name=target_name,
                     parameters=params,
@@ -122,9 +102,7 @@ def protect(
                     outcome=eval_res.outcome,
                     matched_rule=eval_res.matched_rule,
                     hitl_id=eval_res.hitl_id,
-                    pending_action_id=eval_res.pending_action.pending_action_id
-                    if eval_res.pending_action
-                    else None,
+                    pending_action_id=eval_res.pending_action.pending_action_id if eval_res.pending_action else None,
                     latency_ms=latency_ms,
                 )
 
@@ -141,11 +119,7 @@ def protect(
                     )
                 elif eval_res.status == "pending_hitl":
                     active_client.telemetry.emit(event)
-                    pending_id = (
-                        eval_res.pending_action.pending_action_id
-                        if eval_res.pending_action
-                        else eval_res.hitl_id
-                    )
+                    pending_id = eval_res.pending_action.pending_action_id if eval_res.pending_action else eval_res.hitl_id
                     raise GuardWAFHITLRequiredError(
                         message=f"Action '{target_name}' requires Human-in-the-Loop approval: {eval_res.outcome}",
                         pending_action_id=pending_id,
@@ -156,20 +130,12 @@ def protect(
                     )
 
                 # 6. Allowed / Shadow Blocked -> Issue Grant & Record State
-                del_auth_id = (
-                    exec_ctx.authority.authority_id
-                    if (exec_ctx and exec_ctx.authority)
-                    else None
-                )
-                grant = active_client.signer.issue_grant(
-                    intent, delegated_authority_id=del_auth_id
-                )
+                del_auth_id = exec_ctx.authority.authority_id if (exec_ctx and exec_ctx.authority) else None
+                grant = active_client.signer.issue_grant(intent, delegated_authority_id=del_auth_id)
                 event.grant_id = grant.grant_id
                 active_client.telemetry.emit(event)
 
-                active_client.state_store.record_tool_call(
-                    session_id, target_name, eval_res.status
-                )
+                active_client.state_store.record_tool_call(session_id, target_name, eval_res.status)
                 active_client.state_store.record_sequence_state(session_id, target_name)
 
                 # Execute wrapped async target function
@@ -183,9 +149,7 @@ def protect(
             def sync_wrapper(*args, **kwargs) -> Any:
                 active_client = client or GuardWAF.get_default_instance()
                 if not active_client:
-                    raise RuntimeError(
-                        "GuardWAF client is not initialized. Initialize GuardWAF() first."
-                    )
+                    raise RuntimeError("GuardWAF client is not initialized. Initialize GuardWAF() first.")
 
                 # Ensure tool registration
                 active_client.register_tool(target_name, func)
@@ -203,29 +167,16 @@ def protect(
                 # 3. Retrieve context
                 exec_ctx = get_current_execution_context()
                 session_ctx = get_current_session()
-                session_id = (
-                    session_ctx.session_id if session_ctx else "untracked_session"
-                )
-                effective_agent_id = (
-                    exec_ctx.agent.agent_id
-                    if (exec_ctx and exec_ctx.agent)
-                    else agent_id
-                )
+                session_id = session_ctx.session_id if session_ctx else "untracked_session"
+                effective_agent_id = exec_ctx.agent.agent_id if (exec_ctx and exec_ctx.agent) else agent_id
                 effective_tenant_id = exec_ctx.tenant_id if exec_ctx else "default"
 
                 # 3b. Local $O(1)$ Revocation Kill Switch Check FIRST
-                if (
-                    hasattr(active_client, "revocation_client")
-                    and active_client.revocation_client
-                ):
-                    active_client.revocation_client.check_kill_switch_local(
-                        effective_tenant_id, effective_agent_id
-                    )
+                if hasattr(active_client, "revocation_client") and active_client.revocation_client:
+                    active_client.revocation_client.check_kill_switch_local(effective_tenant_id, effective_agent_id)
 
                 # 4. Evaluate Trusted Identity & Delegated Authority Boundary FIRST
-                active_client.authority_evaluator.evaluate_authority(
-                    exec_ctx, target_name, params
-                )
+                active_client.authority_evaluator.evaluate_authority(exec_ctx, target_name, params)
 
                 intent = ActionIntent(
                     intent_id=f"intent_{uuid.uuid4().hex[:10]}",
@@ -243,23 +194,13 @@ def protect(
                 event = TelemetryEvent(
                     event_type="ACTION_PENDING"
                     if eval_res.status == "pending_hitl"
-                    else (
-                        "ACTION_BLOCKED"
-                        if eval_res.status == "blocked"
-                        else "ACTION_ALLOWED"
-                    ),
+                    else ("ACTION_BLOCKED" if eval_res.status == "blocked" else "ACTION_ALLOWED"),
                     event_id=f"evt_{uuid.uuid4().hex[:10]}",
-                    principal_id=exec_ctx.principal.principal_id
-                    if (exec_ctx and exec_ctx.principal)
-                    else None,
+                    principal_id=exec_ctx.principal.principal_id if (exec_ctx and exec_ctx.principal) else None,
                     agent_id=effective_agent_id,
                     tenant_id=exec_ctx.tenant_id if exec_ctx else "default",
-                    authority_id=exec_ctx.authority.authority_id
-                    if (exec_ctx and exec_ctx.authority)
-                    else None,
-                    authentication_method=exec_ctx.principal.authentication_method
-                    if (exec_ctx and exec_ctx.principal)
-                    else "unverified",
+                    authority_id=exec_ctx.authority.authority_id if (exec_ctx and exec_ctx.authority) else None,
+                    authentication_method=exec_ctx.principal.authentication_method if (exec_ctx and exec_ctx.principal) else "unverified",
                     session_id=session_id,
                     tool_name=target_name,
                     parameters=params,
@@ -268,9 +209,7 @@ def protect(
                     outcome=eval_res.outcome,
                     matched_rule=eval_res.matched_rule,
                     hitl_id=eval_res.hitl_id,
-                    pending_action_id=eval_res.pending_action.pending_action_id
-                    if eval_res.pending_action
-                    else None,
+                    pending_action_id=eval_res.pending_action.pending_action_id if eval_res.pending_action else None,
                     latency_ms=latency_ms,
                 )
 
@@ -287,11 +226,7 @@ def protect(
                     )
                 elif eval_res.status == "pending_hitl":
                     active_client.telemetry.emit(event)
-                    pending_id = (
-                        eval_res.pending_action.pending_action_id
-                        if eval_res.pending_action
-                        else eval_res.hitl_id
-                    )
+                    pending_id = eval_res.pending_action.pending_action_id if eval_res.pending_action else eval_res.hitl_id
                     raise GuardWAFHITLRequiredError(
                         message=f"Action '{target_name}' requires Human-in-the-Loop approval: {eval_res.outcome}",
                         pending_action_id=pending_id,
@@ -302,20 +237,12 @@ def protect(
                     )
 
                 # 6. Allowed / Shadow Blocked -> Issue Grant & Record State
-                del_auth_id = (
-                    exec_ctx.authority.authority_id
-                    if (exec_ctx and exec_ctx.authority)
-                    else None
-                )
-                grant = active_client.signer.issue_grant(
-                    intent, delegated_authority_id=del_auth_id
-                )
+                del_auth_id = exec_ctx.authority.authority_id if (exec_ctx and exec_ctx.authority) else None
+                grant = active_client.signer.issue_grant(intent, delegated_authority_id=del_auth_id)
                 event.grant_id = grant.grant_id
                 active_client.telemetry.emit(event)
 
-                active_client.state_store.record_tool_call(
-                    session_id, target_name, eval_res.status
-                )
+                active_client.state_store.record_tool_call(session_id, target_name, eval_res.status)
                 active_client.state_store.record_sequence_state(session_id, target_name)
 
                 # Execute wrapped sync target function

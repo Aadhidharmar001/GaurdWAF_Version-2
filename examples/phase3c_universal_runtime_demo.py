@@ -23,11 +23,7 @@ from guardwaf.observability.metrics import MemoryMetricsCollector
 from guardwaf.sdk.revocation_client import RevocationClient
 
 # Setup Policy ($500 max refund limit)
-rules = PolicyRules(
-    bulk_thresholds=[
-        BulkThresholdRule(tool="process_refund", param_name="amount", max_value=500)
-    ]
-)
+rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="process_refund", param_name="amount", max_value=500)])
 policy = PolicyConfig(metadata={"policy_name": "phase3c_policy"}, rules=rules)
 secret_str = "dev_secret_key_phase3c"
 km = KeyManager(secret_key=secret_str)
@@ -53,29 +49,17 @@ def run_universal_demo():
     agent_id = "support_agent_01"
 
     # --- Scenario 1: Custom Python Agent (Allowed Action) ---
-    print(
-        "\n▶ SCENARIO 1: Custom Python Agent executing $250.00 refund (Policy Limit: $500.00)..."
-    )
+    print("\n▶ SCENARIO 1: Custom Python Agent executing $250.00 refund (Policy Limit: $500.00)...")
     custom_adapter = CustomAgentAdapter(waf=waf)
-    protected_custom_refund = custom_adapter.wrap_tool(
-        refund_body, tool_name="process_refund"
-    )
+    protected_custom_refund = custom_adapter.wrap_tool(refund_body, tool_name="process_refund")
 
-    res1 = protected_custom_refund(
-        customer_id="cust_alice", amount=250.00, tenant_id=tenant_id, agent_id=agent_id
-    )
+    res1 = protected_custom_refund(customer_id="cust_alice", amount=250.00, tenant_id=tenant_id, agent_id=agent_id)
     print(f"   ✅ SUCCESS: Custom agent refund executed cleanly! ({res1})")
-    print(
-        f"      - Downstream Executions: {protected_custom_refund.execution_counter['count']}"
-    )
+    print(f"      - Downstream Executions: {protected_custom_refund.execution_counter['count']}")
 
     # --- Scenario 2: LangChain Adapter (Blocked Action) ---
-    print(
-        "\n▶ SCENARIO 2: LangChain Tool executing $600.00 refund (Exceeds Policy Limit: $500.00)..."
-    )
-    langchain_refund = protect_langchain_tool(
-        refund_body, waf=waf, tool_name="process_refund"
-    )
+    print("\n▶ SCENARIO 2: LangChain Tool executing $600.00 refund (Exceeds Policy Limit: $500.00)...")
+    langchain_refund = protect_langchain_tool(refund_body, waf=waf, tool_name="process_refund")
     try:
         langchain_refund.run(
             customer_id="cust_bob",
@@ -89,12 +73,8 @@ def run_universal_demo():
         print("      - Downstream Executions: 0 (Verified Zero Execution!)")
 
     # --- Scenario 3: CrewAI Adapter (Blocked Action) ---
-    print(
-        "\n▶ SCENARIO 3: CrewAI Tool executing $600.00 refund (Exceeds Policy Limit: $500.00)..."
-    )
-    crewai_refund = protect_crewai_tool(
-        refund_body, waf=waf, tool_name="process_refund"
-    )
+    print("\n▶ SCENARIO 3: CrewAI Tool executing $600.00 refund (Exceeds Policy Limit: $500.00)...")
+    crewai_refund = protect_crewai_tool(refund_body, waf=waf, tool_name="process_refund")
     try:
         crewai_refund._run(
             customer_id="cust_charlie",
@@ -121,9 +101,7 @@ def run_universal_demo():
     print(f"   ✅ SUCCESS: MCP Gateway allowed request! ({mcp_res_allowed.result})")
 
     # --- Scenario 5: MCP Gateway Proxy (Blocked Dangerous Action) ---
-    print(
-        "\n▶ SCENARIO 5: MCP Gateway Proxy handling dangerous $750.00 refund (Limit: $500.00)..."
-    )
+    print("\n▶ SCENARIO 5: MCP Gateway Proxy handling dangerous $750.00 refund (Limit: $500.00)...")
     mcp_req_blocked = MCPToolRequest(
         tenant_id=tenant_id,
         agent_id=agent_id,
@@ -132,17 +110,11 @@ def run_universal_demo():
     )
     mcp_res_blocked = mcp_gateway.handle_tool_request(mcp_req_blocked)
     assert mcp_res_blocked.error is not None
-    print(
-        f"   ✅ GUARDWAF MCP GATEWAY BLOCKED ACTION: {mcp_res_blocked.error['message']}"
-    )
-    print(
-        f"      - Downstream Execution Count: {mcp_gateway.downstream_execution_count} (Verified Zero Downstream Calls!)"
-    )
+    print(f"   ✅ GUARDWAF MCP GATEWAY BLOCKED ACTION: {mcp_res_blocked.error['message']}")
+    print(f"      - Downstream Execution Count: {mcp_gateway.downstream_execution_count} (Verified Zero Downstream Calls!)")
 
     # --- Scenario 6: Parameter Mutation Attempt ---
-    print(
-        "\n▶ SCENARIO 6: Detecting Parameter Mutation between evaluation and forwarding..."
-    )
+    print("\n▶ SCENARIO 6: Detecting Parameter Mutation between evaluation and forwarding...")
     mcp_req_tamper = MCPToolRequest(
         tenant_id=tenant_id,
         agent_id=agent_id,
@@ -153,34 +125,24 @@ def run_universal_demo():
     mcp_req_tamper.arguments["amount"] = 5000.00  # Tampered!
     mcp_res_tamper = mcp_gateway.handle_tool_request(mcp_req_tamper)
     assert mcp_res_tamper.error is not None
-    print(
-        f"   ✅ GUARDWAF BLOCKED PARAMETER MUTATION: {mcp_res_tamper.error['message']}"
-    )
+    print(f"   ✅ GUARDWAF BLOCKED PARAMETER MUTATION: {mcp_res_tamper.error['message']}")
 
     # --- Scenario 7: Cryptographically Signed Revocation Event ---
-    print(
-        "\n▶ SCENARIO 7: Control Plane issuing cryptographically Signed Revocation Event..."
-    )
+    print("\n▶ SCENARIO 7: Control Plane issuing cryptographically Signed Revocation Event...")
     signed_revocation = event_verifier.sign_event(
         event_type="AGENT_REVOKED",
         tenant_id=tenant_id,
         agent_id=agent_id,
         sequence_number=101,
     )
-    print(
-        f"   ✅ Signed Revocation Event Created: ID='{signed_revocation.event_id}', KeyID='{signed_revocation.key_id}'"
-    )
+    print(f"   ✅ Signed Revocation Event Created: ID='{signed_revocation.event_id}', KeyID='{signed_revocation.key_id}'")
     print(f"      - Signature: {signed_revocation.signature[:35]}...")
 
     # --- Scenario 8: SDK Applies Signed Revocation & Blocks Action ---
-    print(
-        "\n▶ SCENARIO 8: SDK RevocationClient verifying signature, sequence number, and blocking agent..."
-    )
+    print("\n▶ SCENARIO 8: SDK RevocationClient verifying signature, sequence number, and blocking agent...")
     verified_applied = revocation_client.process_signed_event(signed_revocation)
     assert verified_applied is True
-    print(
-        "   ✅ SDK RevocationClient Cryptographically Verified and Applied Revocation"
-    )
+    print("   ✅ SDK RevocationClient Cryptographically Verified and Applied Revocation")
 
     # Test hot-path kill switch
     try:
@@ -190,9 +152,7 @@ def run_universal_demo():
         print(f"   ✅ LOCAL HOT-PATH KILL SWITCH BLOCKED ACTION: {e.message}")
 
     # --- Scenario 9: Emergency Tenant Lockdown ---
-    print(
-        "\n▶ SCENARIO 9: Control Plane broadcasting Emergency Tenant Lockdown ('acme_corp')..."
-    )
+    print("\n▶ SCENARIO 9: Control Plane broadcasting Emergency Tenant Lockdown ('acme_corp')...")
     signed_lockdown = event_verifier.sign_event(
         event_type="TENANT_LOCKDOWN",
         tenant_id=tenant_id,
@@ -216,14 +176,10 @@ def run_universal_demo():
         raise RuntimeError("Prometheus / Telemetry Network Error Simulated")
 
     # GuardWAF evaluation continues seamlessly even if telemetry throws exception
-    print(
-        "   ✅ SUCCESS: GuardWAF security decision executed cleanly despite telemetry exception!"
-    )
+    print("   ✅ SUCCESS: GuardWAF security decision executed cleanly despite telemetry exception!")
 
     print("\n" + "=" * 85)
-    print(
-        "✅ PHASE 3C DEMO COMPLETE: Universal Runtime Enforcement & Security Gateway Verified!"
-    )
+    print("✅ PHASE 3C DEMO COMPLETE: Universal Runtime Enforcement & Security Gateway Verified!")
     print("=" * 85)
 
 

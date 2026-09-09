@@ -25,14 +25,8 @@ def test_api_versioning_and_health_routes():
 
 def test_policy_backward_compatibility():
     # Verifies legacy policy configuration formats load cleanly without schema errors
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(tool="legacy_tool", param_name="qty", max_value=10)
-        ]
-    )
-    policy = PolicyConfig(
-        metadata={"policy_name": "v1_legacy_policy", "version": "1"}, rules=rules
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="legacy_tool", param_name="qty", max_value=10)])
+    policy = PolicyConfig(metadata={"policy_name": "v1_legacy_policy", "version": "1"}, rules=rules)
 
     waf = GuardWAF(policy=policy, secret_key="compat_secret_key_32bytes_min_long")
 
@@ -51,11 +45,7 @@ def test_zero_downtime_key_rotation_during_execution():
         "k1": "old_secret_key_32bytes_long_aaaa",
         "k2": "new_secret_key_32bytes_long_bbbb",
     }
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(tool="rot_tool", param_name="val", max_value=100)
-        ]
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="rot_tool", param_name="val", max_value=100)])
     policy = PolicyConfig(metadata={"policy_name": "rot_policy"}, rules=rules)
 
     waf = GuardWAF(
@@ -73,7 +63,5 @@ def test_zero_downtime_key_rotation_during_execution():
         assert rot_tool(val=10.0) == 10.0
 
         # Rotate key dynamically
-        waf.key_manager.rotate_key(
-            new_key_id="k2", new_secret_key="new_secret_key_32bytes_long_bbbb"
-        )
+        waf.key_manager.rotate_key(new_key_id="k2", new_secret_key="new_secret_key_32bytes_long_bbbb")
         assert rot_tool(val=20.0) == 20.0

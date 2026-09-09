@@ -73,9 +73,7 @@ class SQLiteStateStore(StateStore):
             finally:
                 conn.close()
 
-    def record_tool_call(
-        self, session_id: str, tool_name: str, status: str = "allowed"
-    ) -> None:
+    def record_tool_call(self, session_id: str, tool_name: str, status: str = "allowed") -> None:
         if status not in ["allowed", "shadow_blocked"]:
             return
         with self._lock:
@@ -90,15 +88,11 @@ class SQLiteStateStore(StateStore):
             finally:
                 conn.close()
 
-    def get_tool_call_count(
-        self, session_id: str, tool_name: str, window_seconds: int
-    ) -> int:
+    def get_tool_call_count(self, session_id: str, tool_name: str, window_seconds: int) -> int:
         with self._lock:
             conn = self._get_connection()
             try:
-                cutoff = (
-                    datetime.now(timezone.utc) - timedelta(seconds=window_seconds)
-                ).isoformat()
+                cutoff = (datetime.now(timezone.utc) - timedelta(seconds=window_seconds)).isoformat()
                 cursor = conn.cursor()
                 cursor.execute(
                     "SELECT COUNT(*) FROM tool_calls WHERE session_id = ? AND tool_name = ? AND timestamp >= ?",
@@ -138,12 +132,8 @@ class SQLiteStateStore(StateStore):
         with self._lock:
             conn = self._get_connection()
             try:
-                conn.execute(
-                    "DELETE FROM tool_calls WHERE session_id = ?", (session_id,)
-                )
-                conn.execute(
-                    "DELETE FROM sequence_state WHERE session_id = ?", (session_id,)
-                )
+                conn.execute("DELETE FROM tool_calls WHERE session_id = ?", (session_id,))
+                conn.execute("DELETE FROM sequence_state WHERE session_id = ?", (session_id,))
                 conn.commit()
             finally:
                 conn.close()
@@ -179,9 +169,7 @@ class SQLiteStateStore(StateStore):
                         pending_action.expires_at.isoformat(),
                         pending_action.status.value,
                         pending_action.approver_id,
-                        pending_action.approved_at.isoformat()
-                        if pending_action.approved_at
-                        else None,
+                        pending_action.approved_at.isoformat() if pending_action.approved_at else None,
                         pending_action.denied_reason,
                         pending_action.execution_status,
                         pending_action.idempotency_key,
@@ -195,9 +183,7 @@ class SQLiteStateStore(StateStore):
     def _row_to_pending_action(self, row: sqlite3.Row) -> PendingAction:
         created_at = datetime.fromisoformat(row["created_at"])
         expires_at = datetime.fromisoformat(row["expires_at"])
-        approved_at = (
-            datetime.fromisoformat(row["approved_at"]) if row["approved_at"] else None
-        )
+        approved_at = datetime.fromisoformat(row["approved_at"]) if row["approved_at"] else None
 
         status_val = ActionState(row["status"])
         now = datetime.now(timezone.utc)
@@ -278,13 +264,7 @@ class SQLiteStateStore(StateStore):
                 elif new_status == ActionState.EXECUTING:
                     exec_status = "EXECUTING"
 
-                appr_time = (
-                    now_iso
-                    if approver_id
-                    else (
-                        action.approved_at.isoformat() if action.approved_at else None
-                    )
-                )
+                appr_time = now_iso if approver_id else (action.approved_at.isoformat() if action.approved_at else None)
 
                 cursor.execute(
                     """
@@ -313,9 +293,7 @@ class SQLiteStateStore(StateStore):
             finally:
                 conn.close()
 
-    def list_pending_actions(
-        self, status: Optional[ActionState] = None
-    ) -> List[PendingAction]:
+    def list_pending_actions(self, status: Optional[ActionState] = None) -> List[PendingAction]:
         with self._lock:
             conn = self._get_connection()
             try:

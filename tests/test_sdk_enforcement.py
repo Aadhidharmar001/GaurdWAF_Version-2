@@ -167,14 +167,10 @@ def test_grant_signature_verification(init_guardwaf_client):
         session_context=SessionContext(session_id="sess_grant"),
     )
     grant = init_guardwaf_client.signer.issue_grant(intent)
-    assert (
-        init_guardwaf_client.signer.verify_grant(grant, intent.parameter_digest) is True
-    )
+    assert init_guardwaf_client.signer.verify_grant(grant, intent.parameter_digest) is True
 
     # Mutated digest fails verification
-    assert (
-        init_guardwaf_client.signer.verify_grant(grant, "mutated_digest_123") is False
-    )
+    assert init_guardwaf_client.signer.verify_grant(grant, "mutated_digest_123") is False
 
 
 # --- Test 11: Async protected function enforcement ---

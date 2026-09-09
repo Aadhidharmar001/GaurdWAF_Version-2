@@ -75,14 +75,10 @@ class PolicyClient:
         with self._lock:
             # 1. Tenant & Agent Binding Check
             if bundle.tenant_id != self.tenant_id:
-                print(
-                    f"⚠️ [GuardWAF PolicyClient] Rejected bundle: Tenant mismatch ('{bundle.tenant_id}' != '{self.tenant_id}')"
-                )
+                print(f"⚠️ [GuardWAF PolicyClient] Rejected bundle: Tenant mismatch ('{bundle.tenant_id}' != '{self.tenant_id}')")
                 return False
             if bundle.agent_id != self.agent_id:
-                print(
-                    f"⚠️ [GuardWAF PolicyClient] Rejected bundle: Agent mismatch ('{bundle.agent_id}' != '{self.agent_id}')"
-                )
+                print(f"⚠️ [GuardWAF PolicyClient] Rejected bundle: Agent mismatch ('{bundle.agent_id}' != '{self.agent_id}')")
                 return False
 
             # 2. Cryptographic Signature & SHA-256 Digest Verification
@@ -93,18 +89,14 @@ class PolicyClient:
                 valid_sig = self._verify_bundle_signature_local(bundle)
 
             if not valid_sig:
-                print(
-                    f"⚠️ [GuardWAF PolicyClient] REJECTED TAMPERED BUNDLE '{bundle.bundle_id}'. Retaining Last Known Good policy."
-                )
+                print(f"⚠️ [GuardWAF PolicyClient] REJECTED TAMPERED BUNDLE '{bundle.bundle_id}'. Retaining Last Known Good policy.")
                 return False
 
             # 3. Compile PolicyConfig instance
             try:
                 new_config = parse_policy_dict(bundle.policy_payload)
             except Exception as e:
-                print(
-                    f"⚠️ [GuardWAF PolicyClient] Failed to parse bundle policy payload: {e}"
-                )
+                print(f"⚠️ [GuardWAF PolicyClient] Failed to parse bundle policy payload: {e}")
                 return False
 
             # 4. Atomic Swap
@@ -129,9 +121,7 @@ class PolicyClient:
             return False
 
         signature_payload = f"{bundle.bundle_id}:{bundle.tenant_id}:{bundle.agent_id}:{bundle.environment}:{bundle.bundle_digest}:{bundle.key_id}:{bundle.issued_at.isoformat()}:{bundle.expires_at.isoformat()}"
-        expected_sig = hmac.new(
-            secret_bytes, signature_payload.encode("utf-8"), hashlib.sha256
-        ).hexdigest()
+        expected_sig = hmac.new(secret_bytes, signature_payload.encode("utf-8"), hashlib.sha256).hexdigest()
         return hmac.compare_digest(bundle.signature, expected_sig)
 
     def fetch_and_apply_remote(self) -> bool:
@@ -150,9 +140,7 @@ class PolicyClient:
                 )
             return self.verify_and_apply_bundle(bundle)
         except Exception as err:
-            print(
-                f"⚠️ [GuardWAF PolicyClient] Remote fetch failed ({err}). Retaining Last Known Good policy."
-            )
+            print(f"⚠️ [GuardWAF PolicyClient] Remote fetch failed ({err}). Retaining Last Known Good policy.")
             return False
 
     def start_background_refresh(self) -> None:
@@ -167,9 +155,7 @@ class PolicyClient:
                 self.fetch_and_apply_remote()
                 self._stop_event.wait(timeout=self.refresh_interval)
 
-        self._refresh_thread = threading.Thread(
-            target=_loop, daemon=True, name="GuardWAFPolicyRefresh"
-        )
+        self._refresh_thread = threading.Thread(target=_loop, daemon=True, name="GuardWAFPolicyRefresh")
         self._refresh_thread.start()
 
     def stop_background_refresh(self) -> None:

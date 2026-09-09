@@ -27,25 +27,13 @@ def raw_transfer_funds(source_acc: str, dest_acc: str, amount: float):
 
 
 def main():
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
     print("🛡️  PHASE 10 REAL-WORLD FINANCIAL AGENT INTEGRATION")
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
 
     rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(
-                tool="transfer_funds", param_name="amount", max_value=10000.0
-            )
-        ],
-        hitl_rules=[
-            HITLRule(
-                tool="transfer_funds", condition_param="amount", greater_than=1000.0
-            )
-        ],
+        bulk_thresholds=[BulkThresholdRule(tool="transfer_funds", param_name="amount", max_value=10000.0)],
+        hitl_rules=[HITLRule(tool="transfer_funds", condition_param="amount", greater_than=1000.0)],
     )
     waf = GuardWAF(
         policy=PolicyConfig(metadata={"policy_name": "fin"}, rules=rules),
@@ -67,14 +55,10 @@ def main():
             print(f"   ⏸️ HITL Suspended: Pending Action '{p_id}'")
 
         assert execution_counters["transfer_funds"] == exec_before
-        print(
-            f"   🔒 Executions Before Approval: {execution_counters['transfer_funds']} (Delta: 0)"
-        )
+        print(f"   🔒 Executions Before Approval: {execution_counters['transfer_funds']} (Delta: 0)")
 
         # 2. Approve & Resume
-        tok = hitl_service.approve_action("default", p_id, "ciso_admin")[
-            "approval_token"
-        ]
+        tok = hitl_service.approve_action("default", p_id, "ciso_admin")["approval_token"]
         res = waf.resume_sync(p_id, tok)
         print(f"   ✅ Approved & Resumed: {res}")
         assert execution_counters["transfer_funds"] == exec_before + 1
@@ -88,13 +72,9 @@ def main():
 
         assert execution_counters["transfer_funds"] == exec_before + 1
 
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
     print("✅ FINANCIAL AGENT REAL-WORLD INTEGRATION COMPLETE!")
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
 
 
 if __name__ == "__main__":

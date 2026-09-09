@@ -20,14 +20,10 @@ class StaticIdentityProvider(IdentityProvider):
     def authenticate(self, credentials: IdentityCredentials) -> VerifiedPrincipal:
         token = credentials.raw_token
         if token not in self._principals:
-            raise GuardWAFAuthenticationError(
-                f"Static token '{token[:10]}...' not found in static provider registry."
-            )
+            raise GuardWAFAuthenticationError(f"Static token '{token[:10]}...' not found in static provider registry.")
 
         principal = self._principals[token]
         if principal.is_expired():
-            raise GuardWAFAuthenticationError(
-                f"VerifiedPrincipal '{principal.principal_id}' has expired."
-            )
+            raise GuardWAFAuthenticationError(f"VerifiedPrincipal '{principal.principal_id}' has expired.")
 
         return principal

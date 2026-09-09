@@ -43,9 +43,7 @@ class ControlPlaneContainer:
     ):
         self.repo = repo or MemoryControlPlaneRepository()
         self.key_manager = key_manager or KeyManager()
-        self.waf = waf or GuardWAF(
-            secret_key=self.key_manager.get_active_key()[1].decode("utf-8")
-        )
+        self.waf = waf or GuardWAF(secret_key=self.key_manager.get_active_key()[1].decode("utf-8"))
 
         self.audit_service = AuditService(self.repo)
         self.agent_service = AgentService(self.repo, self.audit_service)
@@ -103,9 +101,7 @@ def create_control_plane_app(
         if os.path.exists(html_path):
             with open(html_path, "r", encoding="utf-8") as f:
                 return HTMLResponse(content=f.read())
-        return HTMLResponse(
-            content="<h1>GuardWAF Console UI Index Not Found</h1>", status_code=404
-        )
+        return HTMLResponse(content="<h1>GuardWAF Console UI Index Not Found</h1>", status_code=404)
 
     # --- Health & Observability Endpoints ---
     @app.get("/health")
@@ -171,9 +167,7 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
     @router.get("/auth/me")
     def get_auth_me(authorization: Optional[str] = Header(None)):
         if not authorization or not authorization.startswith("Bearer "):
-            raise HTTPException(
-                status_code=401, detail="Missing or invalid Authorization header."
-            )
+            raise HTTPException(status_code=401, detail="Missing or invalid Authorization header.")
         token = authorization.split(" ")[1]
         try:
             payload = verify_jwt_token(token)
@@ -194,24 +188,18 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
     @router.post("/organizations")
     def create_organization(payload: Dict[str, Any]):
         c = get_container()
-        return c.org_service.create_organization(
-            name=payload["name"], slug=payload["slug"]
-        )
+        return c.org_service.create_organization(name=payload["name"], slug=payload["slug"])
 
     @router.post("/users")
     def create_user(payload: Dict[str, Any]):
         c = get_container()
-        return c.org_service.create_user(
-            email=payload["email"], display_name=payload["display_name"]
-        )
+        return c.org_service.create_user(email=payload["email"], display_name=payload["display_name"])
 
     @router.post("/organizations/{org_id}/members")
     def add_member(org_id: str, payload: Dict[str, Any]):
         c = get_container()
         role = Role(payload["role"])
-        return c.org_service.add_member(
-            organization_id=org_id, user_id=payload["user_id"], role=role
-        )
+        return c.org_service.add_member(organization_id=org_id, user_id=payload["user_id"], role=role)
 
     # --- Agent Credential Endpoints ---
     @router.post("/credentials")
@@ -240,9 +228,7 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
         c = get_container()
         agent = c.agent_service.get_agent(agent_id)
         if not agent:
-            raise HTTPException(
-                status_code=404, detail=f"Agent '{agent_id}' not found."
-            )
+            raise HTTPException(status_code=404, detail=f"Agent '{agent_id}' not found.")
         return agent
 
     @router.post("/agents/{agent_id}/revoke")
@@ -276,9 +262,7 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
     def activate_policy(policy_id: str, payload: Dict[str, Any]):
         c = get_container()
         try:
-            return c.policy_service.publish_and_activate(
-                policy_id, version_number=payload["version_number"]
-            )
+            return c.policy_service.publish_and_activate(policy_id, version_number=payload["version_number"])
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
 
@@ -286,9 +270,7 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
     def rollback_policy(policy_id: str, payload: Dict[str, Any]):
         c = get_container()
         try:
-            return c.policy_service.rollback_version(
-                policy_id, target_version_number=payload["version_number"]
-            )
+            return c.policy_service.rollback_version(policy_id, target_version_number=payload["version_number"])
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
 
@@ -334,9 +316,7 @@ guardwaf_active_agents {len(c.repo.list_agents("default"))}
         agents = c.agent_service.list_agents(tenant_id=org_id)
         revoked_count = 0
         for agent in agents:
-            c.agent_service.revoke_agent(
-                agent.agent_id, reason="EMERGENCY_TENANT_LOCKDOWN"
-            )
+            c.agent_service.revoke_agent(agent.agent_id, reason="EMERGENCY_TENANT_LOCKDOWN")
             revoked_count += 1
         return {
             "status": "EMERGENCY_LOCKDOWN_ACTIVATED",

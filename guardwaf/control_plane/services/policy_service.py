@@ -19,9 +19,7 @@ from guardwaf.exceptions import GuardWAFConfigurationError
 
 
 class PolicyService:
-    def __init__(
-        self, repo: PolicyRepository, audit_service: Optional[AuditService] = None
-    ):
+    def __init__(self, repo: PolicyRepository, audit_service: Optional[AuditService] = None):
         self.repo = repo
         self.audit_service = audit_service
 
@@ -53,9 +51,7 @@ class PolicyService:
             )
         return record
 
-    def create_version(
-        self, policy_id: str, rules: Dict[str, Any], actor_id: str = "admin"
-    ) -> PolicyVersion:
+    def create_version(self, policy_id: str, rules: Dict[str, Any], actor_id: str = "admin") -> PolicyVersion:
         policy = self.repo.get_policy(policy_id)
         if not policy:
             raise GuardWAFConfigurationError(f"Policy '{policy_id}' not found.")
@@ -89,18 +85,14 @@ class PolicyService:
 
         return version
 
-    def publish_and_activate(
-        self, policy_id: str, version_number: int, actor_id: str = "admin"
-    ) -> PolicyRecord:
+    def publish_and_activate(self, policy_id: str, version_number: int, actor_id: str = "admin") -> PolicyRecord:
         policy = self.repo.get_policy(policy_id)
         if not policy:
             raise GuardWAFConfigurationError(f"Policy '{policy_id}' not found.")
 
         version = self.repo.get_policy_version(policy_id, version_number)
         if not version:
-            raise GuardWAFConfigurationError(
-                f"Policy version v{version_number} not found for policy '{policy_id}'."
-            )
+            raise GuardWAFConfigurationError(f"Policy version v{version_number} not found for policy '{policy_id}'.")
 
         policy.status = PolicyStatus.ACTIVE
         policy.active_version = version_number
@@ -118,18 +110,14 @@ class PolicyService:
 
         return policy
 
-    def rollback_version(
-        self, policy_id: str, target_version_number: int, actor_id: str = "admin"
-    ) -> PolicyRecord:
+    def rollback_version(self, policy_id: str, target_version_number: int, actor_id: str = "admin") -> PolicyRecord:
         policy = self.repo.get_policy(policy_id)
         if not policy:
             raise GuardWAFConfigurationError(f"Policy '{policy_id}' not found.")
 
         target_version = self.repo.get_policy_version(policy_id, target_version_number)
         if not target_version:
-            raise GuardWAFConfigurationError(
-                f"Target version v{target_version_number} not found for rollback."
-            )
+            raise GuardWAFConfigurationError(f"Target version v{target_version_number} not found for rollback.")
 
         old_version = policy.active_version
         policy.active_version = target_version_number

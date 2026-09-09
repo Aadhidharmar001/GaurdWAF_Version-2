@@ -49,15 +49,11 @@ class HITLTokenManager:
             f"{pending_action_id}:{action_intent_digest}:{parameter_digest}:"
             f"{session_id}:{agent_id}:{approver_id}:{active_key_id}:{expires_at.isoformat()}:{nonce_val}"
         )
-        signature = hmac.new(
-            active_secret, raw_payload.encode("utf-8"), hashlib.sha256
-        ).hexdigest()
+        signature = hmac.new(active_secret, raw_payload.encode("utf-8"), hashlib.sha256).hexdigest()
 
         exp_ts = int(expires_at.timestamp())
         # Format: hitl_apprv.<key_id>.<pending_action_id>.<exp_ts>.<sig>
-        return (
-            f"hitl_apprv.{active_key_id}.{pending_action_id}.{exp_ts}.{signature[:24]}"
-        )
+        return f"hitl_apprv.{active_key_id}.{pending_action_id}.{exp_ts}.{signature[:24]}"
 
     def verify_approval_token(
         self,

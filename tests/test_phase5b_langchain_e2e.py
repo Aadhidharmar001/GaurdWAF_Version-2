@@ -24,16 +24,8 @@ def langchain_waf_env():
     LANGCHAIN_EXEC_COUNT = 0
 
     rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(
-                tool="process_refund", param_name="amount", max_value=5000
-            )
-        ],
-        hitl_rules=[
-            HITLRule(
-                tool="process_refund", condition_param="amount", greater_than=100.0
-            )
-        ],
+        bulk_thresholds=[BulkThresholdRule(tool="process_refund", param_name="amount", max_value=5000)],
+        hitl_rules=[HITLRule(tool="process_refund", condition_param="amount", greater_than=100.0)],
     )
     policy = PolicyConfig(metadata={"policy_name": "langchain_policy"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="secret_langchain_test")
@@ -68,9 +60,7 @@ def test_langchain_hitl_suspension_and_resume(langchain_waf_env):
     # High risk action ($500) -> Suspend HITL
     pending_id = None
     with waf.session(session_id="sess_lc_2", tenant_id="org_lc"):
-        with pytest.raises(
-            (GuardWAFHITLRequiredError, GuardWAFSecurityError)
-        ) as exc_info:
+        with pytest.raises((GuardWAFHITLRequiredError, GuardWAFSecurityError)) as exc_info:
             protected_tool(customer_id="cust_2", amount=500.0)
         pending_id = getattr(exc_info.value, "pending_action_id", None)
         if not pending_id:
@@ -82,8 +72,6 @@ def test_langchain_hitl_suspension_and_resume(langchain_waf_env):
     # Resume action
     curr_count = LANGCHAIN_EXEC_COUNT
     with waf.session(session_id="sess_lc_2", tenant_id="org_lc"):
-        resumed = waf.resume_sync(
-            pending_action_id=pending_id, approval_token=approved.approval_token
-        )
+        resumed = waf.resume_sync(pending_action_id=pending_id, approval_token=approved.approval_token)
         assert resumed["status"] == "SUCCESS"
         assert LANGCHAIN_EXEC_COUNT == curr_count + 1

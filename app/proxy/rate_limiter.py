@@ -7,9 +7,7 @@ from app.db.orm_models import AuditLog
 from app.models import RateLimitRule, RuleResult, ToolCallRequest
 
 
-def evaluate_rate_limit(
-    req: ToolCallRequest, rule: RateLimitRule, db: Session, global_shadow: bool = False
-) -> Optional[RuleResult]:
+def evaluate_rate_limit(req: ToolCallRequest, rule: RateLimitRule, db: Session, global_shadow: bool = False) -> Optional[RuleResult]:
     if rule.tool != req.tool:
         return None
 

@@ -33,11 +33,7 @@ class ExecutionContext(BaseModel):
     def to_legacy_session_context(self) -> SessionContext:
 
         p_id = self.principal.principal_id if self.principal else None
-        role = (
-            self.principal.roles[0]
-            if (self.principal and self.principal.roles)
-            else "user"
-        )
+        role = self.principal.roles[0] if (self.principal and self.principal.roles) else "user"
         return SessionContext(
             session_id=self.session_id,
             principal_id=p_id,
@@ -47,12 +43,8 @@ class ExecutionContext(BaseModel):
         )
 
 
-_CURRENT_EXECUTION_CONTEXT: ContextVar[Optional[ExecutionContext]] = ContextVar(
-    "_CURRENT_EXECUTION_CONTEXT", default=None
-)
-_CURRENT_SESSION: ContextVar[Optional[SessionContext]] = ContextVar(
-    "_CURRENT_SESSION", default=None
-)
+_CURRENT_EXECUTION_CONTEXT: ContextVar[Optional[ExecutionContext]] = ContextVar("_CURRENT_EXECUTION_CONTEXT", default=None)
+_CURRENT_SESSION: ContextVar[Optional[SessionContext]] = ContextVar("_CURRENT_SESSION", default=None)
 
 
 def get_current_execution_context() -> Optional[ExecutionContext]:

@@ -36,9 +36,7 @@ class LangChainAdapter(BaseFrameworkAdapter):
 
     def wrap_tool(self, tool: Any, tool_name: Optional[str] = None) -> Any:
 
-        t_name = tool_name or getattr(
-            tool, "name", getattr(tool, "__name__", "langchain_tool")
-        )
+        t_name = tool_name or getattr(tool, "name", getattr(tool, "__name__", "langchain_tool"))
 
         # Extract target function body
         if hasattr(tool, "_run"):
@@ -85,8 +83,7 @@ class LangChainAdapter(BaseFrameworkAdapter):
                     from guardwaf.exceptions import GuardWAFHITLRequiredError
 
                     raise GuardWAFHITLRequiredError(
-                        message=reason
-                        or f"Action '{t_name}' requires Human-in-the-Loop approval.",
+                        message=reason or f"Action '{t_name}' requires Human-in-the-Loop approval.",
                         pending_action_id=pending.pending_action_id,
                         tool_name=t_name,
                         hitl_id=pending.pending_action_id,

@@ -32,12 +32,8 @@ def mcp_gateway_env():
     MCP_DOWNSTREAM_CALLS = 0
 
     rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(tool="mcp_delete_table", param_name="rows", max_value=100)
-        ],
-        hitl_rules=[
-            HITLRule(tool="mcp_transfer", condition_param="amount", greater_than=500.0)
-        ],
+        bulk_thresholds=[BulkThresholdRule(tool="mcp_delete_table", param_name="rows", max_value=100)],
+        hitl_rules=[HITLRule(tool="mcp_transfer", condition_param="amount", greater_than=500.0)],
     )
     policy = PolicyConfig(metadata={"policy_name": "mcp_policy"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="secret_mcp_test")
@@ -54,9 +50,7 @@ def test_mcp_discovery_and_allowed_execution(mcp_gateway_env):
     ]
 
     # Discovery filter
-    allowed_tools = gateway.filter_allowed_tools(
-        tenant_id="org_mcp", agent_id="agent_mcp", available_tools=tools
-    )
+    allowed_tools = gateway.filter_allowed_tools(tenant_id="org_mcp", agent_id="agent_mcp", available_tools=tools)
     assert len(allowed_tools) == 3
 
     # Allowed execution

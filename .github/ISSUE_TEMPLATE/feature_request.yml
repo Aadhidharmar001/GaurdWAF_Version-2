@@ -1,0 +1,50 @@
+name: "💡 Feature Request"
+description: "Suggest a new rule type, framework adapter, or developer experience enhancement"
+title: "[FEATURE]: "
+labels: ["enhancement", "dx"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 💡 GuardWAF Feature Request
+        Have an idea for a new policy rule type, agent framework integration, or DX improvement? We would love to hear it!
+  - type: textarea
+    id: summary
+    attributes:
+      label: "Feature Summary"
+      description: "A concise summary of the proposed feature or improvement."
+      placeholder: "Add support for AutoGen agent tool interception..."
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Problem or Use Case"
+      description: "What problem does this feature solve? Why is it needed?"
+      placeholder: "Currently, integrating GuardWAF with AutoGen requires custom wrapper loops..."
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_api
+    attributes:
+      label: "Proposed API / Policy Syntax"
+      description: "How should the feature look in code or YAML policy?"
+      render: python
+      placeholder: |
+        # Proposed code snippet or YAML syntax
+    validations:
+      required: false
+  - type: dropdown
+    id: category
+    attributes:
+      label: "Feature Category"
+      options:
+        - "Framework Adapter (e.g., AutoGen, LlamaIndex)"
+        - "Policy Rule Type (e.g., semantic similarity, entropy)"
+        - "HITL / Workflow Enhancements"
+        - "Observability & Metrics"
+        - "Developer Experience / CLI"
+        - "Documentation"
+        - "Other"
+    validations:
+      required: true

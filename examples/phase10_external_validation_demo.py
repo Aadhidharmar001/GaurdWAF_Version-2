@@ -11,13 +11,14 @@ import sys
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
+# Ensure repository root is on sys.path for standalone execution
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 
 def run_cmd(cmd_list, desc):
     print(f"\n▶ {desc}...")
     env = {**os.environ, "PYTHONPATH": "."}
-    res = subprocess.run(
-        cmd_list, env=env, capture_output=True, text=True, encoding="utf-8"
-    )
+    res = subprocess.run(cmd_list, env=env, capture_output=True, text=True, encoding="utf-8")
     if res.returncode != 0:
         print(f"   ❌ FAILED:\n{res.stderr}")
         sys.exit(1)
@@ -26,15 +27,9 @@ def run_cmd(cmd_list, desc):
 
 
 def main():
-    print(
-        "=========================================================================================="
-    )
-    print(
-        "🛡️  GUARdWAF PHASE 10 FLAGSHIP DEMO: EXTERNAL BETA & EVIDENCE DECISION ENGINE"
-    )
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
+    print("🛡️  GUARdWAF PHASE 10 FLAGSHIP DEMO: EXTERNAL BETA & EVIDENCE DECISION ENGINE")
+    print("==========================================================================================")
 
     # Scenario 1: External Beta Starter Kit
     print("▶ Scenario 1: Inspecting External Beta Starter Project Template...")
@@ -54,13 +49,9 @@ def main():
     )
 
     # Scenario 4: Validation Protocol & Production Adoption Barrier Experiment
-    print(
-        "\n▶ Scenario 4: Verifying 8-Experiment Validation Protocol & Adoption Barrier Inquiry..."
-    )
+    print("\n▶ Scenario 4: Verifying 8-Experiment Validation Protocol & Adoption Barrier Inquiry...")
     assert os.path.exists("docs/phase10_validation_protocol.md")
-    print(
-        "   ✅ Validation Protocol Verified (Experiment 8: 'Would You Actually Deploy This?')."
-    )
+    print("   ✅ Validation Protocol Verified (Experiment 8: 'Would You Actually Deploy This?').")
 
     # Scenario 5: Allowed Real-World Action
     print("\n▶ Scenario 5: Executing Real-World Customer Support Lookup (ALLOW)...")
@@ -71,9 +62,7 @@ def main():
 
     # Scenario 6: Blocked Action & Zero Downstream Execution Guarantee
     print("\n▶ Scenario 6: Verifying Zero Downstream Execution Guarantee on Block...")
-    print(
-        "   🔒 Downstream Tool Executions on Block = 0 (Asserted in Customer Support Agent)."
-    )
+    print("   🔒 Downstream Tool Executions on Block = 0 (Asserted in Customer Support Agent).")
 
     # Scenario 7-10: Financial Agent (HITL, Resume, Replay Prevention)
     run_cmd(
@@ -115,9 +104,7 @@ def main():
                 authentication_method="static",
                 roles=["user"],
             )
-            a = AgentIdentity(
-                agent_id="revoked_p10_bot", tenant_id="default", name="RevBot"
-            )
+            a = AgentIdentity(agent_id="revoked_p10_bot", tenant_id="default", name="RevBot")
             with waf.verified_session(principal=p, agent=a, session_id="s_p10"):
                 test_tool()
         except GuardWAFSecurityError as err:
@@ -138,9 +125,7 @@ def main():
     from scripts.import_beta_feedback import validate_feedback_privacy
 
     assert validate_feedback_privacy("Clean feedback") is True
-    assert (
-        validate_feedback_privacy("Leaked key: sk-proj-12345678901234567890") is False
-    )
+    assert validate_feedback_privacy("Leaked key: sk-proj-12345678901234567890") is False
     print("   ✅ Privacy Sanitization Filter Verified.")
 
     # Scenario 17: External Issue Reproduction CLI
@@ -158,26 +143,16 @@ def main():
     # Scenario 19: Dual Completion Status Verification
     print("\n▶ Scenario 19: Verifying Dual Independent Completion Statuses...")
     print("   • Engineering Status:        ✅ PHASE 10 ENGINEERING COMPLETE")
-    print(
-        "   • Product Validation Status: ⏳ PRODUCT VALIDATION PENDING / AWAITING REAL EXTERNAL EVIDENCE"
-    )
+    print("   • Product Validation Status: ⏳ PRODUCT VALIDATION PENDING / AWAITING REAL EXTERNAL EVIDENCE")
 
     # Scenario 20: Phase 10 Final Classification
     print("\n▶ Scenario 20: Verifying Phase 10 Final Evidence Classification...")
     print("   🏁 OVERALL CLASSIFICATION: PHASE 10 ENGINEERING COMPLETE")
-    print(
-        "                               PUBLIC BETA ACTIVE — AWAITING REAL EXTERNAL EVIDENCE"
-    )
+    print("                               PUBLIC BETA ACTIVE — AWAITING REAL EXTERNAL EVIDENCE")
 
-    print(
-        "=========================================================================================="
-    )
-    print(
-        "✅ PHASE 10 DEMO COMPLETE: External Validation Infrastructure & Decision Engine Verified!"
-    )
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
+    print("✅ PHASE 10 DEMO COMPLETE: External Validation Infrastructure & Decision Engine Verified!")
+    print("==========================================================================================")
 
 
 if __name__ == "__main__":

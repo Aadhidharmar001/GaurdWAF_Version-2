@@ -6,9 +6,7 @@ from app.db.orm_models import SequenceState
 from app.models import RuleResult, SequenceRule, ToolCallRequest
 
 
-def evaluate_sequence(
-    req: ToolCallRequest, rule: SequenceRule, db: Session, global_shadow: bool = False
-) -> Optional[RuleResult]:
+def evaluate_sequence(req: ToolCallRequest, rule: SequenceRule, db: Session, global_shadow: bool = False) -> Optional[RuleResult]:
     if rule.tool != req.tool:
         return None
 

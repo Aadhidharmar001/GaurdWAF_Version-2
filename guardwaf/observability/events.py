@@ -26,9 +26,7 @@ def redact_sensitive_parameters(parameters: Dict[str, Any]) -> Dict[str, Any]:
     """
     redacted = {}
     for k, v in parameters.items():
-        if k.lower() in SENSITIVE_PARAM_NAMES or any(
-            s in k.lower() for s in ["secret", "password", "token"]
-        ):
+        if k.lower() in SENSITIVE_PARAM_NAMES or any(s in k.lower() for s in ["secret", "password", "token"]):
             redacted[k] = "[REDACTED]"
         elif isinstance(v, dict):
             redacted[k] = redact_sensitive_parameters(v)
