@@ -28,19 +28,11 @@ class MockMCPServer:
 
 
 def main():
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
     print("🛡️  PHASE 10 REAL-WORLD MCP GATEWAY INTEGRATION")
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
 
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(tool="sql_query", param_name="max_rows", max_value=100)
-        ]
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="sql_query", param_name="max_rows", max_value=100)])
     waf = GuardWAF(
         policy=PolicyConfig(metadata={"policy_name": "mcp_p10"}, rules=rules),
         secret_key="mcp_p10_secret_key_32bytes_long_min",
@@ -51,18 +43,14 @@ def main():
 
     with waf.session(session_id="s_mcp_p10"):
         # 1. Allowed MCP Call
-        res1 = gateway.invoke_tool(
-            "sql_query", {"query": "SELECT * FROM users", "max_rows": 50}
-        )
+        res1 = gateway.invoke_tool("sql_query", {"query": "SELECT * FROM users", "max_rows": 50})
         print(f"▶ 1. Allowed MCP Call (max_rows=50): {res1}")
 
         # 2. Blocked MCP Call -> 0 Executions
         print("\n▶ 2. Blocked MCP Call (max_rows=5000)...")
         exec_before = gateway.downstream_execution_count
         try:
-            gateway.invoke_tool(
-                "sql_query", {"query": "SELECT * FROM users", "max_rows": 5000}
-            )
+            gateway.invoke_tool("sql_query", {"query": "SELECT * FROM users", "max_rows": 5000})
         except GuardWAFSecurityError as err:
             print(f"   🚨 BLOCKED MCP TOOL: {err}")
 
@@ -70,13 +58,9 @@ def main():
         assert exec_before == exec_after
         print(f"   🔒 Downstream MCP Executions After Block: {exec_after} (Delta: 0)")
 
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
     print("✅ MCP GATEWAY REAL-WORLD INTEGRATION COMPLETE!")
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
 
 
 if __name__ == "__main__":

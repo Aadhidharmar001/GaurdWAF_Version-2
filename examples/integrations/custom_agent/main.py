@@ -22,11 +22,7 @@ def main():
     print("🛡️  GUARdWAF CUSTOM PYTHON AGENT INTEGRATION DEMO")
     print("=================================================================")
 
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(tool="execute_trade", param_name="shares", max_value=100)
-        ]
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="execute_trade", param_name="shares", max_value=100)])
     policy = PolicyConfig(metadata={"policy_name": "custom_agent_policy"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="custom_demo_secret_key_32bytes_long")
 

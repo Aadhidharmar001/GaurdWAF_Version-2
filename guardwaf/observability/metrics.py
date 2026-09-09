@@ -9,15 +9,11 @@ from typing import Dict, Optional
 
 class MetricsCollector(ABC):
     @abstractmethod
-    def increment(
-        self, metric_name: str, amount: int = 1, labels: Optional[Dict[str, str]] = None
-    ) -> None:
+    def increment(self, metric_name: str, amount: int = 1, labels: Optional[Dict[str, str]] = None) -> None:
         pass
 
     @abstractmethod
-    def observe(
-        self, metric_name: str, value: float, labels: Optional[Dict[str, str]] = None
-    ) -> None:
+    def observe(self, metric_name: str, value: float, labels: Optional[Dict[str, str]] = None) -> None:
         pass
 
 
@@ -26,18 +22,14 @@ class MemoryMetricsCollector(MetricsCollector):
         self.counters: Dict[str, int] = {}
         self.observations: Dict[str, list] = {}
 
-    def increment(
-        self, metric_name: str, amount: int = 1, labels: Optional[Dict[str, str]] = None
-    ) -> None:
+    def increment(self, metric_name: str, amount: int = 1, labels: Optional[Dict[str, str]] = None) -> None:
         try:
             lbl_str = f"{metric_name}:{sorted(labels.items()) if labels else ''}"
             self.counters[lbl_str] = self.counters.get(lbl_str, 0) + amount
         except Exception as e:
             print(f"⚠️ [Telemetry Warning] Metrics failure isolated: {e}")
 
-    def observe(
-        self, metric_name: str, value: float, labels: Optional[Dict[str, str]] = None
-    ) -> None:
+    def observe(self, metric_name: str, value: float, labels: Optional[Dict[str, str]] = None) -> None:
         try:
             lbl_str = f"{metric_name}:{sorted(labels.items()) if labels else ''}"
             if lbl_str not in self.observations:
@@ -60,13 +52,9 @@ class PrometheusMetricsAdapter(MetricsCollector):
 
             self._prom = prometheus_client
         except ImportError:
-            print(
-                "⚠️ [Telemetry] prometheus_client library not installed. Prometheus metrics disabled."
-            )
+            print("⚠️ [Telemetry] prometheus_client library not installed. Prometheus metrics disabled.")
 
-    def increment(
-        self, metric_name: str, amount: int = 1, labels: Optional[Dict[str, str]] = None
-    ) -> None:
+    def increment(self, metric_name: str, amount: int = 1, labels: Optional[Dict[str, str]] = None) -> None:
         if not self._prom:
             return
         try:
@@ -75,9 +63,7 @@ class PrometheusMetricsAdapter(MetricsCollector):
         except Exception as e:
             print(f"⚠️ [Telemetry Warning] Prometheus counter failure isolated: {e}")
 
-    def observe(
-        self, metric_name: str, value: float, labels: Optional[Dict[str, str]] = None
-    ) -> None:
+    def observe(self, metric_name: str, value: float, labels: Optional[Dict[str, str]] = None) -> None:
         if not self._prom:
             return
         try:

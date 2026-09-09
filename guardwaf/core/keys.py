@@ -25,12 +25,7 @@ class KeyManager:
         environment: Optional[str] = None,
     ):
         self.active_key_id = key_id
-        env = (
-            environment
-            or os.getenv("GUARDWAF_ENV")
-            or os.getenv("ENVIRONMENT")
-            or "development"
-        ).lower()
+        env = (environment or os.getenv("GUARDWAF_ENV") or os.getenv("ENVIRONMENT") or "development").lower()
 
         # 1. Resolve primary secret key
         resolved_primary = secret_key or os.getenv("GUARDWAF_SECRET_KEY")

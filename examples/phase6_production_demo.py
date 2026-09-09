@@ -32,13 +32,9 @@ def raw_transfer_funds(source: str, dest: str, amount: float):
 
 
 def run_phase6_demo():
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
     print("🛡️  GUARdWAF PHASE 6 FLAGSHIP DEMO: PRODUCTION DEPLOYMENT & GOVERNANCE SUITE")
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
 
     # 1. Config Validation & Secret Scan
     print("▶ 1. Validating Production Secrets & Running Secret Scanner...")
@@ -65,17 +61,13 @@ def run_phase6_demo():
     # 4. Register Organization
     print("\n▶ 4. Registering Organization 'FinTech Enterprise'...")
     org = org_service.create_organization(name="FinTech Enterprise", slug="fintech-ent")
-    admin = org_service.create_user(
-        email="security@fintech.io", display_name="Alex (CISO)"
-    )
+    admin = org_service.create_user(email="security@fintech.io", display_name="Alex (CISO)")
     org_service.add_member(
         organization_id=org.organization_id,
         user_id=admin.user_id,
         role=Role.SECURITY_ADMIN,
     )
-    print(
-        f"   ✅ Org Registered: ID='{org.organization_id}', CISO='{admin.display_name}'"
-    )
+    print(f"   ✅ Org Registered: ID='{org.organization_id}', CISO='{admin.display_name}'")
 
     # 5. Register Agent & Issue Credential
     print("\n▶ 5. Registering Agent & Issuing Hashed Production Credential...")
@@ -85,26 +77,14 @@ def run_phase6_demo():
         name="payment_bot",
         description="Automated Payment Agent",
     )
-    cred_resp = cred_service.issue_credential(
-        organization_id=org.organization_id, agent_id=agent.agent_id
-    )
-    print(
-        f"   ✅ Credential Issued: ID='{cred_resp.credential_id}', SecretPrefix='{cred_resp.plaintext_api_key[:12]}...'"
-    )
+    cred_resp = cred_service.issue_credential(organization_id=org.organization_id, agent_id=agent.agent_id)
+    print(f"   ✅ Credential Issued: ID='{cred_resp.credential_id}', SecretPrefix='{cred_resp.plaintext_api_key[:12]}...'")
 
     # 6. Configure Policies
     print("\n▶ 6. Configuring Production Action Governance Policy...")
     rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(
-                tool="transfer_funds", param_name="amount", max_value=10000.0
-            )
-        ],
-        hitl_rules=[
-            HITLRule(
-                tool="transfer_funds", condition_param="amount", greater_than=1000.0
-            )
-        ],
+        bulk_thresholds=[BulkThresholdRule(tool="transfer_funds", param_name="amount", max_value=10000.0)],
+        hitl_rules=[HITLRule(tool="transfer_funds", condition_param="amount", greater_than=1000.0)],
         parameter_blocklist=[
             ParameterBlocklistRule(
                 tool="transfer_funds",
@@ -119,9 +99,7 @@ def run_phase6_demo():
 
     # Register tool body
     waf.register_tool("transfer_funds", raw_transfer_funds)
-    protected_transfer = protect(tool_name="transfer_funds", client=waf)(
-        raw_transfer_funds
-    )
+    protected_transfer = protect(tool_name="transfer_funds", client=waf)(raw_transfer_funds)
 
     # 7. Allowed Action ($250.00)
     print("\n▶ 7. Executing Allowed Transfer Action ($250.00)...")
@@ -162,9 +140,7 @@ def run_phase6_demo():
     print(f"   ✅ Approved Action. Token issued: '{token[:25]}...'")
 
     with waf.session(session_id="sess_p6_3", tenant_id=org.organization_id):
-        res_resumed = waf.resume_sync(
-            pending_action_id=pending_id, approval_token=token
-        )
+        res_resumed = waf.resume_sync(pending_action_id=pending_id, approval_token=token)
         print(f"   ✅ RESUMED EXECUTION SUCCESS: {res_resumed}")
 
     # 11. Replay Attack Attempt
@@ -180,9 +156,7 @@ def run_phase6_demo():
     print("\n▶ 12. Attempting Parameter Injection Attack...")
     with waf.session(session_id="sess_p6_4", tenant_id=org.organization_id):
         try:
-            protected_transfer(
-                source="acc_1", dest="SUSPICIOUS_MALICIOUS_ACC", amount=100.0
-            )
+            protected_transfer(source="acc_1", dest="SUSPICIOUS_MALICIOUS_ACC", amount=100.0)
         except GuardWAFSecurityError as err:
             METRICS_REGISTRY.increment("blocked_actions")
             print(f"   ✅ INJECTION ATTACK BLOCKED: {err}")
@@ -202,9 +176,7 @@ def run_phase6_demo():
         authentication_method="static",
         roles=["user"],
     )
-    a_dev = AgentIdentity(
-        agent_id=agent_id_rev, tenant_id=org.organization_id, name="RevokedBot"
-    )
+    a_dev = AgentIdentity(agent_id=agent_id_rev, tenant_id=org.organization_id, name="RevokedBot")
 
     with waf.verified_session(
         principal=p_dev,
@@ -235,13 +207,9 @@ def run_phase6_demo():
         f"   ✅ Metrics Counters: Allowed={snapshot['counters']['allowed_actions']}, Blocked={snapshot['counters']['blocked_actions']}, HITL={snapshot['counters']['hitl_requested']}"
     )
 
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
     print("✅ PHASE 6 DEMO COMPLETE: Production Deployment & Operations Verified!")
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
 
 
 if __name__ == "__main__":

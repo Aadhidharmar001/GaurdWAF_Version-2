@@ -21,13 +21,9 @@ def run_cmd(cmd_list, desc):
 
 
 def main():
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
     print("🛡️  GUARdWAF PHASE 7 FLAGSHIP DEMO: PUBLIC BETA & DEVELOPER ADOPTION SUITE")
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
 
     # 1. Package Build
     run_cmd(
@@ -80,9 +76,7 @@ def main():
     from guardwaf.telemetry.product_telemetry import TELEMETRY
 
     assert TELEMETRY.enabled is False
-    print(
-        "   ✅ Verified: Telemetry is strictly OFF by default (opt-in only). Zero user prompts or secrets collected."
-    )
+    print("   ✅ Verified: Telemetry is strictly OFF by default (opt-in only). Zero user prompts or secrets collected.")
 
     # 11. Simulated Developer Onboarding Test
     run_cmd(
@@ -95,15 +89,9 @@ def main():
         "11. Running Simulated Developer Onboarding DX Benchmark",
     )
 
-    print(
-        "=========================================================================================="
-    )
-    print(
-        "✅ PHASE 7 FLAGSHIP DEMO COMPLETE: Public Beta & Developer Adoption Verified!"
-    )
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
+    print("✅ PHASE 7 FLAGSHIP DEMO COMPLETE: Public Beta & Developer Adoption Verified!")
+    print("==========================================================================================")
 
 
 if __name__ == "__main__":

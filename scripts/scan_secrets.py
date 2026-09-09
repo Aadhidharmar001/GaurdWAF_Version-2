@@ -70,18 +70,14 @@ def main() -> int:
     for dirpath, dirnames, filenames in os.walk(root_dir):
         dirnames[:] = [d for d in dirnames if d not in EXCLUDED_DIRS]
         for fname in filenames:
-            if fname in EXCLUDED_FILES or fname.endswith(
-                (".pyc", ".db", ".zip", ".png", ".jpg")
-            ):
+            if fname in EXCLUDED_FILES or fname.endswith((".pyc", ".db", ".zip", ".png", ".jpg")):
                 continue
             fpath = os.path.join(dirpath, fname)
             findings = scan_file(fpath)
             if findings:
                 rel_path = os.path.relpath(fpath, root_dir)
                 for line_num, secret_type, snippet in findings:
-                    print(
-                        f"❌ CRITICAL SECRET DETECTED in [{rel_path}:L{line_num}]: {secret_type}"
-                    )
+                    print(f"❌ CRITICAL SECRET DETECTED in [{rel_path}:L{line_num}]: {secret_type}")
                     total_findings += 1
 
     if total_findings > 0:

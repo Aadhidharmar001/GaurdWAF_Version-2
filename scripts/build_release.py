@@ -34,9 +34,7 @@ def main():
         sys.exit(1)
 
     artifacts = os.listdir(dist_dir)
-    print(
-        f"✅ BUILD SUCCESSFUL: Generated {len(artifacts)} release artifact(s) in 'dist/':"
-    )
+    print(f"✅ BUILD SUCCESSFUL: Generated {len(artifacts)} release artifact(s) in 'dist/':")
     for a in artifacts:
         print(f"   - dist/{a}")
 

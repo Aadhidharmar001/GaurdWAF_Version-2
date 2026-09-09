@@ -22,19 +22,11 @@ def main():
     print("🛡️  GUARdWAF CREWAI FRAMEWORK INTEGRATION DEMO")
     print("=================================================================")
 
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(
-                tool="send_email", param_name="recipient_count", max_value=100
-            )
-        ]
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="send_email", param_name="recipient_count", max_value=100)])
     policy = PolicyConfig(metadata={"policy_name": "crewai_policy"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="crewai_demo_secret_key_32bytes_long")
 
-    protected_crew_tool = protect_crewai_tool(
-        send_marketing_email, waf=waf, tool_name="send_email"
-    )
+    protected_crew_tool = protect_crewai_tool(send_marketing_email, waf=waf, tool_name="send_email")
 
     with waf.session(session_id="sess_crew_1"):
         res1 = protected_crew_tool(recipient_count=20, subject="Weekly Digest")

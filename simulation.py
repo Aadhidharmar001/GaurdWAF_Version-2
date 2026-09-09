@@ -113,9 +113,7 @@ def run_simulation():
                 "parameters": {"recipient": "bob@aivar.com", "subject": f"Ping {i}"},
             },
         ).json()
-        print(
-            f"Call {i}/4 -> Outcome: {res['status'].upper()} - {res['evaluation_details']['outcome']}"
-        )
+        print(f"Call {i}/4 -> Outcome: {res['status'].upper()} - {res['evaluation_details']['outcome']}")
 
     # --- Scenario 5: Parameter Blocklist SQL Injection (Blocked) ---
     print("\n--- SCENARIO 5: Parameter Blocklist & Injection (Blocked) ---")

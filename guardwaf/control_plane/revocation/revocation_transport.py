@@ -29,9 +29,7 @@ class MemoryRevocationTransport(RevocationTransport):
             try:
                 cb(event)
             except Exception as e:
-                print(
-                    f"⚠️ [RevocationTransport] Error dispatching event to subscriber: {e}"
-                )
+                print(f"⚠️ [RevocationTransport] Error dispatching event to subscriber: {e}")
 
     def subscribe(self, callback: Callable[[SignedRevocationEvent], None]) -> None:
         self._subscribers.append(callback)

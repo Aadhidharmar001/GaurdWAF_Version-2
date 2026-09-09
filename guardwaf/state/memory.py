@@ -20,9 +20,7 @@ class MemoryStateStore(StateStore):
         # pending_action_id -> PendingAction
         self._pending_actions: Dict[str, PendingAction] = {}
 
-    def record_tool_call(
-        self, session_id: str, tool_name: str, status: str = "allowed"
-    ) -> None:
+    def record_tool_call(self, session_id: str, tool_name: str, status: str = "allowed") -> None:
         with self._lock:
             now = datetime.now(timezone.utc)
             if session_id not in self._call_history:
@@ -30,18 +28,12 @@ class MemoryStateStore(StateStore):
             if status in ["allowed", "shadow_blocked"]:
                 self._call_history[session_id].append((tool_name, now))
 
-    def get_tool_call_count(
-        self, session_id: str, tool_name: str, window_seconds: int
-    ) -> int:
+    def get_tool_call_count(self, session_id: str, tool_name: str, window_seconds: int) -> int:
         with self._lock:
             if session_id not in self._call_history:
                 return 0
             cutoff = datetime.now(timezone.utc) - timedelta(seconds=window_seconds)
-            matching = [
-                ts
-                for tool, ts in self._call_history[session_id]
-                if tool == tool_name and ts >= cutoff
-            ]
+            matching = [ts for tool, ts in self._call_history[session_id] if tool == tool_name and ts >= cutoff]
             return len(matching)
 
     def has_executed_predecessor(self, session_id: str, predecessor_tool: str) -> bool:
@@ -65,9 +57,7 @@ class MemoryStateStore(StateStore):
 
     def save_pending_action(self, pending_action: PendingAction) -> None:
         with self._lock:
-            self._pending_actions[pending_action.pending_action_id] = (
-                pending_action.model_copy()
-            )
+            self._pending_actions[pending_action.pending_action_id] = pending_action.model_copy()
 
     def get_pending_action(self, pending_action_id: str) -> Optional[PendingAction]:
         with self._lock:
@@ -76,10 +66,7 @@ class MemoryStateStore(StateStore):
                 return None
 
             # Check expiration
-            if (
-                action.status == ActionState.PENDING
-                and datetime.now(timezone.utc) > action.expires_at
-            ):
+            if action.status == ActionState.PENDING and datetime.now(timezone.utc) > action.expires_at:
                 action.status = ActionState.EXPIRED
 
             return action.model_copy()
@@ -99,10 +86,7 @@ class MemoryStateStore(StateStore):
                 return False
 
             # Check expiration before transition
-            if (
-                action.status == ActionState.PENDING
-                and datetime.now(timezone.utc) > action.expires_at
-            ):
+            if action.status == ActionState.PENDING and datetime.now(timezone.utc) > action.expires_at:
                 action.status = ActionState.EXPIRED
                 return False
 
@@ -127,9 +111,7 @@ class MemoryStateStore(StateStore):
             self._pending_actions[pending_action_id] = action
             return True
 
-    def list_pending_actions(
-        self, status: Optional[ActionState] = None
-    ) -> List[PendingAction]:
+    def list_pending_actions(self, status: Optional[ActionState] = None) -> List[PendingAction]:
         with self._lock:
             now = datetime.now(timezone.utc)
             results = []

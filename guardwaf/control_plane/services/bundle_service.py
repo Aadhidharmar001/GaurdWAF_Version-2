@@ -43,9 +43,7 @@ class BundleService:
         # 1. Verify Agent Status
         agent = self.agent_repo.get_agent(agent_id)
         if not agent:
-            raise GuardWAFConfigurationError(
-                f"Agent '{agent_id}' not found in registry."
-            )
+            raise GuardWAFConfigurationError(f"Agent '{agent_id}' not found in registry.")
 
         if agent.status == AgentStatus.REVOKED:
             if self.audit_service:
@@ -69,13 +67,9 @@ class BundleService:
             )
 
         # 2. Resolve Assigned Policies (Precedence: Agent-specific -> Tenant-wide)
-        assignments = self.policy_repo.list_assignments(
-            tenant_id=tenant_id, agent_id=agent_id, environment=environment
-        )
+        assignments = self.policy_repo.list_assignments(tenant_id=tenant_id, agent_id=agent_id, environment=environment)
         if not assignments:
-            assignments = self.policy_repo.list_assignments(
-                tenant_id=tenant_id, agent_id=None, environment=environment
-            )
+            assignments = self.policy_repo.list_assignments(tenant_id=tenant_id, agent_id=None, environment=environment)
 
         policy_versions_map: Dict[str, int] = {}
         compiled_rules: Dict[str, List[Any]] = {
@@ -128,10 +122,10 @@ class BundleService:
         expires_at = now + timedelta(seconds=ttl_seconds)
         bundle_id = f"bundle_{uuid.uuid4().hex[:10]}"
 
-        signature_payload = f"{bundle_id}:{tenant_id}:{agent_id}:{environment}:{bundle_digest}:{active_key_id}:{now.isoformat()}:{expires_at.isoformat()}"
-        signature = hmac.new(
-            active_secret, signature_payload.encode("utf-8"), hashlib.sha256
-        ).hexdigest()
+        signature_payload = (
+            f"{bundle_id}:{tenant_id}:{agent_id}:{environment}:{bundle_digest}:{active_key_id}:{now.isoformat()}:{expires_at.isoformat()}"
+        )
+        signature = hmac.new(active_secret, signature_payload.encode("utf-8"), hashlib.sha256).hexdigest()
 
         bundle = SignedPolicyBundle(
             bundle_id=bundle_id,
@@ -178,8 +172,6 @@ class BundleService:
 
         # 4. Verify HMAC Signature
         signature_payload = f"{bundle.bundle_id}:{bundle.tenant_id}:{bundle.agent_id}:{bundle.environment}:{bundle.bundle_digest}:{bundle.key_id}:{bundle.issued_at.isoformat()}:{bundle.expires_at.isoformat()}"
-        expected_sig = hmac.new(
-            secret_bytes, signature_payload.encode("utf-8"), hashlib.sha256
-        ).hexdigest()
+        expected_sig = hmac.new(secret_bytes, signature_payload.encode("utf-8"), hashlib.sha256).hexdigest()
 
         return hmac.compare_digest(bundle.signature, expected_sig)

@@ -18,9 +18,7 @@ class LangGraphAdapter(BaseFrameworkAdapter):
     def __init__(self, waf: GuardWAF):
         super().__init__(waf=waf, protocol_name="langgraph")
 
-    def wrap_tool(
-        self, tool_func: Callable, tool_name: Optional[str] = None
-    ) -> Callable:
+    def wrap_tool(self, tool_func: Callable, tool_name: Optional[str] = None) -> Callable:
         t_name = tool_name or getattr(tool_func, "__name__", "langgraph_tool")
 
         def _protected_node_execution(*args, **kwargs):
@@ -35,19 +33,9 @@ class LangGraphAdapter(BaseFrameworkAdapter):
             from guardwaf.sdk.context import get_current_execution_context
 
             exec_ctx = get_current_execution_context()
-            ctx_tenant = (
-                exec_ctx.tenant_id if exec_ctx and exec_ctx.tenant_id else "default"
-            )
-            ctx_agent = (
-                exec_ctx.agent.agent_id
-                if exec_ctx and exec_ctx.agent
-                else "langgraph_agent"
-            )
-            ctx_session = (
-                exec_ctx.session_id
-                if exec_ctx and exec_ctx.session_id
-                else "sess_default"
-            )
+            ctx_tenant = exec_ctx.tenant_id if exec_ctx and exec_ctx.tenant_id else "default"
+            ctx_agent = exec_ctx.agent.agent_id if exec_ctx and exec_ctx.agent else "langgraph_agent"
+            ctx_session = exec_ctx.session_id if exec_ctx and exec_ctx.session_id else "sess_default"
 
             allowed, reason, grant, pending = self.evaluate_envelope(
                 tool_name=t_name,
@@ -62,8 +50,7 @@ class LangGraphAdapter(BaseFrameworkAdapter):
                     from guardwaf.exceptions import GuardWAFHITLRequiredError
 
                     raise GuardWAFHITLRequiredError(
-                        message=reason
-                        or f"Action '{t_name}' requires Human-in-the-Loop approval.",
+                        message=reason or f"Action '{t_name}' requires Human-in-the-Loop approval.",
                         pending_action_id=pending.pending_action_id,
                         tool_name=t_name,
                         hitl_id=pending.pending_action_id,
@@ -80,8 +67,6 @@ class LangGraphAdapter(BaseFrameworkAdapter):
     wrap_node_tool = wrap_tool
 
 
-def protect_langgraph_tool(
-    tool_func: Callable, waf: GuardWAF, tool_name: Optional[str] = None
-) -> Callable:
+def protect_langgraph_tool(tool_func: Callable, waf: GuardWAF, tool_name: Optional[str] = None) -> Callable:
     adapter = LangGraphAdapter(waf=waf)
     return adapter.wrap_tool(tool_func, tool_name=tool_name)

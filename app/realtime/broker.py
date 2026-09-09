@@ -18,13 +18,9 @@ async def stream_dashboard_events(
             db = SessionLocal()
             try:
                 latest_log = db.query(AuditLog).order_by(AuditLog.id.desc()).first()
-                pending_hitl = (
-                    db.query(HitlQueue).filter(HitlQueue.status == "pending").count()
-                )
+                pending_hitl = db.query(HitlQueue).filter(HitlQueue.status == "pending").count()
                 total_logs = db.query(AuditLog).count()
-                blocked_logs = (
-                    db.query(AuditLog).filter(AuditLog.status == "blocked").count()
-                )
+                blocked_logs = db.query(AuditLog).filter(AuditLog.status == "blocked").count()
                 return {
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     "latest_log_id": latest_log.id if latest_log else 0,

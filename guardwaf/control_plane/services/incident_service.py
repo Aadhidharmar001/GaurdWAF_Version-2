@@ -35,11 +35,7 @@ class IncidentService:
         related_ids = []
         if correlation_id:
             events = self.audit_repo.list_audit_events(organization_id)
-            related_ids = [
-                e.event_id
-                for e in events
-                if e.metadata.get("correlation_id") == correlation_id
-            ]
+            related_ids = [e.event_id for e in events if e.metadata.get("correlation_id") == correlation_id]
 
         inc = Incident(
             incident_id=inc_id,
@@ -65,9 +61,7 @@ class IncidentService:
         if not inc:
             raise GuardWAFConfigurationError(f"Incident '{incident_id}' not found.")
         if inc.organization_id != organization_id:
-            raise GuardWAFSecurityError(
-                "Cross-tenant incident access denied.", tool_name="incident_service"
-            )
+            raise GuardWAFSecurityError("Cross-tenant incident access denied.", tool_name="incident_service")
 
         inc.status = IncidentStatus.RESOLVED
         inc.resolved_at = datetime.now(timezone.utc)
@@ -75,8 +69,4 @@ class IncidentService:
         return inc
 
     def list_incidents(self, organization_id: str) -> List[Incident]:
-        return [
-            inc
-            for inc in self._incidents.values()
-            if inc.organization_id == organization_id
-        ]
+        return [inc for inc in self._incidents.values() if inc.organization_id == organization_id]

@@ -37,9 +37,7 @@ def import_feedback_file(filepath: str) -> dict:
         content_str = f.read()
 
     if not validate_feedback_privacy(content_str):
-        raise ValueError(
-            "PRIVACY VIOLATION DETECTED: Feedback file contains potential API keys, bearer tokens, or credentials!"
-        )
+        raise ValueError("PRIVACY VIOLATION DETECTED: Feedback file contains potential API keys, bearer tokens, or credentials!")
 
     data = json.loads(content_str)
     required_keys = [
@@ -57,22 +55,16 @@ def import_feedback_file(filepath: str) -> dict:
 
 
 def main():
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
     print("🛡️  GUARdWAF BETA FEEDBACK INTAKE & PRIVACY VALIDATION TOOL")
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
 
     data_dir = os.path.join("data", "beta_feedback")
     if not os.path.exists(data_dir):
         print(f"Directory '{data_dir}' not found.")
         sys.exit(1)
 
-    files = [
-        os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith(".json")
-    ]
+    files = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith(".json")]
     print(f"Found {len(files)} feedback file(s) in '{data_dir}'.")
 
     valid_count = 0
@@ -80,21 +72,13 @@ def main():
         try:
             fb = import_feedback_file(fp)
             valid_count += 1
-            print(
-                f"   ✅ Imported & Privacy-Verified: '{fb['feedback_id']}' ({fb['category']} via {fb['framework']})"
-            )
+            print(f"   ✅ Imported & Privacy-Verified: '{fb['feedback_id']}' ({fb['category']} via {fb['framework']})")
         except Exception as err:
             print(f"   ❌ Validation Failed for '{fp}': {err}")
 
-    print(
-        "=========================================================================================="
-    )
-    print(
-        f"✅ INTAKE COMPLETE: {valid_count} / {len(files)} feedback entry(ies) verified."
-    )
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
+    print(f"✅ INTAKE COMPLETE: {valid_count} / {len(files)} feedback entry(ies) verified.")
+    print("==========================================================================================")
 
 
 if __name__ == "__main__":

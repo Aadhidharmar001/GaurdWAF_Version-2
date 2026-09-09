@@ -38,9 +38,7 @@ def run_smoke_tests(target_url: str = None) -> bool:
     print("▶ 1. Probing Liveness Endpoint (/health/live)...")
     res_live = client.get("/health/live")
     if res_live.status_code != 200:
-        print(
-            f"❌ SMOKE TEST FAILED: /health/live returned status {res_live.status_code}"
-        )
+        print(f"❌ SMOKE TEST FAILED: /health/live returned status {res_live.status_code}")
         return False
     print("   ✅ Liveness Probe OK (HTTP 200)")
 
@@ -48,9 +46,7 @@ def run_smoke_tests(target_url: str = None) -> bool:
     print("▶ 2. Probing Readiness Endpoint (/health/ready)...")
     res_ready = client.get("/health/ready")
     if res_ready.status_code != 200:
-        print(
-            f"❌ SMOKE TEST FAILED: /health/ready returned status {res_ready.status_code}"
-        )
+        print(f"❌ SMOKE TEST FAILED: /health/ready returned status {res_ready.status_code}")
         return False
     data_ready = res_ready.json()
     print(
@@ -62,11 +58,7 @@ def run_smoke_tests(target_url: str = None) -> bool:
     from guardwaf import GuardWAF, protect
     from guardwaf.core.models import BulkThresholdRule, PolicyConfig, PolicyRules
 
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(tool="smoke_tool", param_name="amount", max_value=100)
-        ]
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="smoke_tool", param_name="amount", max_value=100)])
     pol = PolicyConfig(metadata={"policy_name": "smoke_pol"}, rules=rules)
     waf = GuardWAF(policy=pol, secret_key="staging_smoke_test_secret_key_32bytes")
 

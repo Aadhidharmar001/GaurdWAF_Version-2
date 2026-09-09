@@ -30,21 +30,15 @@ MCP_EXEC_COUNT = 0
 def raw_refund_func(customer_id: str, amount: float):
     global LANGCHAIN_EXEC_COUNT
     LANGCHAIN_EXEC_COUNT += 1
-    print(
-        f"   [DOWNSTREAM LANGCHAIN EXECUTION] 💸 Refunding ${amount:.2f} for {customer_id}"
-    )
+    print(f"   [DOWNSTREAM LANGCHAIN EXECUTION] 💸 Refunding ${amount:.2f} for {customer_id}")
     return {"status": "SUCCESS", "refunded": amount}
 
 
 def downstream_mcp_handler(request):
     global MCP_EXEC_COUNT
     MCP_EXEC_COUNT += 1
-    print(
-        f"   [DOWNSTREAM MCP EXECUTION] 🛠️ Executing MCP Tool '{request.tool_name}' with {request.arguments}"
-    )
-    return MCPToolResponse(
-        id=request.id, result={"status": "EXECUTED", "tool": request.tool_name}
-    )
+    print(f"   [DOWNSTREAM MCP EXECUTION] 🛠️ Executing MCP Tool '{request.tool_name}' with {request.arguments}")
+    return MCPToolResponse(id=request.id, result={"status": "EXECUTED", "tool": request.tool_name})
 
 
 def run_phase5b_demo():
@@ -57,9 +51,7 @@ def run_phase5b_demo():
     print("=" * 90)
 
     # --- Scenarios 1, 2, 3: Control Plane & Metadata Setup ---
-    print(
-        "\n▶ SCENARIOS 1-3: Starting Control Plane, Postgres/Redis Metadata & Admin Account..."
-    )
+    print("\n▶ SCENARIOS 1-3: Starting Control Plane, Postgres/Redis Metadata & Admin Account...")
     cp_container = ControlPlaneContainer()
     org_svc = cp_container.org_service
     agent_svc = cp_container.agent_service
@@ -68,9 +60,7 @@ def run_phase5b_demo():
     acme_org = org_svc.create_organization("Acme Enterprise", "acme-ent-p5b")
     maya = org_svc.create_user("maya@acme.com", "Maya (Security Admin)")
     org_svc.add_member(acme_org.organization_id, maya.user_id, Role.SECURITY_ADMIN)
-    print(
-        f"   ✅ Control Plane Active: Org='{acme_org.name}' ({acme_org.organization_id}), Admin='{maya.display_name}'"
-    )
+    print(f"   ✅ Control Plane Active: Org='{acme_org.name}' ({acme_org.organization_id}), Admin='{maya.display_name}'")
 
     # --- Scenario 4: Register Agent ---
     print("\n▶ SCENARIO 4: Registering AI Agent 'customer_service_agent'...")
@@ -81,33 +71,19 @@ def run_phase5b_demo():
         name="Customer Service Agent",
         version="1.0.0",
     )
-    print(
-        f"   ✅ Agent Registered: ID='{agent_rec.agent_id}', Tenant='{agent_rec.tenant_id}'"
-    )
+    print(f"   ✅ Agent Registered: ID='{agent_rec.agent_id}', Tenant='{agent_rec.tenant_id}'")
 
     # --- Scenario 5: LangChain Integration Setup ---
     print("\n▶ SCENARIO 5: Connecting LangChain Agent Tool Adapter...")
     rules_obj = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(
-                tool="process_refund", param_name="amount", max_value=5000
-            )
-        ],
-        hitl_rules=[
-            HITLRule(
-                tool="process_refund", condition_param="amount", greater_than=200.0
-            )
-        ],
+        bulk_thresholds=[BulkThresholdRule(tool="process_refund", param_name="amount", max_value=5000)],
+        hitl_rules=[HITLRule(tool="process_refund", condition_param="amount", greater_than=200.0)],
     )
-    policy_obj = PolicyConfig(
-        metadata={"policy_name": "refund_policy_p5b"}, rules=rules_obj
-    )
+    policy_obj = PolicyConfig(metadata={"policy_name": "refund_policy_p5b"}, rules=rules_obj)
     waf = GuardWAF(policy=policy_obj, secret_key="dev_secret_key_phase5b_demo")
     waf.register_tool("process_refund", raw_refund_func)
 
-    protected_refund_tool = protect_tool(
-        raw_refund_func, tool_name="process_refund", waf=waf
-    )
+    protected_refund_tool = protect_tool(raw_refund_func, tool_name="process_refund", waf=waf)
     hitl_service = HITLWorkstationService(waf=waf)
 
     print("   ✅ LangChain Tool Adapter Connected to GuardWAF Engine!")
@@ -128,9 +104,7 @@ def run_phase5b_demo():
             print("   ❌ FAIL: Action was not blocked!")
         except GuardWAFSecurityError as e:
             print(f"   ✅ GUARDWAF BLOCKED ACTION: {e.message}")
-            print(
-                f"   ✅ INVARIANT VERIFIED: Downstream Execution Count remained strictly {LANGCHAIN_EXEC_COUNT} (0 new calls!)"
-            )
+            print(f"   ✅ INVARIANT VERIFIED: Downstream Execution Count remained strictly {LANGCHAIN_EXEC_COUNT} (0 new calls!)")
             assert LANGCHAIN_EXEC_COUNT == curr_exec
 
     # --- Scenario 8: Trigger HITL Action ---
@@ -142,9 +116,7 @@ def run_phase5b_demo():
         except (GuardWAFHITLRequiredError, GuardWAFSecurityError) as e:
             pending_action_id = getattr(e, "pending_action_id", None)
             if not pending_action_id:
-                pending_action_id = waf.state_store.list_pending_actions()[
-                    -1
-                ].pending_action_id
+                pending_action_id = waf.state_store.list_pending_actions()[-1].pending_action_id
             print(f"   ✅ process_refund ($500.00): HITL SUSPENDED ({e.message})")
             print(f"      - Created PendingAction: ID='{pending_action_id}'")
 
@@ -160,9 +132,7 @@ def run_phase5b_demo():
 
     prev_count = LANGCHAIN_EXEC_COUNT
     with waf.session(session_id="sess_lc_5b", tenant_id=acme_org.organization_id):
-        res_resumed = waf.resume_sync(
-            pending_action_id=pending_action_id, approval_token=token
-        )
+        res_resumed = waf.resume_sync(pending_action_id=pending_action_id, approval_token=token)
         print(f"   ✅ Resumed Action Executed Successfully: {res_resumed}")
         assert LANGCHAIN_EXEC_COUNT == prev_count + 1
 
@@ -199,12 +169,8 @@ def run_phase5b_demo():
     curr_mcp_exec = MCP_EXEC_COUNT
     res_mcp_bad = mcp_gateway.handle_tool_request(req_bad)
     assert res_mcp_bad.error is not None
-    print(
-        f"   ✅ GUARDWAF BLOCKED DANGEROUS MCP REQUEST: {res_mcp_bad.error['message']}"
-    )
-    print(
-        f"   ✅ INVARIANT VERIFIED: Downstream MCP Execution Count remained strictly {MCP_EXEC_COUNT}"
-    )
+    print(f"   ✅ GUARDWAF BLOCKED DANGEROUS MCP REQUEST: {res_mcp_bad.error['message']}")
+    print(f"   ✅ INVARIANT VERIFIED: Downstream MCP Execution Count remained strictly {MCP_EXEC_COUNT}")
     assert MCP_EXEC_COUNT == curr_mcp_exec
 
     # --- Scenario 13: Agent Revocation ---
@@ -214,14 +180,10 @@ def run_phase5b_demo():
 
     # --- Scenario 14: Control Plane Outage & LKG Fallback ---
     print("\n▶ SCENARIO 14: Simulating Control Plane Outage...")
-    print(
-        "   ✅ Local SDK Enforcement continues safely using local Last Known Good (LKG) policy!"
-    )
+    print("   ✅ Local SDK Enforcement continues safely using local Last Known Good (LKG) policy!")
 
     # --- Scenario 15: Concurrent Load Benchmark ---
-    print(
-        "\n▶ SCENARIO 15: Running Concurrent Load & Performance Benchmark (10,000 protected calls)..."
-    )
+    print("\n▶ SCENARIO 15: Running Concurrent Load & Performance Benchmark (10,000 protected calls)...")
     bench_latencies = []
     t_start = time.perf_counter()
     with waf.session(session_id="sess_bench", tenant_id=acme_org.organization_id):
@@ -239,17 +201,13 @@ def run_phase5b_demo():
     p99 = bench_latencies[int(len(bench_latencies) * 0.99)]
     rps = len(bench_latencies) / dur
 
-    print(
-        f"   ✅ BENCHMARK MEASURED: Total={len(bench_latencies)} calls, Throughput={rps:.1f} req/sec"
-    )
+    print(f"   ✅ BENCHMARK MEASURED: Total={len(bench_latencies)} calls, Throughput={rps:.1f} req/sec")
     print(f"      - p50 Latency: {p50:.3f} ms")
     print(f"      - p95 Latency: {p95:.3f} ms")
     print(f"      - p99 Latency: {p99:.3f} ms")
 
     # --- Scenario 16: Adversarial Attack Suite Validation ---
-    print(
-        "\n▶ SCENARIO 16: Executing Adversarial Attack Suite (JWT forgery, parameter tampering, cross-tenant identity reuse)..."
-    )
+    print("\n▶ SCENARIO 16: Executing Adversarial Attack Suite (JWT forgery, parameter tampering, cross-tenant identity reuse)...")
     bad_token = create_jwt_token(
         "hacker",
         "hacker@evil.com",
@@ -264,9 +222,7 @@ def run_phase5b_demo():
         print("   ✅ FORGED JWT ATTACK REJECTED!")
 
     print("\n" + "=" * 90)
-    print(
-        "✅ PHASE 5B DEMO COMPLETE: Production Validation & Resilience Suite Verified!"
-    )
+    print("✅ PHASE 5B DEMO COMPLETE: Production Validation & Resilience Suite Verified!")
     print("=" * 90)
 
 

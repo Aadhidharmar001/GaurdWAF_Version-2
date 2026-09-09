@@ -22,11 +22,7 @@ def main():
     print("🛡️  GUARdWAF LANGCHAIN FRAMEWORK INTEGRATION DEMO")
     print("=================================================================")
 
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(tool="query_db", param_name="max_rows", max_value=500)
-        ]
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="query_db", param_name="max_rows", max_value=500)])
     policy = PolicyConfig(metadata={"policy_name": "langchain_policy"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="langchain_demo_secret_key_32bytes")
 

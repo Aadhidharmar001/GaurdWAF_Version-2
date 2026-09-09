@@ -17,9 +17,7 @@ def test_signed_revocation_event_creation_and_verification():
     km = KeyManager(secret_key="secret_key_signed_test")
     verifier = EventSignatureVerifier(key_manager=km)
 
-    signed_event = verifier.sign_event(
-        "AGENT_REVOKED", "tenant_1", sequence_number=1, agent_id="bot_bad"
-    )
+    signed_event = verifier.sign_event("AGENT_REVOKED", "tenant_1", sequence_number=1, agent_id="bot_bad")
     assert verifier.verify_event_signature(signed_event) is True
 
 
@@ -27,9 +25,7 @@ def test_forged_revocation_event_rejection():
     km = KeyManager(secret_key="secret_key_signed_test")
     verifier = EventSignatureVerifier(key_manager=km)
 
-    signed_event = verifier.sign_event(
-        "AGENT_REVOKED", "tenant_1", sequence_number=1, agent_id="bot_bad"
-    )
+    signed_event = verifier.sign_event("AGENT_REVOKED", "tenant_1", sequence_number=1, agent_id="bot_bad")
 
     # Tamper signature
     signed_event.signature = "forged_signature_hex"
@@ -52,9 +48,7 @@ def test_revocation_client_integration():
     verifier = EventSignatureVerifier(key_manager=km)
     client = RevocationClient(key_manager=km)
 
-    event = verifier.sign_event(
-        "AGENT_REVOKED", "tenant_x", sequence_number=10, agent_id="rogue_bot"
-    )
+    event = verifier.sign_event("AGENT_REVOKED", "tenant_x", sequence_number=10, agent_id="rogue_bot")
     applied = client.process_signed_event(event)
     assert applied is True
 

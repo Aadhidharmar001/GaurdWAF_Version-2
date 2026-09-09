@@ -91,9 +91,7 @@ async def stream_events():
         "Connection": "keep-alive",
         "X-Accel-Buffering": "no",
     }
-    return StreamingResponse(
-        stream_dashboard_events(), media_type="text/event-stream", headers=headers
-    )
+    return StreamingResponse(stream_dashboard_events(), media_type="text/event-stream", headers=headers)
 
 
 @app.post("/proxy/tool", response_model=ToolCallResponse)

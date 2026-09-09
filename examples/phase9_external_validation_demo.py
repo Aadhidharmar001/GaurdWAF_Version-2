@@ -14,9 +14,7 @@ if hasattr(sys.stdout, "reconfigure"):
 def run_cmd(cmd_list, desc):
     print(f"\n▶ {desc}...")
     env = {**os.environ, "PYTHONPATH": "."}
-    res = subprocess.run(
-        cmd_list, env=env, capture_output=True, text=True, encoding="utf-8"
-    )
+    res = subprocess.run(cmd_list, env=env, capture_output=True, text=True, encoding="utf-8")
     if res.returncode != 0:
         print(f"   ❌ FAILED:\n{res.stderr}")
         sys.exit(1)
@@ -25,13 +23,9 @@ def run_cmd(cmd_list, desc):
 
 
 def main():
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
     print("🛡️  GUARdWAF PHASE 9 FLAGSHIP DEMO: EXTERNAL VALIDATION & PRODUCT LEARNING")
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
 
     from guardwaf.telemetry.product_telemetry import PRODUCT_INTELLIGENCE
 
@@ -39,9 +33,7 @@ def main():
     print("▶ Scenario 1: Verifying Current Internal Engineering Evidence...")
     eng = PRODUCT_INTELLIGENCE.get_engineering_evidence()
     assert eng["automated_tests_passing"] >= 120
-    print(
-        f"   ✅ Engineering Evidence: {eng['automated_tests_passing']} Pytest tests passing."
-    )
+    print(f"   ✅ Engineering Evidence: {eng['automated_tests_passing']} Pytest tests passing.")
 
     # Scenario 2: Simulated Evidence Separation
     print("\n▶ Scenario 2: Verifying Simulated / Controlled Evidence Separation...")
@@ -84,11 +76,7 @@ def main():
     from guardwaf import GuardWAFSecurityError
     from guardwaf.core.models import BulkThresholdRule, PolicyConfig, PolicyRules
 
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(tool="withdraw", param_name="amount", max_value=100)
-        ]
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="withdraw", param_name="amount", max_value=100)])
     waf_p = GuardWAF(
         policy=PolicyConfig(metadata={"policy_name": "p9"}, rules=rules),
         secret_key="p9_demo_secret_key_32bytes_min_l",
@@ -110,11 +98,7 @@ def main():
     from guardwaf.control_plane.services.hitl_service import HITLWorkstationService
     from guardwaf.core.models import HITLRule
 
-    rules_h = PolicyRules(
-        hitl_rules=[
-            HITLRule(tool="transfer", condition_param="amount", greater_than=50)
-        ]
-    )
+    rules_h = PolicyRules(hitl_rules=[HITLRule(tool="transfer", condition_param="amount", greater_than=50)])
     waf_h = GuardWAF(
         policy=PolicyConfig(metadata={"policy_name": "h"}, rules=rules_h),
         secret_key="p9_demo_secret_key_32bytes_min_l",
@@ -163,9 +147,7 @@ def main():
     from scripts.import_beta_feedback import validate_feedback_privacy
 
     assert validate_feedback_privacy("Clean feedback") is True
-    assert (
-        validate_feedback_privacy("Leaked key: sk-proj-12345678901234567890") is False
-    )
+    assert validate_feedback_privacy("Leaked key: sk-proj-12345678901234567890") is False
     print("   ✅ Sensitive Secret Filter Verified.")
 
     # Scenario 14: Issue Triage
@@ -203,19 +185,11 @@ def main():
     # Scenario 20: Final Classification
     print("\n▶ Scenario 20: Verifying Phase 9 Final Evidence Classification...")
     print("   🏁 FINAL CLASSIFICATION: PHASE 9 ENGINEERING COMPLETE")
-    print(
-        "                           PUBLIC BETA ACTIVE — AWAITING REAL EXTERNAL EVIDENCE"
-    )
+    print("                           PUBLIC BETA ACTIVE — AWAITING REAL EXTERNAL EVIDENCE")
 
-    print(
-        "=========================================================================================="
-    )
-    print(
-        "✅ PHASE 9 DEMO COMPLETE: External Validation Infrastructure & Product Learning Verified!"
-    )
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
+    print("✅ PHASE 9 DEMO COMPLETE: External Validation Infrastructure & Product Learning Verified!")
+    print("==========================================================================================")
 
 
 if __name__ == "__main__":

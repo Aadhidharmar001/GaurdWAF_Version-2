@@ -34,9 +34,7 @@ class CrewAIAdapter(BaseFrameworkAdapter):
         super().__init__(waf=waf, protocol_name="crewai")
 
     def wrap_tool(self, tool: Any, tool_name: Optional[str] = None) -> Any:
-        t_name = tool_name or getattr(
-            tool, "name", getattr(tool, "__name__", "crewai_tool")
-        )
+        t_name = tool_name or getattr(tool, "name", getattr(tool, "__name__", "crewai_tool"))
         execution_counter = {"count": 0}
 
         target_func = getattr(tool, "_run", tool)

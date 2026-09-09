@@ -19,11 +19,7 @@ def benchmark_tool(x: int):
 
 
 def run_local_benchmark(total_calls: int = 10000):
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(tool="benchmark_tool", param_name="x", max_value=1000000)
-        ]
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="benchmark_tool", param_name="x", max_value=1000000)])
     policy = PolicyConfig(metadata={"policy_name": "bench_policy"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="secret_bench_key")
     waf.register_tool("benchmark_tool", benchmark_tool)

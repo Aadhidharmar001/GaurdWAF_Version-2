@@ -26,18 +26,14 @@ PAYMENT_EXEC_COUNT = 0
 def process_payment(customer_id: str, amount: float):
     global PAYMENT_EXEC_COUNT
     PAYMENT_EXEC_COUNT += 1
-    print(
-        f"   [TOOL EXECUTION] 💳 Processing Payment of ${amount:.2f} for {customer_id}"
-    )
+    print(f"   [TOOL EXECUTION] 💳 Processing Payment of ${amount:.2f} for {customer_id}")
     return {"status": "SUCCESS", "amount": amount}
 
 
 def run_phase5a_demo():
     global PAYMENT_EXEC_COUNT
     print("=" * 85)
-    print(
-        "🛡️  GUARdWAF PHASE 5A DEMO: PRODUCTION CONTROL PLANE & REAL-TIME SECURITY DASHBOARD"
-    )
+    print("🛡️  GUARdWAF PHASE 5A DEMO: PRODUCTION CONTROL PLANE & REAL-TIME SECURITY DASHBOARD")
     print("=" * 85)
 
     # Initialize Control Plane Container
@@ -58,16 +54,12 @@ def run_phase5a_demo():
         role="SECURITY_ADMIN",
     )
     user_context = verify_jwt_token(jwt_token)
-    print(
-        f"   ✅ Authenticated Successfully! User='{user_context['email']}', Role='{user_context['role']}'"
-    )
+    print(f"   ✅ Authenticated Successfully! User='{user_context['email']}', Role='{user_context['role']}'")
 
     # --- Scenario 2: Select Organization ---
     print("\n▶ SCENARIO 2: Selecting Organization 'Acme Corp'...")
     acme_org = org_svc.create_organization(name="Acme Corp", slug="acme-corp-p5a")
-    print(
-        f"   ✅ Active Organization Context: Name='{acme_org.name}', ID='{acme_org.organization_id}'"
-    )
+    print(f"   ✅ Active Organization Context: Name='{acme_org.name}', ID='{acme_org.organization_id}'")
 
     # --- Scenario 3: Initial Dashboard View ---
     print("\n▶ SCENARIO 3: Loading Real Security Operations Dashboard Metrics...")
@@ -86,23 +78,17 @@ def run_phase5a_demo():
         version="1.0.0",
         environment="production",
     )
-    print(
-        f"   ✅ Agent Registered: ID='{agent_rec.agent_id}', Status={agent_rec.status.value}"
-    )
+    print(f"   ✅ Agent Registered: ID='{agent_rec.agent_id}', Status={agent_rec.status.value}")
 
     # --- Scenario 5: Security Admin Creates & Publishes Policy ---
-    print(
-        "\n▶ SCENARIO 5: Security Admin creating and publishing 'billing_policy' v1..."
-    )
+    print("\n▶ SCENARIO 5: Security Admin creating and publishing 'billing_policy' v1...")
     pol_rec = pol_svc.create_policy(
         tenant_id=acme_org.organization_id,
         name="billing_policy",
         description="Billing Policy for Acme Corp",
     )
     v1_rules = {
-        "bulk_thresholds": [
-            {"tool": "process_payment", "param_name": "amount", "max_value": 10000}
-        ],
+        "bulk_thresholds": [{"tool": "process_payment", "param_name": "amount", "max_value": 10000}],
         "hitl_rules": [
             {
                 "tool": "process_payment",
@@ -117,20 +103,10 @@ def run_phase5a_demo():
 
     # Initialize Local GuardWAF Runtime
     rules_obj = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(
-                tool="process_payment", param_name="amount", max_value=10000
-            )
-        ],
-        hitl_rules=[
-            HITLRule(
-                tool="process_payment", condition_param="amount", greater_than=500.0
-            )
-        ],
+        bulk_thresholds=[BulkThresholdRule(tool="process_payment", param_name="amount", max_value=10000)],
+        hitl_rules=[HITLRule(tool="process_payment", condition_param="amount", greater_than=500.0)],
     )
-    policy_obj = PolicyConfig(
-        metadata={"policy_name": "billing_policy"}, rules=rules_obj
-    )
+    policy_obj = PolicyConfig(metadata={"policy_name": "billing_policy"}, rules=rules_obj)
     waf = GuardWAF(policy=policy_obj, secret_key="dev_secret_key_phase5a_demo")
     waf.register_tool("process_payment", process_payment)
     hitl_service = HITLWorkstationService(waf=waf)
@@ -181,16 +157,12 @@ def run_phase5a_demo():
     )
     approval_token = hitl_res["approval_token"]
     print(f"   ✅ Action Approved: Token Issued={approval_token[:30]}...")
-    print(
-        "      - Verification: Downstream tool body was NOT executed by Control Plane!"
-    )
+    print("      - Verification: Downstream tool body was NOT executed by Control Plane!")
 
     # Agent resumes action
     curr_exec = PAYMENT_EXEC_COUNT
     with waf.session(session_id="sess_p5a_01", tenant_id=acme_org.organization_id):
-        res_resumed = waf.resume_sync(
-            pending_action_id=pending_action_id, approval_token=approval_token
-        )
+        res_resumed = waf.resume_sync(pending_action_id=pending_action_id, approval_token=approval_token)
         print(f"   ✅ Agent Resumed & Executed Action: {res_resumed}")
         assert PAYMENT_EXEC_COUNT == curr_exec + 1
 
@@ -214,23 +186,17 @@ def run_phase5a_demo():
     print("   Simulating SSE broadcast failure...")
     # Intentionally trigger fault in broadcast call
     try:
-        asyncio.run(
-            cp_container.sse_broadcaster.broadcast_event("non_existent_tenant", None)
-        )
+        asyncio.run(cp_container.sse_broadcaster.broadcast_event("non_existent_tenant", None))
     except Exception as e:
         print(f"   Broadcaster handled fault: {e}")
 
     # Local runtime enforcement remains 100% operational
     with waf.session(session_id="sess_p5a_02", tenant_id=acme_org.organization_id):
         res_fault_test = process_payment("cust_202", 50.00)
-        print(
-            f"   ✅ GUARDWAF LOCAL RUNTIME ENFORCEMENT CONTINUES SAFELY! ({res_fault_test})"
-        )
+        print(f"   ✅ GUARDWAF LOCAL RUNTIME ENFORCEMENT CONTINUES SAFELY! ({res_fault_test})")
 
     print("\n" + "=" * 85)
-    print(
-        "✅ PHASE 5A DEMO COMPLETE: Production Control Plane & Real-Time Security Dashboard Verified!"
-    )
+    print("✅ PHASE 5A DEMO COMPLETE: Production Control Plane & Real-Time Security Dashboard Verified!")
     print("=" * 85)
 
 

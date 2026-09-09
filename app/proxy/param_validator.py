@@ -8,9 +8,7 @@ from app.models import (
 )
 
 
-def evaluate_bulk_threshold(
-    req: ToolCallRequest, rule: BulkThresholdRule, global_shadow: bool = False
-) -> Optional[RuleResult]:
+def evaluate_bulk_threshold(req: ToolCallRequest, rule: BulkThresholdRule, global_shadow: bool = False) -> Optional[RuleResult]:
     if rule.tool != req.tool:
         return None
 
@@ -26,9 +24,7 @@ def evaluate_bulk_threshold(
     return None
 
 
-def evaluate_parameter_blocklist(
-    req: ToolCallRequest, rule: ParameterBlocklistRule, global_shadow: bool = False
-) -> Optional[RuleResult]:
+def evaluate_parameter_blocklist(req: ToolCallRequest, rule: ParameterBlocklistRule, global_shadow: bool = False) -> Optional[RuleResult]:
     if rule.tool != req.tool:
         return None
 

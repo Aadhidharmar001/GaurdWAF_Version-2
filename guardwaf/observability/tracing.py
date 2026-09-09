@@ -16,7 +16,5 @@ class TraceContext:
 
     @classmethod
     def extract_headers(cls, headers: Dict[str, str]) -> "TraceContext":
-        cid = headers.get("x-guardwaf-correlation-id") or headers.get(
-            "X-GuardWAF-Correlation-ID"
-        )
+        cid = headers.get("x-guardwaf-correlation-id") or headers.get("X-GuardWAF-Correlation-ID")
         return cls(correlation_id=cid)

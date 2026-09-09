@@ -29,11 +29,7 @@ def main():
     print("🛡️  GUARdWAF MCP GATEWAY SERVER INTEGRATION DEMO")
     print("=================================================================")
 
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(tool="fetch_file", param_name="max_kb", max_value=1024)
-        ]
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="fetch_file", param_name="max_kb", max_value=1024)])
     policy = PolicyConfig(metadata={"policy_name": "mcp_policy"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="mcp_demo_secret_key_32bytes_long_m")
 
@@ -42,16 +38,12 @@ def main():
 
     with waf.session(session_id="sess_mcp_1"):
         # Allowed MCP Tool call
-        res1 = mcp_proxy.invoke_tool(
-            "fetch_file", {"path": "/docs/readme.txt", "max_kb": 100}
-        )
+        res1 = mcp_proxy.invoke_tool("fetch_file", {"path": "/docs/readme.txt", "max_kb": 100})
         print(f"▶ 1. Safe MCP Tool Call Execution: {res1}")
 
         # Blocked MCP Tool call (exceeds threshold)
         try:
-            mcp_proxy.invoke_tool(
-                "fetch_file", {"path": "/data/dump.iso", "max_kb": 10240}
-            )
+            mcp_proxy.invoke_tool("fetch_file", {"path": "/data/dump.iso", "max_kb": 10240})
         except GuardWAFSecurityError as err:
             print(f"▶ 2. 🚨 BLOCKED MCP Tool Call Execution: {err}")
 

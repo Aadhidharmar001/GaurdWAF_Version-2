@@ -10,11 +10,7 @@ from guardwaf.core.models import BulkThresholdRule, PolicyConfig, PolicyRules
 
 
 def test_legacy_phase1_decorator_compatibility():
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(tool="legacy_func", param_name="val", max_value=10)
-        ]
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="legacy_func", param_name="val", max_value=10)])
     policy = PolicyConfig(metadata={"policy_name": "legacy_p"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="legacy_compat_secret_key_32bytes_long")
 

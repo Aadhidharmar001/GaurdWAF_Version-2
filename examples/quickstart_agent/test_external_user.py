@@ -19,9 +19,7 @@ def main():
 
     main_py_path = os.path.join(os.path.dirname(__file__), "main.py")
     env = os.environ.copy()
-    env["PYTHONPATH"] = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "..")
-    )
+    env["PYTHONPATH"] = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
     res = subprocess.run(
         [sys.executable, main_py_path],

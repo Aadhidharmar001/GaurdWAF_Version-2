@@ -12,9 +12,7 @@ from guardwaf.exceptions import GuardWAFConfigurationError
 
 
 class AgentService:
-    def __init__(
-        self, repo: AgentRepository, audit_service: Optional[AuditService] = None
-    ):
+    def __init__(self, repo: AgentRepository, audit_service: Optional[AuditService] = None):
         self.repo = repo
         self.audit_service = audit_service
 
@@ -55,9 +53,7 @@ class AgentService:
     def list_agents(self, tenant_id: str) -> List[AgentRecord]:
         return self.repo.list_agents(tenant_id)
 
-    def revoke_agent(
-        self, agent_id: str, actor_id: str = "admin", reason: Optional[str] = None
-    ) -> AgentRecord:
+    def revoke_agent(self, agent_id: str, actor_id: str = "admin", reason: Optional[str] = None) -> AgentRecord:
         agent = self.repo.get_agent(agent_id)
         if not agent:
             raise GuardWAFConfigurationError(f"Agent '{agent_id}' not found.")
@@ -91,8 +87,6 @@ class AgentService:
         self.repo.save_agent(agent)
 
         if self.audit_service:
-            self.audit_service.record_event(
-                "AGENT_ACTIVATED", agent.tenant_id, actor_id, "agent", agent_id
-            )
+            self.audit_service.record_event("AGENT_ACTIVATED", agent.tenant_id, actor_id, "agent", agent_id)
 
         return agent

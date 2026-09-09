@@ -22,17 +22,11 @@ def main():
     print("🛡️  GUARdWAF LANGGRAPH FRAMEWORK INTEGRATION DEMO")
     print("=================================================================")
 
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(tool="sys_cmd", param_name="timeout_sec", max_value=30)
-        ]
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="sys_cmd", param_name="timeout_sec", max_value=30)])
     policy = PolicyConfig(metadata={"policy_name": "langgraph_policy"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="langgraph_demo_secret_key_32bytes")
 
-    protected_node_tool = protect_langgraph_tool(
-        execute_system_command, waf=waf, tool_name="sys_cmd"
-    )
+    protected_node_tool = protect_langgraph_tool(execute_system_command, waf=waf, tool_name="sys_cmd")
 
     with waf.session(session_id="sess_lg_1"):
         res1 = protected_node_tool(command="ls -la", timeout_sec=10)

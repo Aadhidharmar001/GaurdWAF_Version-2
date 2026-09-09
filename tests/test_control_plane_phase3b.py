@@ -39,9 +39,7 @@ def api_client(cp_container):
 
 def test_agent_registration_and_lookup(cp_container):
     svc: AgentService = cp_container.agent_service
-    agent = svc.register_agent(
-        agent_id="bot_1", tenant_id="t1", name="Bot One", version="1.0.0"
-    )
+    agent = svc.register_agent(agent_id="bot_1", tenant_id="t1", name="Bot One", version="1.0.0")
 
     assert agent.agent_id == "bot_1"
     assert agent.status == AgentStatus.ACTIVE
@@ -87,17 +85,13 @@ def test_policy_creation_versioning_and_rollback(cp_container):
     pol = ps.create_policy(tenant_id="t1", name="payment_policy")
 
     # Create Version 1
-    v1_rules = {
-        "bulk_thresholds": [{"tool": "pay", "param_name": "amount", "max_value": 100}]
-    }
+    v1_rules = {"bulk_thresholds": [{"tool": "pay", "param_name": "amount", "max_value": 100}]}
     ver1 = ps.create_version(pol.policy_id, rules=v1_rules)
     assert ver1.version_number == 1
     assert ver1.content_digest is not None
 
     # Create Version 2
-    v2_rules = {
-        "bulk_thresholds": [{"tool": "pay", "param_name": "amount", "max_value": 500}]
-    }
+    v2_rules = {"bulk_thresholds": [{"tool": "pay", "param_name": "amount", "max_value": 500}]}
     ver2 = ps.create_version(pol.policy_id, rules=v2_rules)
     assert ver2.version_number == 2
 
@@ -126,20 +120,12 @@ def test_signed_policy_bundle_compilation_and_verification(cp_container):
     pol = policy_svc.create_policy("t1", "transfer_policy")
     policy_svc.create_version(
         pol.policy_id,
-        rules={
-            "bulk_thresholds": [
-                {"tool": "transfer", "param_name": "val", "max_value": 50}
-            ]
-        },
+        rules={"bulk_thresholds": [{"tool": "transfer", "param_name": "val", "max_value": 50}]},
     )
     policy_svc.publish_and_activate(pol.policy_id, version_number=1)
-    policy_svc.assign_policy(
-        tenant_id="t1", policy_id=pol.policy_id, agent_id="agent_bundle_1"
-    )
+    policy_svc.assign_policy(tenant_id="t1", policy_id=pol.policy_id, agent_id="agent_bundle_1")
 
-    bundle = bundle_svc.compile_and_sign_bundle(
-        tenant_id="t1", agent_id="agent_bundle_1"
-    )
+    bundle = bundle_svc.compile_and_sign_bundle(tenant_id="t1", agent_id="agent_bundle_1")
     assert bundle.bundle_digest is not None
     assert bundle.signature is not None
 
@@ -157,13 +143,9 @@ def test_tampered_bundle_rejection(cp_container):
     pol = policy_svc.create_policy("t1", "p1")
     policy_svc.create_version(pol.policy_id, rules={"bulk_thresholds": []})
     policy_svc.publish_and_activate(pol.policy_id, 1)
-    policy_svc.assign_policy(
-        tenant_id="t1", policy_id=pol.policy_id, agent_id="agent_tamper"
-    )
+    policy_svc.assign_policy(tenant_id="t1", policy_id=pol.policy_id, agent_id="agent_tamper")
 
-    valid_bundle = bundle_svc.compile_and_sign_bundle(
-        tenant_id="t1", agent_id="agent_tamper"
-    )
+    valid_bundle = bundle_svc.compile_and_sign_bundle(tenant_id="t1", agent_id="agent_tamper")
 
     # Tamper with payload
     tampered_bundle = SignedPolicyBundle.model_validate(valid_bundle.model_dump())
@@ -187,11 +169,7 @@ def test_sdk_policy_client_lkg_fallback_and_latency(cp_container):
     pol = policy_svc.create_policy("tenant_x", "sdk_pol")
     policy_svc.create_version(
         pol.policy_id,
-        rules={
-            "bulk_thresholds": [
-                {"tool": "execute_task", "param_name": "cost", "max_value": 10}
-            ]
-        },
+        rules={"bulk_thresholds": [{"tool": "execute_task", "param_name": "cost", "max_value": 10}]},
     )
     policy_svc.publish_and_activate(pol.policy_id, 1)
     policy_svc.assign_policy("tenant_x", pol.policy_id, agent_id="sdk_bot")
@@ -249,22 +227,16 @@ def test_fastapi_control_plane_endpoints(api_client):
     assert agent_res.json()["agent_id"] == "api_agent_1"
 
     # Create Policy
-    pol_res = api_client.post(
-        "/api/v1/policies", json={"tenant_id": "tenant_api", "name": "api_policy"}
-    )
+    pol_res = api_client.post("/api/v1/policies", json={"tenant_id": "tenant_api", "name": "api_policy"})
     assert pol_res.status_code == 200
     policy_id = pol_res.json()["policy_id"]
 
     # Create Version
-    ver_res = api_client.post(
-        f"/api/v1/policies/{policy_id}/versions", json={"rules": {"sequences": []}}
-    )
+    ver_res = api_client.post(f"/api/v1/policies/{policy_id}/versions", json={"rules": {"sequences": []}})
     assert ver_res.status_code == 200
 
     # Activate
-    act_res = api_client.post(
-        f"/api/v1/policies/{policy_id}/activate", json={"version_number": 1}
-    )
+    act_res = api_client.post(f"/api/v1/policies/{policy_id}/activate", json={"version_number": 1})
     assert act_res.status_code == 200
 
     # Assign

@@ -49,9 +49,7 @@ class OIDCIdentityProvider(JWTIdentityProvider):
             self._last_fetch_time = now
 
         if kid not in self._key_cache:
-            raise GuardWAFInvalidTokenError(
-                f"JWKS Key ID '{kid}' not found in OIDC provider public key set."
-            )
+            raise GuardWAFInvalidTokenError(f"JWKS Key ID '{kid}' not found in OIDC provider public key set.")
 
         return self._key_cache[kid]
 
@@ -64,9 +62,7 @@ class OIDCIdentityProvider(JWTIdentityProvider):
             raise GuardWAFInvalidTokenError(f"Failed to read OIDC JWT header: {e!s}")
 
         if not kid and not self._key_cache:
-            raise GuardWAFInvalidTokenError(
-                "OIDC JWT token missing required 'kid' header field."
-            )
+            raise GuardWAFInvalidTokenError("OIDC JWT token missing required 'kid' header field.")
 
         key_id = kid or list(self._key_cache.keys())[0]
         public_key = self._resolve_jwks_key(key_id)

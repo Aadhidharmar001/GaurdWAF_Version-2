@@ -30,9 +30,7 @@ class HitlQueue(Base):
     session_id = Column(String(100), nullable=False)
     tool = Column(String(100), nullable=False)
     parameters = Column(Text, nullable=False)
-    status = Column(
-        String(50), default="pending", index=True
-    )  # pending, approved, rejected
+    status = Column(String(50), default="pending", index=True)  # pending, approved, rejected
     reason = Column(Text, nullable=True)
     fraud_score = Column(Float, nullable=True, default=0.0)
     confidence_score = Column(Float, nullable=True, default=0.0)

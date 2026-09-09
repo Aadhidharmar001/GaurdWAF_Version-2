@@ -23,29 +23,15 @@ def state_graph_deploy_service(service_name: str, replica_count: int):
 
 
 def main():
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
     print("🛡️  GUARdWAF REAL-WORLD LANGGRAPH WORKFLOW AGENT INTEGRATION")
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
 
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(
-                tool="deploy_service", param_name="replica_count", max_value=10
-            )
-        ]
-    )
-    policy = PolicyConfig(
-        metadata={"policy_name": "langgraph_real_policy"}, rules=rules
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="deploy_service", param_name="replica_count", max_value=10)])
+    policy = PolicyConfig(metadata={"policy_name": "langgraph_real_policy"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="langgraph_real_secret_key_32bytes_l")
 
-    protected_deploy_node = protect_langgraph_tool(
-        state_graph_deploy_service, waf=waf, tool_name="deploy_service"
-    )
+    protected_deploy_node = protect_langgraph_tool(state_graph_deploy_service, waf=waf, tool_name="deploy_service")
 
     with waf.session(session_id="sess_lg_real_1"):
         # 1. State Graph Step 1: Deploy 3 replicas (ALLOW)
@@ -54,9 +40,7 @@ def main():
         print(f"   ✅ ALLOWED LANGGRAPH NODE: {res1}")
 
         # 2. State Graph Step 2: Deploy 100 replicas (BLOCK)
-        print(
-            "\n▶ 2. LangGraph Workflow Node: Deploying 100 replicas (Exceeds Policy)..."
-        )
+        print("\n▶ 2. LangGraph Workflow Node: Deploying 100 replicas (Exceeds Policy)...")
         exec_before = node_execution_counter
         try:
             protected_deploy_node(service_name="payment_api", replica_count=100)
@@ -64,18 +48,12 @@ def main():
             print(f"   🚨 GUARdWAF BLOCKED LANGGRAPH NODE: {err}")
 
         exec_after = node_execution_counter
-        print(
-            f"   🔒 Downstream Node Executions Before: {exec_before}, After: {exec_after} (Delta: 0)"
-        )
+        print(f"   🔒 Downstream Node Executions Before: {exec_before}, After: {exec_after} (Delta: 0)")
         assert exec_before == exec_after
 
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
     print("✅ REAL-WORLD LANGGRAPH WORKFLOW AGENT INTEGRATION COMPLETE!")
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
 
 
 if __name__ == "__main__":

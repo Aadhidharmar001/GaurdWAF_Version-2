@@ -77,13 +77,9 @@ class GuardWAF:
             if os.path.exists(default_yaml):
                 self._static_policy = load_policy_from_yaml(default_yaml)
             elif policy_client:
-                self._static_policy = PolicyConfig(
-                    metadata={"policy_name": "empty"}, rules={}
-                )
+                self._static_policy = PolicyConfig(metadata={"policy_name": "empty"}, rules={})
             else:
-                raise GuardWAFConfigurationError(
-                    "GuardWAF requires a valid config_path, policy instance, or policy_client."
-                )
+                raise GuardWAFConfigurationError("GuardWAF requires a valid config_path, policy instance, or policy_client.")
 
         self.key_manager = KeyManager(
             secret_key=secret_key,
@@ -94,9 +90,7 @@ class GuardWAF:
         self.state_store = state_store or MemoryStateStore()
         self.signer = GrantSigner(key_manager=self.key_manager)
         self.token_mgr = HITLTokenManager(key_manager=self.key_manager)
-        self._evaluator = ActionEvaluator(
-            policy=self._static_policy, state_store=self.state_store
-        )
+        self._evaluator = ActionEvaluator(policy=self._static_policy, state_store=self.state_store)
         self.authority_evaluator = AuthorityEvaluator(strict_mode=self.strict_identity)
         self.telemetry = TelemetryEmitter()
         self.hitl_workflow = HITLWorkflowManager(
@@ -172,13 +166,9 @@ class GuardWAF:
             customer_id=customer_id,
         )
 
-    def approve_pending_action(
-        self, pending_action_id: str, approver_id: str = "admin"
-    ) -> PendingAction:
+    def approve_pending_action(self, pending_action_id: str, approver_id: str = "admin") -> PendingAction:
         """Approve a pending action, producing a cryptographically signed approval token."""
-        return self.hitl_workflow.approve_action(
-            pending_action_id, approver_id=approver_id
-        )
+        return self.hitl_workflow.approve_action(pending_action_id, approver_id=approver_id)
 
     def deny_pending_action(
         self,
@@ -187,13 +177,9 @@ class GuardWAF:
         reason: str = "Denied by human reviewer",
     ) -> PendingAction:
         """Deny a pending action."""
-        return self.hitl_workflow.deny_action(
-            pending_action_id, approver_id=approver_id, reason=reason
-        )
+        return self.hitl_workflow.deny_action(pending_action_id, approver_id=approver_id, reason=reason)
 
-    def list_pending_actions(
-        self, status: Optional[ActionState] = None
-    ) -> List[PendingAction]:
+    def list_pending_actions(self, status: Optional[ActionState] = None) -> List[PendingAction]:
         """Lists pending actions."""
         return self.state_store.list_pending_actions(status=status)
 
@@ -226,9 +212,7 @@ class GuardWAF:
         # 2. Retrieve PendingAction
         action = self.state_store.get_pending_action(pending_action_id)
         if not action:
-            raise GuardWAFSecurityError(
-                f"PendingAction '{pending_action_id}' not found.", tool_name="unknown"
-            )
+            raise GuardWAFSecurityError(f"PendingAction '{pending_action_id}' not found.", tool_name="unknown")
 
         # 3. Check State
         if action.status == ActionState.DENIED:
@@ -237,9 +221,7 @@ class GuardWAF:
                 tool_name=action.tool_name,
             )
         if action.status == ActionState.EXPIRED:
-            raise GuardWAFActionExpiredError(
-                f"Action '{pending_action_id}' has EXPIRED and cannot be resumed."
-            )
+            raise GuardWAFActionExpiredError(f"Action '{pending_action_id}' has EXPIRED and cannot be resumed.")
         if action.status in [ActionState.EXECUTED, ActionState.EXECUTING]:
             raise GuardWAFAlreadyExecutedError(
                 f"Action '{pending_action_id}' has already been executed.",
@@ -315,9 +297,7 @@ class GuardWAF:
         func = self._tool_registry.get(action.tool_name)
         if not func:
             # Rollback state if tool implementation is missing
-            self.state_store.update_pending_action_status(
-                pending_action_id, ActionState.APPROVED, ActionState.EXECUTING
-            )
+            self.state_store.update_pending_action_status(pending_action_id, ActionState.APPROVED, ActionState.EXECUTING)
             raise GuardWAFConfigurationError(
                 f"No execution body registered for tool '{action.tool_name}'. Decorate the function with @protect()."
             )
@@ -340,9 +320,7 @@ class GuardWAF:
                 new_status=ActionState.EXECUTED,
                 expected_old_status=ActionState.EXECUTING,
             )
-            self.state_store.record_tool_call(
-                action.session_id, action.tool_name, "allowed"
-            )
+            self.state_store.record_tool_call(action.session_id, action.tool_name, "allowed")
             self.state_store.record_sequence_state(action.session_id, action.tool_name)
 
             self.telemetry.emit(
@@ -387,9 +365,7 @@ class GuardWAF:
         session_context: Optional[SessionContext] = None,
     ) -> Any:
         """Synchronous wrapper for resume()."""
-        return asyncio.run(
-            self.resume(pending_action_id, approval_token, session_context)
-        )
+        return asyncio.run(self.resume(pending_action_id, approval_token, session_context))
 
 
 def set_default_instance(instance: GuardWAF) -> None:

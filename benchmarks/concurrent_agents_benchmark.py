@@ -34,13 +34,7 @@ def run_concurrent_agent_task(waf: GuardWAF, agent_idx: int, calls_per_agent: in
 
 
 def run_concurrent_benchmark(num_agents: int = 100, calls_per_agent: int = 50):
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(
-                tool="concurrent_tool", param_name="call_idx", max_value=1000
-            )
-        ]
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="concurrent_tool", param_name="call_idx", max_value=1000)])
     policy = PolicyConfig(metadata={"policy_name": "concurrent_policy"}, rules=rules)
     waf = GuardWAF(policy=policy, secret_key="secret_concurrent_bench")
     waf.register_tool("concurrent_tool", concurrent_tool)
@@ -49,10 +43,7 @@ def run_concurrent_benchmark(num_agents: int = 100, calls_per_agent: int = 50):
     total_expected_calls = num_agents * calls_per_agent
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        futures = [
-            executor.submit(run_concurrent_agent_task, waf, i, calls_per_agent)
-            for i in range(num_agents)
-        ]
+        futures = [executor.submit(run_concurrent_agent_task, waf, i, calls_per_agent) for i in range(num_agents)]
         results = [f.result() for f in concurrent.futures.as_completed(futures)]
 
     total_time_sec = time.perf_counter() - start_t

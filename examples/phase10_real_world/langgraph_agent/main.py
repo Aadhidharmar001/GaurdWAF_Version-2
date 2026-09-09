@@ -23,29 +23,17 @@ def raw_deploy_cluster(cluster_name: str, replica_count: int):
 
 
 def main():
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
     print("🛡️  PHASE 10 REAL-WORLD LANGGRAPH WORKFLOW INTEGRATION")
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
 
-    rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(
-                tool="deploy_cluster", param_name="replica_count", max_value=5
-            )
-        ]
-    )
+    rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="deploy_cluster", param_name="replica_count", max_value=5)])
     waf = GuardWAF(
         policy=PolicyConfig(metadata={"policy_name": "lg_p10"}, rules=rules),
         secret_key="lg_p10_secret_key_32bytes_long_min_l",
     )
 
-    deploy_node = protect_langgraph_tool(
-        raw_deploy_cluster, waf=waf, tool_name="deploy_cluster"
-    )
+    deploy_node = protect_langgraph_tool(raw_deploy_cluster, waf=waf, tool_name="deploy_cluster")
 
     with waf.session(session_id="s_lg_p10"):
         # 1. Allowed Node Step
@@ -64,13 +52,9 @@ def main():
         assert exec_before == exec_after
         print(f"   🔒 Downstream Node Executions After Block: {exec_after} (Delta: 0)")
 
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
     print("✅ LANGGRAPH WORKFLOW REAL-WORLD INTEGRATION COMPLETE!")
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
 
 
 if __name__ == "__main__":

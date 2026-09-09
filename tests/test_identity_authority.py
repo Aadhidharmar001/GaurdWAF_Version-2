@@ -64,9 +64,7 @@ def test_strict_mode_rejects_unverified_context(strict_waf_client):
 
 def test_jwt_provider_cryptographic_verification():
     secret = "super_secret_jwt_test_key_32bytes_long!"
-    provider = JWTIdentityProvider(
-        secret_key=secret, issuer="https://auth.example.com/", audience="guardwaf-api"
-    )
+    provider = JWTIdentityProvider(secret_key=secret, issuer="https://auth.example.com/", audience="guardwaf-api")
 
     # Valid Token
     payload = {
@@ -89,9 +87,7 @@ def test_jwt_provider_cryptographic_verification():
 
     # Expired Token
     exp_payload = dict(payload)
-    exp_payload["exp"] = int(
-        (datetime.now(timezone.utc) - timedelta(seconds=10)).timestamp()
-    )
+    exp_payload["exp"] = int((datetime.now(timezone.utc) - timedelta(seconds=10)).timestamp())
     exp_token = jwt.encode(exp_payload, secret, algorithm="HS256")
     with pytest.raises(GuardWAFAuthenticationError):
         provider.authenticate(IdentityCredentials(raw_token=exp_token))
@@ -129,9 +125,7 @@ def test_delegated_authority_tool_and_tenant_scope(waf_client):
         exec_count += 1
         return {"status": "deleted"}
 
-    principal = VerifiedPrincipal(
-        principal_id="usr_alice", tenant_id="tenant_acme", subject="alice"
-    )
+    principal = VerifiedPrincipal(principal_id="usr_alice", tenant_id="tenant_acme", subject="alice")
     agent = AgentIdentity(agent_id="agent_v1", tenant_id="tenant_acme")
     authority = DelegatedAuthority(
         authority_id="auth_1",
@@ -172,9 +166,7 @@ def test_tenant_boundary_anti_spoofing(waf_client):
     def process_refund(customer_id: str, amount: float, tenant_id: str = "tenant_a"):
         return {"status": "ok"}
 
-    principal = VerifiedPrincipal(
-        principal_id="usr_tenant", tenant_id="tenant_a", subject="usr"
-    )
+    principal = VerifiedPrincipal(principal_id="usr_tenant", tenant_id="tenant_a", subject="usr")
     agent = AgentIdentity(agent_id="agent_a", tenant_id="tenant_a")
     authority = DelegatedAuthority(
         authority_id="auth_t",

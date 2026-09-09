@@ -53,9 +53,7 @@ def raw_view_customer_orders(customer_id: str):
 
 
 def raw_issue_refund(customer_id: str, amount: float):
-    REFUND_LOG.append(
-        {"customer_id": customer_id, "amount": amount, "timestamp": time.time()}
-    )
+    REFUND_LOG.append({"customer_id": customer_id, "amount": amount, "timestamp": time.time()})
     return {"status": "SUCCESS", "customer_id": customer_id, "refunded_amount": amount}
 
 
@@ -69,22 +67,14 @@ def raw_cancel_order(order_id: str):
 
 
 def run_flagship_demo():
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
     print("🛡️  GUARdWAF FLAGSHIP DEMO: SECURE CUSTOMER OPERATIONS AI AGENT")
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
 
     # 1. Setup Control Plane & Policies
     org_service = OrgService()
-    acme_org = org_service.create_organization(
-        name="Acme Enterprise Ops", slug="acme-ops"
-    )
-    admin_user = org_service.create_user(
-        email="security@acme.com", display_name="Sarah (SecAdmin)"
-    )
+    acme_org = org_service.create_organization(name="Acme Enterprise Ops", slug="acme-ops")
+    admin_user = org_service.create_user(email="security@acme.com", display_name="Sarah (SecAdmin)")
     org_service.add_member(
         organization_id=acme_org.organization_id,
         user_id=admin_user.user_id,
@@ -92,14 +82,8 @@ def run_flagship_demo():
     )
 
     rules = PolicyRules(
-        bulk_thresholds=[
-            BulkThresholdRule(
-                tool="issue_refund", param_name="amount", max_value=5000.0
-            )
-        ],
-        hitl_rules=[
-            HITLRule(tool="issue_refund", condition_param="amount", greater_than=200.0)
-        ],
+        bulk_thresholds=[BulkThresholdRule(tool="issue_refund", param_name="amount", max_value=5000.0)],
+        hitl_rules=[HITLRule(tool="issue_refund", condition_param="amount", greater_than=200.0)],
         parameter_blocklist=[
             ParameterBlocklistRule(
                 tool="update_customer_address",
@@ -108,9 +92,7 @@ def run_flagship_demo():
             )
         ],
     )
-    policy_obj = PolicyConfig(
-        metadata={"policy_name": "customer_ops_policy"}, rules=rules
-    )
+    policy_obj = PolicyConfig(metadata={"policy_name": "customer_ops_policy"}, rules=rules)
     waf = GuardWAF(policy=policy_obj, secret_key="dev_flagship_secret_key_32bytes_min")
     hitl_service = HITLWorkstationService(waf=waf)
 
@@ -122,16 +104,10 @@ def run_flagship_demo():
     waf.register_tool("cancel_order", raw_cancel_order)
 
     # Protected Tool Wrappers
-    protected_lookup = protect(tool_name="lookup_customer", client=waf)(
-        raw_lookup_customer
-    )
-    protected_orders = protect(tool_name="view_customer_orders", client=waf)(
-        raw_view_customer_orders
-    )
+    protected_lookup = protect(tool_name="lookup_customer", client=waf)(raw_lookup_customer)
+    protected_orders = protect(tool_name="view_customer_orders", client=waf)(raw_view_customer_orders)
     protected_refund = protect(tool_name="issue_refund", client=waf)(raw_issue_refund)
-    protected_address = protect(tool_name="update_customer_address", client=waf)(
-        raw_update_customer_address
-    )
+    protected_address = protect(tool_name="update_customer_address", client=waf)(raw_update_customer_address)
 
     # Scenario 1: Normal Read Operation
     print("\n▶ SCENARIO 1: Executing Read Operation (lookup_customer)...")
@@ -153,9 +129,7 @@ def run_flagship_demo():
             protected_refund(customer_id="cust_101", amount=450.0)
         except GuardWAFHITLRequiredError as err:
             pending_action_id = err.pending_action_id
-            print(
-                f"   ✅ GUARDWAF INTERCEPTED: HITL Required! (PendingAction ID: '{pending_action_id}')"
-            )
+            print(f"   ✅ GUARDWAF INTERCEPTED: HITL Required! (PendingAction ID: '{pending_action_id}')")
 
     # Scenario 4 & 5: Security Admin Approves & Agent Resumes
     print("\n▶ SCENARIOS 4 & 5: Security Admin Approving & Agent Resuming Execution...")
@@ -168,18 +142,14 @@ def run_flagship_demo():
     print(f"   ✅ Approved Action. Issued Token: '{approval_token[:30]}...'")
 
     with waf.session(session_id="sess_flag_3", tenant_id=acme_org.organization_id):
-        res_resumed = waf.resume_sync(
-            pending_action_id=pending_action_id, approval_token=approval_token
-        )
+        res_resumed = waf.resume_sync(pending_action_id=pending_action_id, approval_token=approval_token)
         print(f"   ✅ RESUMED EXECUTION RESULT: {res_resumed}")
 
     # Scenario 6: Replay Attempt -> Blocked
     print("\n▶ SCENARIO 6: Attempting Replay Attack with Used Token...")
     with waf.session(session_id="sess_flag_3", tenant_id=acme_org.organization_id):
         try:
-            waf.resume_sync(
-                pending_action_id=pending_action_id, approval_token=approval_token
-            )
+            waf.resume_sync(pending_action_id=pending_action_id, approval_token=approval_token)
             print("   ❌ FAIL: Replay attack succeeded!")
         except Exception as err:
             print(f"   ✅ REPLAY ATTACK BLOCKED BY GUARdWAF: {err}")
@@ -209,9 +179,7 @@ def run_flagship_demo():
         authentication_method="static",
         roles=["user"],
     )
-    a_dev = AgentIdentity(
-        agent_id=agent_id, tenant_id=acme_org.organization_id, name="SupportAgent"
-    )
+    a_dev = AgentIdentity(agent_id=agent_id, tenant_id=acme_org.organization_id, name="SupportAgent")
 
     with waf.verified_session(
         principal=p_dev,
@@ -225,15 +193,9 @@ def run_flagship_demo():
         except GuardWAFSecurityError as err:
             print(f"   ✅ REVOKED AGENT BLOCKED LOCALLY: {err}")
 
-    print(
-        "=========================================================================================="
-    )
-    print(
-        "✅ FLAGSHIP DEMO COMPLETE: All 8 Real-World Customer Support Scenarios Passed!"
-    )
-    print(
-        "=========================================================================================="
-    )
+    print("==========================================================================================")
+    print("✅ FLAGSHIP DEMO COMPLETE: All 8 Real-World Customer Support Scenarios Passed!")
+    print("==========================================================================================")
 
 
 if __name__ == "__main__":

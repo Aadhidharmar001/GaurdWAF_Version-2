@@ -9,9 +9,7 @@ from app.hitl.risk_evaluator import evaluate_hitl_risk
 
 @pytest.fixture
 def db_session():
-    engine = create_engine(
-        "sqlite:///:memory:", connect_args={"check_same_thread": False}
-    )
+    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -20,9 +18,7 @@ def db_session():
 
 
 def test_evaluate_hitl_risk_external_email():
-    res = evaluate_hitl_risk(
-        "send_email", {"recipient": "attacker@external.com", "subject": "Data Leak"}
-    )
+    res = evaluate_hitl_risk("send_email", {"recipient": "attacker@external.com", "subject": "Data Leak"})
     assert res["fraud_score"] >= 80.0
     assert res["confidence_score"] >= 90.0
     assert res["risk_level"] in ["HIGH", "CRITICAL"]
@@ -30,17 +26,13 @@ def test_evaluate_hitl_risk_external_email():
 
 
 def test_evaluate_hitl_risk_internal_email():
-    res = evaluate_hitl_risk(
-        "send_email", {"recipient": "employee@aivar.com", "subject": "Meeting"}
-    )
+    res = evaluate_hitl_risk("send_email", {"recipient": "employee@aivar.com", "subject": "Meeting"})
     assert res["fraud_score"] < 50.0
     assert res["risk_level"] in ["LOW", "MEDIUM"]
 
 
 def test_evaluate_hitl_risk_sql_injection():
-    res = evaluate_hitl_risk(
-        "execute_query", {"query": "SELECT * FROM users; DROP TABLE users;"}
-    )
+    res = evaluate_hitl_risk("execute_query", {"query": "SELECT * FROM users; DROP TABLE users;"})
     assert res["fraud_score"] >= 85.0
     assert res["risk_level"] == "CRITICAL"
     assert any("SQL pattern" in reason for reason in res["risk_reasons"])

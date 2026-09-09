@@ -12,14 +12,8 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 # 1. Configure GuardWAF Engine
-rules = PolicyRules(
-    bulk_thresholds=[
-        BulkThresholdRule(tool="process_payment", param_name="amount", max_value=500.0)
-    ]
-)
-policy = PolicyConfig(
-    metadata={"policy_name": "developer_quickstart_policy"}, rules=rules
-)
+rules = PolicyRules(bulk_thresholds=[BulkThresholdRule(tool="process_payment", param_name="amount", max_value=500.0)])
+policy = PolicyConfig(metadata={"policy_name": "developer_quickstart_policy"}, rules=rules)
 waf = GuardWAF(policy=policy, secret_key="quickstart_dev_secret_key_32bytes_long")
 
 

@@ -32,21 +32,13 @@ class ActionEvaluator:
     def evaluate(self, intent: ActionIntent) -> RuleResult:
         global_shadow = self.policy.shadow_mode
         rules = self.policy.rules
-        session_id = (
-            intent.session_context.session_id
-            if intent.session_context
-            else "default_session"
-        )
-        principal_id = (
-            intent.session_context.principal_id if intent.session_context else None
-        )
+        session_id = intent.session_context.session_id if intent.session_context else "default_session"
+        principal_id = intent.session_context.principal_id if intent.session_context else None
 
         # 1. Rate Limiting Check
         for rule in rules.rate_limits:
             if rule.tool == intent.tool_name:
-                count = self.state_store.get_tool_call_count(
-                    session_id, intent.tool_name, rule.window_seconds
-                )
+                count = self.state_store.get_tool_call_count(session_id, intent.tool_name, rule.window_seconds)
                 if count >= rule.max_calls:
                     is_shadow = rule.shadow_mode or global_shadow
                     status = "shadow_blocked" if is_shadow else "blocked"
@@ -97,9 +89,7 @@ class ActionEvaluator:
                 if rule.check_session_customer_id or rule.param_name == "customer_id":
                     if intent.session_context and intent.session_context.customer_id:
                         session_cust_id = str(intent.session_context.customer_id)
-                        target_cust_id = (
-                            str(param_val) if param_val is not None else None
-                        )
+                        target_cust_id = str(param_val) if param_val is not None else None
                         if target_cust_id != session_cust_id:
                             is_shadow = rule.shadow_mode or global_shadow
                             status = "shadow_blocked" if is_shadow else "blocked"
@@ -112,14 +102,8 @@ class ActionEvaluator:
                             )
 
                 # Check allowed scope IDs list
-                if (
-                    intent.session_context
-                    and intent.session_context.allowed_scope_ids
-                    and param_val is not None
-                ):
-                    allowed_scope_ids = {
-                        str(sid) for sid in intent.session_context.allowed_scope_ids
-                    }
+                if intent.session_context and intent.session_context.allowed_scope_ids and param_val is not None:
+                    allowed_scope_ids = {str(sid) for sid in intent.session_context.allowed_scope_ids}
                     if str(param_val) not in allowed_scope_ids:
                         is_shadow = rule.shadow_mode or global_shadow
                         status = "shadow_blocked" if is_shadow else "blocked"
@@ -159,9 +143,7 @@ class ActionEvaluator:
                         now = datetime.now(timezone.utc)
                         expires_at = now + timedelta(seconds=600)  # 10 min HITL TTL
                         canon_params = canonicalize_parameters(intent.parameters)
-                        intent_digest = hashlib.sha256(
-                            intent.model_dump_json().encode("utf-8")
-                        ).hexdigest()
+                        intent_digest = hashlib.sha256(intent.model_dump_json().encode("utf-8")).hexdigest()
 
                         tok = self.hitl_token_mgr.generate_approval_token(
                             pending_action_id=pending_id,
@@ -172,12 +154,7 @@ class ActionEvaluator:
                         )
 
                         tenant_id = (
-                            intent.session_context.tenant_id
-                            if (
-                                intent.session_context
-                                and intent.session_context.tenant_id
-                            )
-                            else "default"
+                            intent.session_context.tenant_id if (intent.session_context and intent.session_context.tenant_id) else "default"
                         )
                         pending_action = PendingAction(
                             pending_action_id=pending_id,

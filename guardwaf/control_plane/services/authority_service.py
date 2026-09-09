@@ -16,9 +16,7 @@ from guardwaf.exceptions import GuardWAFConfigurationError
 
 
 class AuthorityService:
-    def __init__(
-        self, repo: AuthorityRepository, audit_service: Optional[AuditService] = None
-    ):
+    def __init__(self, repo: AuthorityRepository, audit_service: Optional[AuditService] = None):
         self.repo = repo
         self.audit_service = audit_service
 
@@ -41,14 +39,11 @@ class AuthorityService:
             allowed_actions=allowed_actions,
             constraints=constraints or {},
             status=AuthorityStatus.ACTIVE,
-            expires_at=expires_at
-            or (datetime.now(timezone.utc) + datetime.timedelta(hours=24)),
+            expires_at=expires_at or (datetime.now(timezone.utc) + datetime.timedelta(hours=24)),
         )
         self.repo.save_authority(record)
         if self.audit_service:
-            self.audit_service.record_event(
-                "AUTHORITY_ISSUED", tenant_id, actor_id, "authority", authority_id
-            )
+            self.audit_service.record_event("AUTHORITY_ISSUED", tenant_id, actor_id, "authority", authority_id)
         return record
 
     def revoke_authority(
@@ -82,6 +77,4 @@ class AuthorityService:
 
     def list_revoked_authorities(self, tenant_id: str) -> List[str]:
         authorities = self.repo.list_authorities(tenant_id)
-        return [
-            a.authority_id for a in authorities if a.status == AuthorityStatus.REVOKED
-        ]
+        return [a.authority_id for a in authorities if a.status == AuthorityStatus.REVOKED]
