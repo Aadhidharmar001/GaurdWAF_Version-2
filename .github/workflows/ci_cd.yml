@@ -113,7 +113,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[all]" httpx uvicorn
+          pip install -e ".[all]" httpx
       - name: Deploy to ECS Staging Cluster
         run: |
           echo "Deploying container image to ECS Staging Cluster..."
@@ -122,9 +122,7 @@ jobs:
           PYTHONPATH: "."
           GUARDWAF_SECRET_KEY: "staging_secret_key_min_32_bytes_long_guardwaf"
         run: |
-          uvicorn app.main:app --host 127.0.0.1 --port 8000 &
-          sleep 3
-          python scripts/smoke_test.py --target-url http://127.0.0.1:8000
+          python scripts/smoke_test.py
 
   stage8_production_deploy:
     name: "Stage 8 — Production Deployment (Manual Approval Gated)"

@@ -23,7 +23,11 @@ def run_smoke_tests(target_url: str = None) -> bool:
     print("🛡️  GUARdWAF STAGING AUTOMATED SMOKE TEST SUITE")
     print("=================================================================")
 
-    client = TestClient(app)
+    if target_url:
+        import httpx
+        client = httpx.Client(base_url=target_url, timeout=10.0)
+    else:
+        client = TestClient(app)
 
     # 1. Test /health/live
     print("▶ 1. Probing Liveness Endpoint (/health/live)...")
