@@ -13,9 +13,18 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-from fastapi.testclient import TestClient
 
-from app.main import app
+def _build_client(target_url: str = None):
+    if target_url:
+        import httpx
+
+        return httpx.Client(base_url=target_url, timeout=10.0)
+
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    return TestClient(app)
 
 
 def run_smoke_tests(target_url: str = None) -> bool:
@@ -23,11 +32,7 @@ def run_smoke_tests(target_url: str = None) -> bool:
     print("🛡️  GUARdWAF STAGING AUTOMATED SMOKE TEST SUITE")
     print("=================================================================")
 
-    if target_url:
-        import httpx
-        client = httpx.Client(base_url=target_url, timeout=10.0)
-    else:
-        client = TestClient(app)
+    client = _build_client(target_url)
 
     # 1. Test /health/live
     print("▶ 1. Probing Liveness Endpoint (/health/live)...")
