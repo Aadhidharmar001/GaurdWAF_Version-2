@@ -1,0 +1,83 @@
+name: "🐛 Bug Report"
+description: "Report an issue, error, or unexpected behavior in GuardWAF SDK or Control Plane"
+title: "[BUG]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### 🛡️ GuardWAF Bug Report
+        Thank you for reporting a bug! Please review our privacy warning below before submitting.
+  - type: markdown
+    attributes:
+      value: |
+        > [!CAUTION]
+        > **DO NOT SUBMIT SENSITIVE DATA**
+        > Never include:
+        > - API keys, tokens, or passwords
+        > - Database credentials or connection strings
+        > - Raw customer or proprietary business data
+        > - Production LLM conversation prompts
+        > - Tool arguments or payloads containing confidential information
+        > 
+        > *For potential security vulnerabilities or policy bypasses, report privately via [GitHub Security Advisories](https://github.com/Aadhidharmar001/GaurdWAF_Version-2/security/advisories/new).*
+  - type: textarea
+    id: description
+    attributes:
+      label: "Bug Description"
+      description: "A clear and concise description of what the bug is."
+      placeholder: "When invoking @protect with parameter X..."
+    validations:
+      required: true
+  - type: dropdown
+    id: framework
+    attributes:
+      label: "Framework / Integration"
+      description: "Which framework adapter or component was in use?"
+      options:
+        - "Core Python (@protect)"
+        - "LangChain (LangChainAdapter)"
+        - "LangGraph (LangGraphAdapter)"
+        - "CrewAI (CrewAIAdapter)"
+        - "FastMCP / MCP Gateway"
+        - "Control Plane FastAPI Server"
+        - "Policy Engine / YAML Loader"
+        - "Other"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: "Environment Details"
+      description: "Operating system, Python version, GuardWAF version"
+      placeholder: "Ubuntu 22.04 / Python 3.11.4 / GuardWAF 1.0.0"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: "Sanitized Reproduction Steps & Code"
+      description: "Minimal code snippet reproducing the problem. Use REDACTED or sanitized placeholders."
+      render: python
+      placeholder: |
+        from guardwaf import GuardWAF, protect
+
+        # Minimal reproduction snippet (NO SECRETS)
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Expected Behavior"
+      description: "What did you expect to happen instead?"
+      placeholder: "The action should have been blocked with GuardWAFSecurityError..."
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Sanitized Logs / Traceback"
+      description: "Paste sanitized error traceback or log lines here."
+      render: text
+    validations:
+      required: false
